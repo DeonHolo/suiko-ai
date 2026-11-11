@@ -30,8 +30,9 @@ export default async ({ rootDir, config, fs, path, logger, registerExplicitId })
     const rollupBundle = await rollup({
         // Use the file system module provided by the build environment
         fs,
-        // Search all HTML files in the client directory to find entry points
-        input: htmlFilePattern,
+        // Build the single workbench entry directly to keep its asset IDs
+        // consistent on Windows and on the Linux CI runner.
+        input: htmlFiles.length === 1 ? htmlFiles[0] : htmlFilePattern,
         // Use the default set of ServiceNow plugins for Rollup
         // configured for the scope name and root directory
         plugins: [
