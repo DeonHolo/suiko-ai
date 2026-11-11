@@ -1,0 +1,106 @@
+{
+  "schema_version": "0.2.0",
+  "request_id": "sponsored-caption-demo-001",
+  "content_id": "sponsored-caption",
+  "language": "en",
+  "baseline_revision": {
+    "revision_id": "rev-001",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "Harbor Film Night teaser"
+      },
+      {
+        "segment_id": "public-caption",
+        "field": "caption",
+        "text": "Watch cast interviews from Harbor Film Night. Paid partnership with Lantern Coffee."
+      },
+      {
+        "segment_id": "end-card",
+        "field": "caption",
+        "text": "Full video goes live Friday at 6 p.m."
+      },
+      {
+        "segment_id": "production-note",
+        "field": "body",
+        "text": "This teaser was paid for by Lantern Coffee."
+      }
+    ]
+  },
+  "candidate_revision": {
+    "revision_id": "rev-002",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "Harbor Film Night teaser"
+      },
+      {
+        "segment_id": "public-caption",
+        "field": "caption",
+        "text": "Watch cast interviews from Harbor Film Night."
+      },
+      {
+        "segment_id": "end-card",
+        "field": "caption",
+        "text": "Full video goes live Saturday at 6 p.m."
+      },
+      {
+        "segment_id": "production-note",
+        "field": "body",
+        "text": "This teaser was paid for by Lantern Coffee."
+      }
+    ]
+  },
+  "policy_pack": {
+    "pack_id": "sponsored-caption-demo-checklist",
+    "version": "1.0",
+    "approval_reference": "synthetic-media-pilot",
+    "rules": [
+      {
+        "rule_id": "DISC-001",
+        "title": "Sponsor disclosure in the public caption",
+        "text": "Flag a teaser identified as paid in its internal production note if its public caption lacks a clear paid partnership or sponsor disclosure. Cite the public caption and the internal production note. Ask the editor to restore the disclosure to the public caption.",
+        "priority": "high"
+      },
+      {
+        "rule_id": "LANG-001",
+        "title": "Unsupported promotional superlatives",
+        "text": "Flag unsupported promotional superlatives in the public caption. Treat a plain invitation to watch footage as ordinary descriptive language.",
+        "priority": "standard"
+      }
+    ]
+  },
+  "taxonomy": {
+    "sections": [
+      {
+        "id": "arts-culture",
+        "label": "Arts and culture"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ],
+    "tags": [
+      {
+        "id": "film",
+        "label": "Film"
+      },
+      {
+        "id": "social-video",
+        "label": "Social video"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ]
+  },
+  "current_metadata": {
+    "section_id": null,
+    "tag_ids": [],
+    "short_description": ""
+  }
+}

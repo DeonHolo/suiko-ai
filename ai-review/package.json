@@ -1,0 +1,20 @@
+{
+  "name": "backyardigans-ai-review",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/review.js",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check:gemini": "node --env-file=.env.local src/check-gemini-config.js",
+    "demo": "node src/demo.js",
+    "demo:json": "node src/demo.js --json"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "jsonc-parser": "3.3.1"
+  }
+}

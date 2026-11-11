@@ -1,0 +1,150 @@
+{
+  "schema_version": "0.2.0",
+  "request_id": "review-demo-001",
+  "review_id": "result-demo-001",
+  "content_id": "article-library-demo",
+  "baseline_revision_id": "rev-001",
+  "candidate_revision_id": "rev-002",
+  "processing": {
+    "state": "succeeded",
+    "attempt_id": "attempt-demo-001",
+    "error": null
+  },
+  "freshness": "current",
+  "provenance": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "editorial-review-0.2",
+    "schema_version": "0.2.0",
+    "policy_pack_id": "demo-newsroom-policy",
+    "policy_pack_version": "1.0",
+    "input_fingerprint": "synthetic-demo-fingerprint-001",
+    "settings": {
+      "thinking_level": "MINIMAL",
+      "max_output_tokens": 8192
+    }
+  },
+  "assessment": {
+    "status": "reviewed",
+    "coverage": {
+      "revision_comparison": "complete",
+      "metadata_suggestions": "complete"
+    },
+    "changes": [
+      {
+        "change_id": "chg-001",
+        "kind": "modified",
+        "summary": "The stated opening date changed from December 5 to December 12.",
+        "before": [
+          {
+            "revision_id": "rev-001",
+            "segment_id": "p1",
+            "quote": "The new community library will open on December 5."
+          }
+        ],
+        "after": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p1",
+            "quote": "The new community library will open on December 12."
+          }
+        ]
+      },
+      {
+        "change_id": "chg-002",
+        "kind": "modified",
+        "summary": "Expected attendance changed from 200 to more than 500 residents, and the attribution to organizers was removed.",
+        "before": [
+          {
+            "revision_id": "rev-001",
+            "segment_id": "p2",
+            "quote": "Organizers expect 200 residents to attend."
+          }
+        ],
+        "after": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p2",
+            "quote": "More than 500 residents are expected to attend."
+          }
+        ]
+      }
+    ],
+    "metadata_suggestions": {
+      "section": {
+        "suggested_id": "community",
+        "reason": "The candidate announces a local library opening.",
+        "evidence": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p1",
+            "quote": "The new community library will open on December 12."
+          }
+        ]
+      },
+      "tags": {
+        "suggested_ids": [
+          "libraries",
+          "community-events"
+        ],
+        "reason": "The supplied text concerns a library and its opening event.",
+        "evidence": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "title",
+            "quote": "Community library opening moved to December 12"
+          }
+        ]
+      },
+      "short_description": {
+        "suggested_text": "The community library is scheduled to open on December 12 with free admission.",
+        "reason": "The date and admission details are present in the candidate.",
+        "evidence": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p1",
+            "quote": "The new community library will open on December 12."
+          },
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p3",
+            "quote": "Admission is free."
+          }
+        ]
+      }
+    },
+    "policy_assessments": [
+      {
+        "rule_id": "ATTR-001",
+        "status": "potential_conflict",
+        "reason": "The revised attendance estimate has no visible source attribution in the supplied candidate. This does not establish that the estimate is false.",
+        "evidence": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p2",
+            "quote": "More than 500 residents are expected to attend."
+          }
+        ],
+        "suggested_action": "Confirm the basis of the attendance estimate and add source attribution if appropriate."
+      },
+      {
+        "rule_id": "LANG-001",
+        "status": "no_potential_conflict_observed",
+        "reason": "No unsupported promotional superlative was identified in the supplied candidate text.",
+        "evidence": [
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p1",
+            "quote": "The new community library will open on December 12."
+          },
+          {
+            "revision_id": "rev-002",
+            "segment_id": "p3",
+            "quote": "Admission is free."
+          }
+        ],
+        "suggested_action": null
+      }
+    ],
+    "limitations": []
+  }
+}

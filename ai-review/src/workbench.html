@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suiko AI · Draft review</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #202b24; --muted: #4e5e55; --paper: #f4f3ed; --card: #fffefa;
+    --line: #d7ddd2; --green: #18533b; --pale: #e8f2ea; --amber: #713d18; --warm: #fbefdf;
+    font-family: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: var(--paper); line-height: 1.5; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid #a75e32; outline-offset: 3px; }
+  h1, h2, h3, p, ul { margin: 0; }
+  .wrap { width: min(1130px, calc(100% - 44px)); margin-inline: auto; }
+  header { background: var(--card); border-bottom: 1px solid var(--line); }
+  .topbar { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 750; letter-spacing: -.02em; }
+  .mark { display: grid; place-items: center; border-radius: 7px; width: 30px; height: 30px; background: var(--green); color: white; font: bold 1.14rem Georgia, serif; }
+  .model, .hint { color: var(--muted); font-size: .86rem; }
+  main { padding: 28px 0 55px; }
+  h1, h2 { font-family: "Newsreader", Georgia, serif; font-weight: 500; letter-spacing: -.035em; }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.55rem); line-height: 1.12; }
+  h2 { font-size: 1.58rem; line-height: 1.18; }
+  .lead { margin: 5px 0 22px; color: var(--muted); }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 320px); gap: 18px; align-items: start; }
+  .card { padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+  .card + .card { margin-top: 15px; }
+  .field-head, .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+  .field-head { justify-content: space-between; margin-bottom: 11px; }
+  .samples { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { cursor: pointer; font: inherit; font-weight: 700; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line); color: var(--green); background: var(--card); }
+  button:hover:not(:disabled) { background: var(--pale); }
+  button:disabled { opacity: .55; cursor: default; }
+  .primary { background: var(--green); border-color: var(--green); color: white; padding-inline: 19px; }
+  .primary:hover:not(:disabled) { background: #10422e; }
+  select { display: block; width: 100%; margin-top: 9px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--card); font: inherit; }
+  textarea { display: block; width: 100%; min-height: 228px; resize: vertical; padding: 12px; border: 1px solid #acbbae; border-radius: 7px; background: #fcfdf9; color: var(--ink); font-family: inherit; font-size: .93rem; line-height: 1.55; }
+  .actions { margin-top: 12px; }
+  #status { margin-top: 10px; color: var(--green); font-size: .88rem; }
+  #status.error { color: var(--amber); }
+  #versions, #rules { margin-top: 10px; }
+  #rules { padding-left: 18px; font-size: .88rem; }
+  #rules li + li { margin-top: 6px; }
+  details { min-width: 0; }
+  summary { cursor: pointer; font-weight: 700; color: var(--green); }
+  .version { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .version:last-child { border-bottom: 0; }
+  pre { margin: 7px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 6px; padding: 10px; background: #f0f3ed; font: .82rem/1.5 "IBM Plex Mono", Consolas, monospace; max-height: 440px; overflow: auto; }
+  .history { margin-top: 18px; }
+  .history h2 { margin-bottom: 10px; }
+  .report { margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .report > summary { line-height: 1.65; }
+  .pill { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 99px; background: var(--pale); color: var(--green); font-size: .74rem; font-weight: 700; vertical-align: middle; }
+  .pill.alert { background: var(--warm); color: var(--amber); }
+  .report-body { margin-top: 9px; }
+  .report-body h3 { font-size: .96rem; margin: 12px 0 5px; }
+  .overview, .failure { border-radius: 7px; padding: 10px 12px; margin-top: 9px; background: var(--pale); font-size: .9rem; }
+  .failure { background: var(--warm); }
+  .overview h3, .failure h3 { margin: 0 0 5px; }
+  .overview p + p, .failure p + p { margin-top: 6px; }
+  .overview ul, .raw ul { padding-left: 20px; margin-top: 6px; }
+  .item { border-top: 1px solid var(--line); padding: 7px 0; font-size: .9rem; }
+  .item h4 { margin: 0 0 3px; font-size: .9rem; }
+  .item .action { margin-top: 4px; color: var(--muted); }
+  .evidence { margin: 4px 0 0; font-size: .83rem; }
+  .evidence blockquote { margin: 4px 0; padding: 6px 8px; background: #f0f4ef; border-left: 2px solid #92aa9a; overflow-wrap: anywhere; }
+  .raw { margin-top: 12px; font-size: .85rem; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+  @media (max-width: 460px) { .wrap { width: calc(100% - 24px); } .card { padding: 14px; } main { padding-top: 20px; } }
+</style>
+<script defer src="/workbench.js"></script>
+</head>
+<body>
+<header><div class="wrap topbar">
+  <div class="brand"><span class="mark" aria-hidden="true">S</span>Suiko AI</div>
+  <span id="model" class="model"></span>
+</div></header>
+<main class="wrap">
+  <h1>Draft review</h1>
+  <p class="lead">Paste or edit a script. Review saves the text, sends it to Gemini, and keeps the reply here.</p>
+  <div class="layout">
+    <div>
+      <section class="card" aria-labelledby="draft-label">
+        <div class="field-head">
+          <h2 id="draft-label"><label for="draft">Draft text</label></h2>
+          <div class="samples" aria-label="Draft actions">
+            <button type="button" id="new-story" disabled>New story</button>
+            <button type="button" id="first-example" disabled>Start river example</button>
+            <button type="button" id="revised-example" disabled>Load revised script</button>
+          </div>
+        </div>
+        <form id="review-form">
+          <textarea id="draft" maxlength="12000" spellcheck="false" aria-describedby="next-step" required disabled></textarea>
+          <div class="actions">
+            <button type="submit" class="primary" id="review" disabled>Review</button>
+            <p id="next-step" class="hint"></p>
+          </div>
+        </form>
+        <p id="status" role="status" aria-live="polite">Opening the local review page…</p>
+      </section>
+      <section class="card history" aria-labelledby="history-title">
+        <h2 id="history-title">AI reviews</h2>
+        <div id="history"><p class="hint">Your first reply will appear here.</p></div>
+      </section>
+    </div>
+    <aside>
+      <section class="card" aria-labelledby="versions-title">
+        <h2 id="versions-title">Saved drafts</h2>
+        <div id="versions"></div>
+      </section>
+      <section class="card" aria-labelledby="rules-title">
+        <h2 id="rules-title"><label for="profile">Review checklist</label></h2>
+        <select id="profile" disabled></select>
+        <p class="hint" style="margin-top: 7px">Choose the sample rules that fit your draft.</p>
+        <ul id="rules"></ul>
+      </section>
+    </aside>
+  </div>
+</main>
+</body>
+</html>

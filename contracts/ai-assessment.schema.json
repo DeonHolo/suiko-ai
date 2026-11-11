@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Editorial AI assessment draft 0.2",
+  "description": "Application validation schema for the model-owned assessment only. Cross-field, source, rule, and vocabulary checks are also mandatory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "coverage",
+    "changes",
+    "metadata_suggestions",
+    "policy_assessments",
+    "limitations"
+  ],
+  "properties": {
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision_comparison", "metadata_suggestions"],
+      "properties": {
+        "revision_comparison": {
+          "type": "string",
+          "enum": ["complete", "incomplete", "not_requested"]
+        },
+        "metadata_suggestions": {
+          "type": "string",
+          "enum": ["complete", "incomplete"]
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "reviewed",
+        "partial",
+        "unable_to_assess"
+      ]
+    },
+    "changes": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "change_id",
+          "kind",
+          "summary",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "change_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "added",
+              "removed",
+              "modified",
+              "moved",
+              "formatting"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "before": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 6,
+            "items": {
+              "$ref": "#/$defs/evidence"
+            }
+          },
+          "after": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 6,
+            "items": {
+              "$ref": "#/$defs/evidence"
+            }
+          }
+        }
+      }
+    },
+    "metadata_suggestions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section",
+        "tags",
+        "short_description"
+      ],
+      "properties": {
+        "section": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "suggested_id",
+            "reason",
+            "evidence"
+          ],
+          "properties": {
+            "suggested_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "evidence": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 6,
+              "items": {
+                "$ref": "#/$defs/evidence"
+              }
+            }
+          }
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "suggested_ids",
+            "reason",
+            "evidence"
+          ],
+          "properties": {
+            "suggested_ids": {
+              "type": "array",
+              "maxItems": 5,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              }
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "evidence": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 6,
+              "items": {
+                "$ref": "#/$defs/evidence"
+              }
+            }
+          }
+        },
+        "short_description": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "suggested_text",
+            "reason",
+            "evidence"
+          ],
+          "properties": {
+            "suggested_text": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 240
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "evidence": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 6,
+              "items": {
+                "$ref": "#/$defs/evidence"
+              }
+            }
+          }
+        }
+      }
+    },
+    "policy_assessments": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rule_id",
+          "status",
+          "reason",
+          "evidence",
+          "suggested_action"
+        ],
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "potential_conflict",
+              "no_potential_conflict_observed",
+              "not_assessable",
+              "not_applicable"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 6,
+            "items": {
+              "$ref": "#/$defs/evidence"
+            }
+          },
+          "suggested_action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision_id",
+        "segment_id",
+        "quote"
+      ],
+      "properties": {
+        "revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "segment_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    }
+  }
+}

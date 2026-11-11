@@ -1,0 +1,116 @@
+{
+  "schema_version": "0.2.0",
+  "request_id": "river-video-demo-001",
+  "content_id": "river-video",
+  "language": "en",
+  "baseline_revision": {
+    "revision_id": "rev-001",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "River cleanup video package"
+      },
+      {
+        "segment_id": "anchor",
+        "field": "body",
+        "text": "The river cleanup is scheduled for Saturday at 8 a.m."
+      },
+      {
+        "segment_id": "lower-third",
+        "field": "caption",
+        "text": "River cleanup | Saturday, 8 a.m."
+      },
+      {
+        "segment_id": "visual",
+        "field": "body",
+        "text": "Use staff footage from last year's cleanup."
+      },
+      {
+        "segment_id": "voiceover",
+        "field": "body",
+        "text": "Volunteers will collect litter along the river."
+      }
+    ]
+  },
+  "candidate_revision": {
+    "revision_id": "rev-002",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "River cleanup video package"
+      },
+      {
+        "segment_id": "anchor",
+        "field": "body",
+        "text": "The river cleanup is scheduled for Sunday at 9 a.m."
+      },
+      {
+        "segment_id": "lower-third",
+        "field": "caption",
+        "text": "River cleanup | Sunday, 9 a.m."
+      },
+      {
+        "segment_id": "visual",
+        "field": "body",
+        "text": "Use Northbank Aerial's drone clip from social media."
+      },
+      {
+        "segment_id": "voiceover",
+        "field": "body",
+        "text": "Volunteers will collect litter along the river."
+      }
+    ]
+  },
+  "policy_pack": {
+    "pack_id": "river-video-demo-checklist",
+    "version": "1.0",
+    "approval_reference": "synthetic-media-pilot",
+    "rules": [
+      {
+        "rule_id": "RIGHTS-001",
+        "title": "Third-party footage permission",
+        "text": "Flag a proposed third-party clip when the supplied production notes do not document permission or a license to use it. Cite the footage note and ask the producer to confirm permission before use. Missing documentation does not establish that permission was denied.",
+        "priority": "high"
+      },
+      {
+        "rule_id": "TIME-001",
+        "title": "On-screen time matches the script",
+        "text": "Compare the day and time in the anchor's spoken line and the on-screen caption. Flag a potential conflict only when those two references disagree.",
+        "priority": "standard"
+      }
+    ]
+  },
+  "taxonomy": {
+    "sections": [
+      {
+        "id": "local-news",
+        "label": "Local news"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ],
+    "tags": [
+      {
+        "id": "video-package",
+        "label": "Video package"
+      },
+      {
+        "id": "environment",
+        "label": "Environment"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ]
+  },
+  "current_metadata": {
+    "section_id": null,
+    "tag_ids": [],
+    "short_description": ""
+  }
+}

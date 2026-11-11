@@ -1,0 +1,82 @@
+name: Suiko AI checks and PDI deployment
+
+on:
+  pull_request:
+    paths:
+      - 'servicenow-app/**'
+      - 'ai-review/**'
+      - 'contracts/**'
+      - 'prompts/**'
+      - '.github/workflows/suiko-pdi.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'servicenow-app/**'
+      - 'ai-review/**'
+      - 'contracts/**'
+      - 'prompts/**'
+      - '.github/workflows/suiko-pdi.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            ai-review/package-lock.json
+            servicenow-app/package-lock.json
+      - name: Install review and app dependencies
+        run: |
+          npm --prefix ai-review ci
+          npm --prefix servicenow-app ci
+      - name: Run the review checks
+        run: npm --prefix ai-review test
+      - name: Build the app with committed record identities
+        run: npm --prefix servicenow-app run build -- --frozenKeys
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: suiko-pdi-package
+          path: |
+            servicenow-app/dist/
+            servicenow-app/target/
+          if-no-files-found: error
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    concurrency:
+      group: suiko-dev309702-deployment
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: servicenow-app/package-lock.json
+      - run: npm --prefix servicenow-app ci
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: suiko-pdi-package
+          path: servicenow-app
+      - name: Install the package that passed validation
+        working-directory: servicenow-app
+        env: &pdi_auth
+          SN_SDK_NODE_ENV: SN_SDK_CI_INSTALL
+          SN_SDK_AUTH_TYPE: basic
+          SN_SDK_INSTANCE_URL: https://dev309702.service-now.com
+          SN_SDK_USER: ${{ secrets.SERVICENOW_USERNAME }}
+          SN_SDK_USER_PWD: ${{ secrets.SERVICENOW_PASSWORD }}
+        run: npm exec -- now-sdk install
+      - name: Check the page and review API
+        env: *pdi_auth
+        run: npm --prefix servicenow-app run smoke:pdi

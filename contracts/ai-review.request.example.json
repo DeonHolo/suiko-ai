@@ -1,0 +1,102 @@
+{
+  "schema_version": "0.2.0",
+  "request_id": "review-demo-001",
+  "content_id": "article-library-demo",
+  "language": "en",
+  "baseline_revision": {
+    "revision_id": "rev-001",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "Community library to open on December 5"
+      },
+      {
+        "segment_id": "p1",
+        "field": "body",
+        "text": "The new community library will open on December 5."
+      },
+      {
+        "segment_id": "p2",
+        "field": "body",
+        "text": "Organizers expect 200 residents to attend."
+      },
+      {
+        "segment_id": "p3",
+        "field": "body",
+        "text": "Admission is free."
+      }
+    ]
+  },
+  "candidate_revision": {
+    "revision_id": "rev-002",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "Community library opening moved to December 12"
+      },
+      {
+        "segment_id": "p1",
+        "field": "body",
+        "text": "The new community library will open on December 12."
+      },
+      {
+        "segment_id": "p2",
+        "field": "body",
+        "text": "More than 500 residents are expected to attend."
+      },
+      {
+        "segment_id": "p3",
+        "field": "body",
+        "text": "Admission is free."
+      }
+    ]
+  },
+  "policy_pack": {
+    "pack_id": "demo-newsroom-policy",
+    "version": "1.0",
+    "approval_reference": "synthetic-policy-approval-001",
+    "rules": [
+      {
+        "rule_id": "ATTR-001",
+        "title": "Attribution of numerical claims",
+        "text": "Flag quantitative claims about expected attendance when the supplied article does not visibly attribute the estimate to a source. Ask the editor to verify the basis of the estimate; do not conclude that the estimate is false.",
+        "priority": "standard"
+      },
+      {
+        "rule_id": "LANG-001",
+        "title": "Neutral descriptive language",
+        "text": "Flag unsupported promotional superlatives in the supplied article. Do not flag ordinary event descriptions solely for announcing an event.",
+        "priority": "standard"
+      }
+    ]
+  },
+  "taxonomy": {
+    "sections": [
+      {
+        "id": "community",
+        "label": "Community"
+      },
+      {
+        "id": "public-affairs",
+        "label": "Public affairs"
+      }
+    ],
+    "tags": [
+      {
+        "id": "libraries",
+        "label": "Libraries"
+      },
+      {
+        "id": "community-events",
+        "label": "Community events"
+      }
+    ]
+  },
+  "current_metadata": {
+    "section_id": null,
+    "tag_ids": [],
+    "short_description": ""
+  }
+}

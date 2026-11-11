@@ -1,0 +1,39 @@
+{
+  "id": "news",
+  "label": "News article",
+  "policy_pack": {
+    "pack_id": "demo-news-article-checklist",
+    "version": "1.0",
+    "approval_reference": "synthetic-news-pilot",
+    "rules": [
+      {
+        "rule_id": "NEWS-SOURCE-001",
+        "title": "Sources for specific claims",
+        "text": "Flag specific product releases, research results, and figures when the draft does not point to a named report, direct quotation, link, or other source the editor can check for the specific claim. Ask the editor to add or verify that source. Assess the supplied text only and do not decide whether the claim is true.",
+        "priority": "high"
+      },
+      {
+        "rule_id": "NEWS-TONE-001",
+        "title": "Neutral wording",
+        "text": "Flag praise or sweeping opinions presented as fact in the writer's own voice. Ask the editor to rewrite them in neutral terms or attribute them to a source. An opinion quoted and clearly attributed to someone can be left for the editor to judge.",
+        "priority": "standard"
+      }
+    ]
+  },
+  "taxonomy": {
+    "sections": [
+      { "id": "technology", "label": "Technology" },
+      { "id": "local-news", "label": "Local news" },
+      { "id": "arts-culture", "label": "Arts and culture" },
+      { "id": "sports", "label": "Sports" }
+    ],
+    "tags": [
+      { "id": "ai", "label": "AI" },
+      { "id": "product-releases", "label": "Product releases" },
+      { "id": "research", "label": "Research" },
+      { "id": "community-events", "label": "Community events" },
+      { "id": "film", "label": "Film" },
+      { "id": "sports", "label": "Sports" }
+    ]
+  }
+}
