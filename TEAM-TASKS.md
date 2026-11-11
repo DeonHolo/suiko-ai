@@ -4,17 +4,17 @@ Team Backyardigans · 12 November 2026
 
 A **task breakdown**, also called a **backlog**, is the team's list of things to build. Each ticket below has steps, a prompt for your coding assistant, and a check that tells you when it works.
 
-Claim a ticket by adding your name in the Owner column. Make a branch with its ID, such as **fe-01-inbox**. Update the status and link your pull request.
+Claim a ticket by commenting on its GitHub issue. Make a branch with its ID, such as **fe-01-inbox**. Link your pull request to the issue. [GitHub team workflow](docs/14-github-team-workflow.md)
 
-| Ticket | Work | Owner | Status |
-| --- | --- | --- | --- |
-| [FE-01](#fe-01-build-the-review-inbox) | Build the Review Inbox | _Claim this_ | To do |
-| [FE-02](#fe-02-connect-the-inbox-and-story-screen) | Connect the Inbox and Story screen | _Claim this_ | To do |
-| [FE-03](#fe-03-configure-the-legal-review-form) | Configure the Legal Review form | _Claim this_ | To do |
-| [BE-01](#be-01-add-editor-decisions) | Add editor decisions | _Claim this_ | To do |
-| [BE-02](#be-02-route-a-version-to-legal) | Route a version to legal | _Claim this_ | To do |
-| [BE-03](#be-03-finish-history-and-test-access) | Finish history and test access | _Claim this_ | To do |
-| [QA-01](#qa-01-rehearse-the-demo) | Rehearse the demo | _Claim this_ | To do |
+| Ticket | Work | GitHub issue |
+| --- | --- | --- |
+| [FE-01](#fe-01-build-the-review-inbox) | Build the Review Inbox | [#1](https://github.com/DeonHolo/suiko-ai/issues/1) |
+| [FE-02](#fe-02-connect-the-inbox-and-story-screen) | Connect the Inbox and Story screen | [#2](https://github.com/DeonHolo/suiko-ai/issues/2) |
+| [FE-03](#fe-03-configure-the-legal-review-form) | Configure the Legal Review form | [#3](https://github.com/DeonHolo/suiko-ai/issues/3) |
+| [BE-01](#be-01-add-editor-decisions) | Add editor decisions | [#4](https://github.com/DeonHolo/suiko-ai/issues/4) |
+| [BE-02](#be-02-route-a-version-to-legal) | Route a version to legal | [#5](https://github.com/DeonHolo/suiko-ai/issues/5) |
+| [BE-03](#be-03-finish-history-and-test-access) | Finish history and test access | [#6](https://github.com/DeonHolo/suiko-ai/issues/6) |
+| [QA-01](#qa-01-rehearse-the-demo) | Rehearse the demo | [#7](https://github.com/DeonHolo/suiko-ai/issues/7) |
 
 Deon owns the AI prompt, evidence checks, evaluation, and AI panel. Pair with him on FE-02. FE-01 and BE-01 can start in parallel. [Full build plan](PLAN.md)
 
@@ -48,7 +48,7 @@ The assignment lists what the app must do and leaves the screen technology open.
 ## Before your first ticket
 
 1. Open the live workbench and try the river example. **ServiceNow Studio** is where developers open app files. The **workbench** is where editors use the app.
-2. Clone the repository and run the setup and checks. Work in the existing scope, **x_2236136_suiko_ai**. [Setup commands](README.md#work-from-your-computer)
+2. Fork the repository, clone your fork, and run the setup and checks. Work in the existing scope, **x_2236136_suiko_ai**. [Setup commands](README.md#work-from-your-computer)
 3. Give your coding assistant this file and your ticket ID. Point it at the repository or open the Suiko AI scope in Studio. Use a branch and fictional test stories.
 4. For changes in Studio, coordinate edits on the shared PDI and bring the app changes into the repository before the next deploy. [Studio and deployment steps](docs/13-servicenow-development-and-cicd.md#changes-made-in-studio)
 
