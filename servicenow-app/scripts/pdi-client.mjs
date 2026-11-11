@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 export const project = fileURLToPath(new URL('../', import.meta.url));
 export const instance = 'https://dev309702.service-now.com';
+export const profile = 'suiko-pdi';
 const sdkRoot = new URL('../node_modules/@servicenow/sdk/', import.meta.url);
 const sdkPackage = JSON.parse(await readFile(new URL('package.json', sdkRoot), 'utf8'));
 const sdkBin = fileURLToPath(new URL(sdkPackage.bin['now-sdk'], sdkRoot));
@@ -35,18 +36,12 @@ export async function createPdiClient() {
     throw new Error('This project targets dev309702. Set the instance URL to match before continuing.');
   }
   const headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
-  if (process.env.SN_SDK_NODE_ENV === 'SN_SDK_CI_INSTALL') {
-    const { SN_SDK_USER, SN_SDK_USER_PWD } = process.env;
-    if (!SN_SDK_USER || !SN_SDK_USER_PWD) throw new Error('The pipeline needs its ServiceNow username and password secrets.');
-    headers.Authorization = 'Basic ' + Buffer.from(SN_SDK_USER + ':' + SN_SDK_USER_PWD).toString('base64');
-  } else {
-    const output = await sdk(['auth', '--print', 'suiko-pdi', '--format', 'headers'], { capture: true });
-    for (const line of output.split(/\r?\n/)) {
-      const match = line.match(/^(Authorization|Cookie|X-UserToken):\s*(.+)$/i);
-      if (match) headers[match[1]] = match[2];
-    }
-    if (!headers.Cookie && !headers.Authorization) throw new Error('Authenticate the suiko-pdi SDK profile first.');
+  const output = await sdk(['auth', '--print', profile, '--format', 'headers'], { capture: true });
+  for (const line of output.split(/\r?\n/)) {
+    const match = line.match(/^(Authorization|Cookie|X-UserToken):\s*(.+)$/i);
+    if (match) headers[match[1]] = match[2];
   }
+  if (!headers.Cookie && !headers.Authorization) throw new Error('Authenticate the suiko-pdi SDK profile first.');
   return async function call(path, { method = 'GET', body, text = false } = {}) {
     if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Use an instance-relative path.');
     const response = await fetch(instance + path, {

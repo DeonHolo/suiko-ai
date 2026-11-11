@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 ai-review/output/
+/.local-pdi/
 # Local Gemini credentials
 ai-review/.env.local
 .now-sdk/

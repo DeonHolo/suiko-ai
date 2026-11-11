@@ -25,7 +25,7 @@ The intended app can be read/edited through the agreed development workflow and 
 
 ## Evidence and current state
 
-On 12 November, the local push completed through `npm --prefix servicenow-app run push:pdi`. It ran 23 checks, built the app, installed the package, and confirmed the page and API. Saved stories, reviews, metadata, edited rule version 2, and provider configuration survived the update. [Project instructions](../../../servicenow-app/README.md) · [Pipeline guide](../../../docs/13-servicenow-development-and-cicd.md)
+On 12 November, the local push ran 23 checks, built the app, installed the package, and confirmed the page and API. Saved stories, reviews, metadata, edited rule version 2, and provider configuration survived the update. [Project instructions](../../../servicenow-app/README.md) · [Pipeline guide](../../../docs/13-servicenow-development-and-cicd.md)
 
 ## References
 

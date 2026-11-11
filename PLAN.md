@@ -46,7 +46,7 @@ Each row opens an editable checklist. Dependencies describe what the team needs 
 | AI-10 | [Handle failure, duplicate, and outdated reviews](.scratch/ai-review/issues/10-reliability-and-currentness.md) | Deon + backend teammate | AI-08, AI-09 | in-progress · busy-provider retry proved, simulated cases remain |
 | AI-11 | [Evaluate AI quality against held-out cases](.scratch/ai-review/issues/11-evaluation.md) | Deon | AI-06 | draft |
 | AI-12 | [Prepare the integrated demo and handoff](.scratch/ai-review/issues/12-demo-and-handoff.md) | Whole team | AI-10, AI-11, AI-13 | draft |
-| AI-15 | [Push and check the shared ServiceNow app](.scratch/ai-review/issues/15-pdi-pipeline.md) | Deon + integration teammates | AI-03 | in-progress · local push verified, manual GitHub deploy remains |
+| AI-15 | [Push and check the shared ServiceNow app](.scratch/ai-review/issues/15-pdi-pipeline.md) | Deon | AI-03 | Local deployment and GitHub build checks |
 
 ## What the first demo needs to prove
 
@@ -61,7 +61,7 @@ Each row opens an editable checklist. Dependencies describe what the team needs 
 
 The [local workbench](ai-review/README.md) runs Gemini and retains results. The updated foundation passes 23 checks, including free-form source notes, reviews with all rules disabled, and keeping production notes out of public metadata evidence. Earlier library trials passed the date, attribution, and description checks. [Trial notes](.scratch/ai-review/issues/06-local-gemini-pilot.md) · Progress page (local file `ai-review/output/library-review-progress.html`)
 
-The [shared PDI app](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do) saves versions and calls Gemini from ServiceNow. SDK 4.14.0 builds and updates the same app. Repeated pushes preserved saved data, metadata choices, edited rules, and the encrypted provider configuration. The release-family name remains unrecorded. GitHub deployment is manual and needs deployment secrets. The Inbox and human/legal sign-off still need implementation. [Development and pipeline guide](docs/13-servicenow-development-and-cicd.md)
+The [shared PDI app](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do) saves versions and calls Gemini from ServiceNow. SDK 4.14.0 builds and updates the same app. Repeated pushes preserved saved data, metadata choices, edited rules, and the encrypted provider configuration. The release-family name remains unrecorded. GitHub runs the build and tests. Deon installs reviewed changes from his local clone. The Inbox and human/legal sign-off still need implementation. [Development and pipeline guide](docs/13-servicenow-development-and-cicd.md)
 
 ## Editing this plan
 

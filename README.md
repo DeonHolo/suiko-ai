@@ -33,14 +33,6 @@ npm --prefix ai-review test
 npm --prefix servicenow-app run build -- --frozenKeys
 ```
 
-Use one branch for your ticket and open a pull request from your fork. Bring forms or flows you edit in Studio into that branch so the next build includes them. Coordinate deployments to the shared PDI with your team.
-
-For a local app push, set up your SDK login once and run this from the repository root. [ServiceNow project guide](servicenow-app/README.md#set-up-another-computer)
-
-```sh
-npm --prefix servicenow-app run push:pdi
-```
-
-That command checks the app, builds it, installs it on the same PDI, and checks the deployed page and API. GitHub checks pull requests and builds the app. PDI deployment from GitHub is manual and uses the team's ServiceNow deployment credentials. [Development and deployment guide](docs/13-servicenow-development-and-cicd.md)
+Open a pull request from your fork. If you edit a form or flow in Studio, coordinate with Deon to include those changes in your branch. GitHub runs the tests and builds the app. Deon reviews and merges PRs, then installs the reviewed build on the shared PDI from his computer. [Development guide](docs/13-servicenow-development-and-cicd.md)
 
 [Full build plan](PLAN.md) · [Demo guide](Suiko%20AI%20Build%20Guide.md) · [Product brief](docs/12-suiko-ai-product-brief.md) · [Change log](CHANGELOG.md)

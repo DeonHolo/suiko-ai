@@ -9,11 +9,7 @@
     "scripts": {
         "prebuild": "node scripts/prepare-review.mjs",
         "build": "now-sdk build",
-        "deploy": "now-sdk install --auth suiko-pdi",
-        "push:pdi": "node scripts/push-pdi.mjs",
         "check": "npm --prefix ../ai-review test",
-        "configure:gemini": "node scripts/configure-gemini.mjs",
-        "smoke:pdi": "node scripts/smoke-pdi.mjs",
         "transform": "now-sdk transform",
         "types": "now-sdk dependencies",
         "dev": "node scripts/preview.mjs"
