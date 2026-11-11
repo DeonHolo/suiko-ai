@@ -2,7 +2,7 @@
 
 Suiko AI is a ServiceNow app for a small newsroom or media team. An editor saves an article, script, or caption. Gemini summarizes the draft, compares it with the previous version when there is one, suggests tags and a description, and flags passages that may conflict with shared rules. People decide what can go out.
 
-**Team Backyardigans.** Claim a ticket in [Team tasks](TEAM-TASKS.md). Each ticket has steps, a prompt for your coding assistant, and a check you can demo.
+**Team Backyardigans.** Claim a ticket in [GitHub Issues](https://github.com/DeonHolo/suiko-ai/issues). Each ticket has steps, a prompt for your coding assistant, and a check you can demo. [Team task overview](TEAM-TASKS.md)
 
 ## Try the app
 
@@ -24,18 +24,16 @@ The scoped app, saved drafts, and AI reviews have working demo paths. The Inbox,
 
 ## Work from your computer
 
-Once Deon gives you repository access, clone it and install the packages. Use Git and Node.js 24.
+Once Deon gives you access, use the team guide to fork the repo, clone your fork, and sync with the team’s main branch. From inside your clone, install the packages and run the checks with Node.js 24. [GitHub team workflow](docs/14-github-team-workflow.md)
 
 ```sh
-git clone https://github.com/DeonHolo/suiko-ai.git
-cd suiko-ai
 npm --prefix ai-review ci
 npm --prefix servicenow-app ci
 npm --prefix ai-review test
 npm --prefix servicenow-app run build -- --frozenKeys
 ```
 
-Make a branch for your ticket. For FE-01, run `git switch -c fe-01-inbox`. Commit your changes, run `git push -u origin fe-01-inbox`, and open a pull request. Bring forms or flows you edit in Studio into the same branch so the next build includes them. Coordinate deployments to the shared PDI with your team.
+Use one branch for your ticket and open a pull request from your fork. Bring forms or flows you edit in Studio into that branch so the next build includes them. Coordinate deployments to the shared PDI with your team.
 
 For a local app push, set up your SDK login once and run this from the repository root. [ServiceNow project guide](servicenow-app/README.md#set-up-another-computer)
 
