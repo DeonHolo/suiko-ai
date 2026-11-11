@@ -50,7 +50,7 @@ Gemini 3.5 Flash-Lite is the default. If it returns HTTP 503, the server makes o
 
 ## Local preview
 
-The preview uses an authenticated ServiceNow SDK profile. If you have access to preview against the shared PDI, build the panel and start the preview from the workspace root.
+The preview requires an authenticated SDK profile named `suiko-pdi` for the shared instance. Coordinate with Deon if you need to preview a panel change against the PDI. In a clone with that profile, build the panel and start the preview from the workspace root.
 
 ```powershell
 npm --prefix servicenow-app run build
