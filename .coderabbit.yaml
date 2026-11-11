@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  profile: chill
+  auto_approvals:
+    enabled: false
+  auto_review:
+    enabled: true
+    drafts: false
+  pre_merge_checks:
+    issue_assessment:
+      mode: warning
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        Review the change against the linked GitHub issue's Done when check.
+        Call out missing behavior or evidence. Identify anything that needs a
+        test in ServiceNow. For changes to approvals, check that the decision
+        applies to the exact saved revision and that the actor has access.

@@ -24,7 +24,7 @@ The scoped app, saved drafts, and AI reviews have working demo paths. The Inbox,
 
 ## Work from your computer
 
-Once Deon gives you access, use the team guide to fork the repo, clone your fork, and sync with the team’s main branch. From inside your clone, install the packages and run the checks with Node.js 24. [GitHub team workflow](docs/14-github-team-workflow.md)
+Use the team guide to fork this public repo, clone your fork, and sync with the team's main branch. From inside your clone, install the packages and run the checks with Node.js 24. [GitHub team workflow](docs/14-github-team-workflow.md)
 
 ```sh
 npm --prefix ai-review ci

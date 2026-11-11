@@ -2,25 +2,17 @@
 
 Start with a [GitHub issue](https://github.com/DeonHolo/suiko-ai/issues). Each issue has the task steps, a prompt for your coding assistant, and a **Done when** check. Make one branch for the task. Open a pull request (PR) for Deon to review.
 
-## Set up access once
-
-Suiko AI is a private repository under Deon's personal account. GitHub gives collaborators write access on private personal repositories. To let teammates claim issues and send PRs from their own forks while Deon controls pushes and merges, use a private repository in a GitHub organization Deon owns. [Personal repository permissions](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository)
-
-1. Create or choose the team organization. Keep Deon as the owner and set the organization's base repository permission to **None** so each person's access is explicit.
-2. In the current repository's **Settings → General → Danger Zone**, choose **Transfer** and select the organization. GitHub transfers the code, issues, and PRs with the repository. Check that it remains **Private** and update Deon's local Git remote to the new URL. [Transfer guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository)
-3. In the organization's **Settings → Member privileges**, allow forking of private repositories. In the repository's **Settings → General → Features**, enable **Allow forking**. Teammates can then fork Suiko AI to their personal accounts. [Organization fork policy](https://docs.github.com/en/organizations/managing-organization-settings/managing-the-forking-policy-for-your-organization) · [Repository fork policy](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/managing-the-forking-policy-for-your-repository)
-4. Give each teammate **Triage** on Suiko AI. This lets them assign issues to themselves, request a review, and send PRs from their forks. Triage grants no permission to push or merge in the original repo. Confirm the effective role on the repo's access page. [Role permissions](https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role)
-5. Under **Actions → General → Fork pull request workflows**, enable **Run workflows from fork pull requests** if you want the test/build workflow to run for teammates' PRs. Use the read-only token option and leave the options for sending write tokens and secrets off. If maintainer approval is enabled, approve each run you want to test. [Private fork workflow settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#enabling-workflows-for-forks-of-private-repositories)
+Suiko AI is public under **DeonHolo**. Teammates push to their own forks and send PRs back to the original repo. Deon reviews and merges changes in the original repo. If GitHub asks for approval to run the build on a first-time contributor's PR, Deon can approve the run from the PR. [Fork workflow](https://docs.github.com/en/pull-requests/reference/pull-requests#fork-and-pull-model)
 
 ## Your first task
 
-1. Once you have access, open an issue and pick yourself under **Assignees**. FE-01 and BE-01 can start in parallel. Follow the issue's dependencies and reuse the existing Suiko AI app.
-2. Click **Fork** on the original repo and choose your GitHub account. Clone the fork to your computer. Replace `YOUR_GITHUB_USERNAME` and `TEAM_ORG` below with the names on GitHub.
+1. Comment on an issue to claim it. FE-01 and BE-01 can start in parallel. Follow the issue's dependencies and reuse the existing Suiko AI app.
+2. Click **Fork** on the original repo and choose your GitHub account. Clone the fork to your computer. Replace `YOUR_GITHUB_USERNAME` below with your GitHub username.
 
 ```sh
 git clone https://github.com/YOUR_GITHUB_USERNAME/suiko-ai.git
 cd suiko-ai
-git remote add upstream https://github.com/TEAM_ORG/suiko-ai.git
+git remote add upstream https://github.com/DeonHolo/suiko-ai.git
 git remote -v
 ```
 
@@ -72,13 +64,12 @@ For a second look, open a fresh session with your own AI and paste the PR link a
 Review this Suiko AI pull request against the linked GitHub issue. Read the issue's steps and Done when check, the latest PR diff, and the current GitHub check results. For each acceptance check, say Met, Missing, or Needs a PDI test, and cite the code, test, or demo evidence. Then list any bugs or regressions, with a file and line and a way to reproduce each one. Check version-specific decisions, permissions, and stable ServiceNow record IDs where relevant. Return the review in this session for Deon to use.
 ```
 
-Start with the existing CI and this review prompt. Each teammate can run the prompt in their own AI account before asking Deon to review. Deon can run it again against the submitted PR and make the final decision.
+## Enable CodeRabbit
 
-For a bot later, **PR-Agent** is open-source and can review a linked GitHub issue alongside the diff. It needs a configured model provider, so token costs depend on the provider. Its reviewer supports the following option when the issue context is available. [PR-Agent review options](https://docs.pr-agent.ai/tools/review/) · [Run PR-Agent locally](https://docs.pr-agent.ai/installation/locally/)
+CodeRabbit offers hosted reviews for public repositories. The repository config asks for feedback on the linked issue in warning mode and leaves approvals to Deon. [Public repository offer](https://www.coderabbit.ai/oss) · [Linked-issue check](https://docs.coderabbit.ai/pr-reviews/pre-merge-checks#issue-assessment)
 
-```toml
-[pr_reviewer]
-require_ticket_analysis_review = true
-```
+1. Deon merges the setup PR so the review settings are on `main`.
+2. Deon opens the [CodeRabbit GitHub App](https://github.com/apps/coderabbitai), chooses **Only select repositories**, and selects **suiko-ai**.
+3. On the first task PR, include its issue number in the description and check that CodeRabbit posts a review and a linked-issue assessment. Use the PR's evidence to verify any ServiceNow steps.
 
-**Kodus Community** is another option for automated PR reviews. Its free plan uses your own model API key. The model provider bills any usage outside its allowance. [Kodus Community pricing](https://kodus.io/pricing/)
+CodeRabbit covers the model for its public repository offer. The ServiceNow app's Gemini key stays with the app. The existing GitHub Actions build and the maintainer's review are still part of each task PR.

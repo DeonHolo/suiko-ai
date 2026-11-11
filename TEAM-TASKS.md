@@ -4,7 +4,7 @@ Team Backyardigans · 12 November 2026
 
 A **task breakdown**, also called a **backlog**, is the team's list of things to build. Each ticket below has steps, a prompt for your coding assistant, and a check that tells you when it works.
 
-Claim a ticket under **Assignees** once you have access. Make a branch with its ID, such as **fe-01-inbox**. Link your pull request to the issue. [GitHub team workflow](docs/14-github-team-workflow.md)
+Claim a ticket by commenting on its GitHub issue. Make a branch with its ID, such as **fe-01-inbox**. Link your pull request to the issue. [GitHub team workflow](docs/14-github-team-workflow.md)
 
 | Ticket | Work | GitHub issue |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ The assignment lists what the app must do and leaves the screen technology open.
 ## Before your first ticket
 
 1. Open the live workbench and try the river example. **ServiceNow Studio** is where developers open app files. The **workbench** is where editors use the app.
-2. Clone the repository and run the setup and checks. Work in the existing scope, **x_2236136_suiko_ai**. [Setup commands](README.md#work-from-your-computer)
+2. Fork the repository, clone your fork, and run the setup and checks. Work in the existing scope, **x_2236136_suiko_ai**. [Setup commands](README.md#work-from-your-computer)
 3. Give your coding assistant this file and your ticket ID. Point it at the repository or open the Suiko AI scope in Studio. Use a branch and fictional test stories.
 4. For changes in Studio, coordinate edits on the shared PDI and bring the app changes into the repository before the next deploy. [Studio and deployment steps](docs/13-servicenow-development-and-cicd.md#changes-made-in-studio)
 
