@@ -45,6 +45,10 @@ declare global {
                         table: 'sys_atf_step'
                         id: 'a8edb3b62f394be3b4775358f6047c8b'
                     }
+                    'ai22-revision-step': {
+                        table: 'sys_atf_step'
+                        id: '5fc233390b6c42b189e729e4c4aa24a6'
+                    }
                     'ajv@8.20.0/dist/runtime/ucs2length.js': {
                         table: 'sys_module'
                         id: 'd77602b3ed7a43abbacc3eaf7ef7a277'
@@ -186,6 +190,10 @@ declare global {
                     'src_server_review-persistence-test_ts': {
                         table: 'sys_module'
                         id: '299f3408d2f74d019f84797e40284c6a'
+                    }
+                    'src_server_revision-comparison-test_ts': {
+                        table: 'sys_module'
+                        id: '354ede403b684644bf0ebadcc5fc04bc'
                     }
                     'src_server_rule-access_ts': {
                         table: 'sys_module'
@@ -1506,6 +1514,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '633829050fed4e8a8a1b9153403b9be2'
+                        key: {
+                            document_key: '5fc233390b6c42b189e729e4c4aa24a6'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '641768d6cfcf4bd88abff5125207eaf4'
                         key: {
@@ -2109,6 +2125,14 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_rule'
                             element: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '9a15db702d80488aa9ca04bde9fd80b4'
+                        key: {
+                            document_key: '5fc233390b6c42b189e729e4c4aa24a6'
+                            variable: '989d9e235324220002c6435723dc3484'
                         }
                     },
                     {

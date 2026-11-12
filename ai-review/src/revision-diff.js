@@ -71,13 +71,35 @@ function touches(position, edit, side) {
   return position.positions.some(([from, to]) => length ? from < start + length && to > start : from <= start && to >= start);
 }
 
+function retainedLength(before, after) {
+  const parts = diffWordsWithSpace(before, after, { maxEditLength: 2500, timeout: 150 });
+  if (!parts) return null;
+  return parts.filter(part => !part.added && !part.removed)
+    .reduce((total, part) => total + part.value.replace(/\s/g, '').length, 0);
+}
+
+function containsOnlyEditedText(quote, revision, other) {
+  const text = joined(revision, quote.field);
+  const opposite = joined(other, quote.field);
+  const retained = retainedLength(text, opposite);
+  if (retained === null) return false;
+  // Removing a one-sided quote must preserve the text matched to the other
+  // version. Recomputing lets shared words align with their retained occurrence.
+  return quote.positions.some(([from, to]) => {
+    const remaining = retainedLength(text.slice(0, from) + text.slice(to), opposite);
+    return remaining !== null && remaining >= retained;
+  });
+}
+
 export function fitsLiteralEdit(change, baseline, candidate, diff) {
   if (!diff?.changes.length || change.kind === 'formatting') return false;
   const before = change.before.map(reference => ({ ...locate(baseline, reference), quote: reference.quote }));
   const after = change.after.map(reference => ({ ...locate(candidate, reference), quote: reference.quote }));
   const touchesSide = (quote, side) => diff.changes.some(edit => edit.field === quote.field && edit[side].length && touches(quote, edit, side));
-  if (change.kind === 'removed') return before.every(quote => touchesSide(quote, 'before') && !joined(candidate, quote.field).includes(quote.quote));
-  if (change.kind === 'added') return after.every(quote => touchesSide(quote, 'after') && !joined(baseline, quote.field).includes(quote.quote));
+  if (change.kind === 'removed') return before.every(quote => touchesSide(quote, 'before')
+    && !joined(candidate, quote.field).includes(quote.quote) && containsOnlyEditedText(quote, baseline, candidate));
+  if (change.kind === 'added') return after.every(quote => touchesSide(quote, 'after')
+    && !joined(baseline, quote.field).includes(quote.quote) && containsOnlyEditedText(quote, candidate, baseline));
   if (change.kind === 'moved') {
     const moved = (old, next) => next.field === old.field && next.quote === old.quote
       && touchesSide(old, 'before') && touchesSide(next, 'after');
@@ -87,38 +109,4 @@ export function fitsLiteralEdit(change, baseline, candidate, diff) {
   const connected = (old, next) => old.field === next.field && old.quote !== next.quote
     && diff.changes.some(edit => edit.field === old.field && touches(old, edit, 'before') && touches(next, edit, 'after'));
   return before.every(old => after.some(next => connected(old, next))) && after.every(next => before.some(old => connected(old, next)));
-}
-
-export function combineRepeatedChanges(changes, baseline, candidate, diff) {
-  const groups = new Map();
-  return changes.filter(change => {
-    if (change.kind !== 'modified') return true;
-    const before = change.before.map(reference => locate(baseline, reference));
-    const after = change.after.map(reference => locate(candidate, reference));
-    const matching = diff.changes.filter(edit => before.some(quote => quote.field === edit.field && touches(quote, edit, 'before'))
-      && after.some(quote => quote.field === edit.field && touches(quote, edit, 'after')));
-    const pair = matching.map(edit => [edit.before.trim(), edit.after.trim()]);
-    const token = pair[0];
-    if (!token?.every(value => /\d/.test(value)) || pair.some(value => value[0] !== token[0] || value[1] !== token[1])) return true;
-    const contexts = matching.map(edit => {
-      const date = edit.left.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s*$/i)?.[1];
-      const time = edit.right.match(/^\s*(a\.?m\.?|p\.?m\.?)(?:\s|$|[.,])/i)?.[1];
-      return date?.toLowerCase() || time?.toLowerCase().replace(/\./g, '') || '';
-    });
-    if (!contexts[0] || contexts.some(context => context !== contexts[0])) return true;
-    const key = JSON.stringify([contexts[0], ...token]);
-    const prior = groups.get(key);
-    if (!prior) {
-      groups.set(key, change);
-      return true;
-    }
-    for (const side of ['before', 'after']) {
-      for (const reference of change[side]) {
-        if (!prior[side].some(item => item.segment_id === reference.segment_id && item.quote === reference.quote) && prior[side].length < 6) {
-          prior[side].push(reference);
-        }
-      }
-    }
-    return false;
-  });
 }

@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { workbenchSchemas } from '../src/workbench-contract.js';
-import { reviewWorkbench } from '../src/workbench-review.js';
+import { checkWorkbenchResult, reviewWorkbench } from '../src/workbench-review.js';
+import { literalChanges } from '../src/revision-diff.js';
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
 const requestExample = read('../../contracts/ai-review.request.example.json');
@@ -27,6 +28,26 @@ function sample() {
   return { request, result };
 }
 const review = (request, result) => reviewWorkbench(request, { generate: async () => JSON.stringify(result) }, validators);
+
+test('two independent date changes keep their separate summaries and evidence', () => {
+  const { request, result } = sample();
+  const before = ['The library opens on December 5.', 'Applications close on December 5.'];
+  const after = ['The library opens on December 12.', 'Applications close on December 12.'];
+  request.policy_pack.rules = [];
+  result.findings = [];
+  result.assessment.policy_assessments = [];
+  request.baseline_revision.segments = before.map((text, index) => ({ segment_id: `part-${index}`, field: 'body', text }));
+  request.candidate_revision.segments = after.map((text, index) => ({ segment_id: `part-${index}`, field: 'body', text }));
+  const evidence = (revision, index) => ({ revision_id: revision.revision_id, segment_id: `part-${index}`, quote: revision.segments[index].text });
+  result.assessment.changes = ['The library opening changed.', 'The application deadline changed.'].map((summary, index) => ({
+    change_id: `date-${index}`, kind: 'modified', summary,
+    before: [evidence(request.baseline_revision, index)], after: [evidence(request.candidate_revision, index)],
+  }));
+  const checked = checkWorkbenchResult(request, result, validators, {
+    revisionDiff: literalChanges(request.baseline_revision, request.candidate_revision),
+  });
+  assert.deepEqual(checked.assessment.changes.map(change => change.summary), ['The library opening changed.', 'The application deadline changed.']);
+});
 
 test('the workbench preserves a checked overview, findings and independent sections', async () => {
   const { request, result } = sample();

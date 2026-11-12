@@ -2,7 +2,7 @@ import { checkAssessmentEvidence, ReviewValidationError, validateReviewInput } f
 import { parseProviderJson } from './provider-json.js';
 import { ruleApplicability } from './editorial-rules.js';
 import { collectClaimChecks, claimRuleOutcome, overlapsPassage } from './claim-evidence.js';
-import { combineRepeatedChanges, fitsLiteralEdit } from './revision-diff.js';
+import { fitsLiteralEdit } from './revision-diff.js';
 
 const firstDraftNote = 'No baseline revision was supplied; revision comparison was not performed.';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -142,7 +142,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
         ? item.evidence.filter((reference, index) => references([reference], currentId, `${path}/evidence/${index}`)
           && !checks.some(check => check.status === 'supported' && check.claim.segment_id === reference.segment_id
             && check.claim.quote.includes(reference.quote))) : [];
-      sourceGaps.push(...gapEvidence);
+      sourceGaps.push(...gapEvidence.map(reference => ({ rule_id: item.rule_id, reference })));
       return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap, gapEvidence);
     }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
@@ -195,7 +195,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     report('INVALID_COVERAGE', '/assessment/coverage', 'The comparison coverage did not match the saved input. Its completion could not be confirmed.');
     if (request.baseline_revision) coverage.revision_comparison = 'incomplete';
   }
-  let changes = [];
+  const changes = [];
   const changeIds = new Set();
   const rawChanges = list(original.changes, 6, '/assessment/changes');
   if (!Array.isArray(original.changes) || original.changes.length > 6) {
@@ -229,7 +229,6 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     changes.push(clone(change));
   });
   if (revisionDiff?.limited || (revisionDiff?.changes.length && !changes.length)) coverage.revision_comparison = 'incomplete';
-  if (revisionDiff?.changes.length) changes = combineRepeatedChanges(changes, request.baseline_revision, request.candidate_revision, revisionDiff);
 
   const empty = {
     section: { suggested_id: null, reason: 'No checked section suggestion is available.', evidence: [] },
@@ -266,9 +265,9 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       : policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))
         .flatMap(rule => rule.evidence).concat(findings.flatMap(finding => finding.evidence));
     const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference => {
-      const supported = claimChecks.some(check => check.status === 'supported'
-        && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote));
-      const sourceGap = !supported && sourceGaps.some(gap => overlapsPassage(request.candidate_revision, gap, reference));
+      const sourceGap = sourceGaps.some(({ rule_id, reference: gap }) => overlapsPassage(request.candidate_revision, gap, reference)
+        && !claimChecks.some(check => check.rule_id === rule_id && check.status === 'supported'
+          && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote)));
       return sourceGap || suspectSegments.has(reference.segment_id)
         || concernEvidence.some(concern => concern.segment_id === reference.segment_id
           && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)
