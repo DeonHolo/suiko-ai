@@ -126,6 +126,10 @@ test('one supported check cannot hide an unmatched source concern or a reported 
   assert.equal(reportedGap.assessment.metadata_suggestions.short_description.suggested_text, seats);
   reply.assessment.metadata_suggestions.short_description = { suggested_text: tickets, reason: 'Uses the stated price.', evidence: [ref('body-1', tickets)] };
   assert.equal((await review(request, reply)).assessment.metadata_suggestions.short_description.suggested_text, null);
+  reply.assessment.policy_assessments[0].evidence = [ref('body-1', [seats, tickets].join(' '))];
+  assert.equal((await review(request, reply)).assessment.metadata_suggestions.short_description.suggested_text, null);
+  reply.assessment.metadata_suggestions.short_description = { suggested_text: seats, reason: 'Uses the supported count.', evidence: [ref('body-1', seats)] };
+  assert.equal((await review(request, reply)).assessment.metadata_suggestions.short_description.suggested_text, seats);
 
   reply.assessment.policy_assessments[0].status = 'no_potential_conflict_observed';
   const evidence = [ref('body-1', time)];

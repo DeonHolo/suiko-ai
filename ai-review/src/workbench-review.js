@@ -260,16 +260,20 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
     const concernEvidence = request.schema_version === '0.5.0'
       ? claimChecks.filter(check => ['contradicted', 'insufficient'].includes(check.status)).map(check => check.claim)
-        .concat(sourceGaps)
         .concat(findings.flatMap(finding => finding.concern_evidence?.length ? finding.concern_evidence : finding.evidence))
         .concat(policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status)
           && !sourceRuleIds.includes(rule.rule_id) && !findings.some(finding => finding.rule_id === rule.rule_id)).flatMap(rule => rule.evidence))
       : policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))
         .flatMap(rule => rule.evidence).concat(findings.flatMap(finding => finding.evidence));
-    const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference =>
-      suspectSegments.has(reference.segment_id) || concernEvidence.some(concern => concern.segment_id === reference.segment_id
-        && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)
-          : concern.quote.includes(reference.quote) || reference.quote.includes(concern.quote))));
+    const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference => {
+      const supported = claimChecks.some(check => check.status === 'supported'
+        && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote));
+      const sourceGap = !supported && sourceGaps.some(gap => overlapsPassage(request.candidate_revision, gap, reference));
+      return sourceGap || suspectSegments.has(reference.segment_id)
+        || concernEvidence.some(concern => concern.segment_id === reference.segment_id
+          && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)
+            : concern.quote.includes(reference.quote) || reference.quote.includes(concern.quote)));
+    });
     if (overlapsConcern) {
       report('DESCRIPTION_NEEDS_CONFIRMATION', path, 'The suggested public description relies on a passage that needs editorial confirmation. It was withheld.', {
         rejected_suggestion: suggestion.suggested_text,
