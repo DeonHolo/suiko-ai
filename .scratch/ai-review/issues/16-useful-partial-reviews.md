@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** done — PR open for Deon's review/merge.
+**Status:** implemented and tested — CodeRabbit corrections ready for the authorized review/merge loop.
 
 **Approved:** 12 November 2026. Implemented and tested under the active goal.
 
@@ -34,8 +34,8 @@
 
 ## Evidence
 
-42 local tests passed, including both historical fictional radio replies, independent overview evidence and rejected wording inspection. SDK type checking/frozen-key build and PDI page/API smoke checks passed. Three live in-app browser attempts preserved partial results and the earlier review history. [Evidence report](../../../docs/16-review-reliability-evidence.md).
+50 local tests passed, including historical radio replies, independent overview evidence, unknown-rule rejection and saved-attempt handling. SDK type checking/frozen-key build and PDI page/API smoke checks passed. Three live browser attempts preserved partial results/history. The installed automated ServiceNow persistence/retry test passed with actual generated validators. [Named evidence for each completion item](../../../docs/16-review-reliability-evidence.md).
 
 The live model's sourcing accuracy varied: one 3.1 attempt found both unsupported claims; another 3.1 attempt and the direct 3.5 attempt inferred an unsupported station source. This ticket fixes result handling, not the later claim/source analysis. Track that quality gap in AI-21/AI-23. A mistyped opaque revision identity also motivated shorter model-facing source labels in the saved-input follow-up.
 
-Code commit: `1469343`. [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) targets main. Deon retains review and merge authority.
+Initial code commit: `1469343`. [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) targets main. Deon now authorizes the agent to assess CodeRabbit's review, fix applicable findings, verify checks and merge. This replaces the earlier wait-for-owner instruction.
