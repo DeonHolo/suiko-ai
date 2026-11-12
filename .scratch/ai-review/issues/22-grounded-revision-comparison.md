@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** implemented and verified in ServiceNow.
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -23,10 +23,12 @@
 
 **Done when**
 
-- [ ] A repeated schedule change appears once with relevant before/after evidence.
-- [ ] Removed attribution is identified without inventing another edit.
-- [ ] A shortened caption accurately distinguishes deleted and retained wording.
-- [ ] Identical versions and first drafts do not produce invented changes.
+- [x] A repeated schedule change appears once with relevant before/after evidence.
+- [x] Removed attribution is identified without inventing another edit.
+- [x] A shortened caption accurately distinguishes deleted and retained wording.
+- [x] Identical text and first drafts do not produce invented changes.
+
+[Live inputs, results and limits](../../../docs/22-revision-comparisons.md).
 
 **Ask your AI**
 
