@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** ServiceNow evaluation in progress. The final source-change and history check needs the in-app browser connection.
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -25,7 +25,7 @@
 **Done when**
 
 - [ ] The complete AI feature works from the PDI UI with inspectable saved evidence.
-- [ ] A fresh example has been assessed without editing the expected result after seeing Gemini's answer.
+- [x] A fresh example has been assessed without editing the expected result after seeing Gemini's answer.
 - [ ] Repeatable checks cover the known failure cases without requiring repeated live error calls.
 - [ ] The handoff states which assignment capabilities this proves and which teammate workflow work still remains.
 
