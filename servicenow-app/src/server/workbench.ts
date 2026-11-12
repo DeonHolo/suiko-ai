@@ -8,6 +8,7 @@ import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } fr
 import { sourceRuleIds, sourceMaterial } from './generated/source-reader.js';
 import { readSavedSources } from './read-sources.ts';
 import { addDecisionConfidence } from './decision-check.ts';
+import { literalChanges } from './generated/revision-diff.js';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
@@ -77,6 +78,8 @@ function runView(row: GlideRecord) {
     request.sources = sources;
     if (request.input.schema_version === '0.5.0') request.input.source_material = sourceMaterial(sources);
   }
+  const edits = parse(row.getValue('revision_diff_json'));
+  if (request && edits) request.literal_edits = edits;
   return {
     id: id(row), revision_id: row.getValue('revision'), state: row.getValue('state'),
     model: row.getValue('model'), request,
@@ -277,6 +280,7 @@ export function runReview(request, response) {
     if (!key) throw new WorkbenchError('Gemini needs its server configuration before you can run a review.', 503);
     const model = config.getValue('model');
     const prepared = buildRequest(revision, body.request_key, body.decision_check === true);
+    const revisionDiff = literalChanges(prepared.input.baseline_revision, prepared.input.candidate_revision);
     prepared['provider'] = { requested_model: model, prompt_version: reviewData.promptVersion };
     if (JSON.stringify(prepared).length > 190000) throw new WorkbenchError('The saved review input is too large. Shorten the active instructions or context before trying again.');
     const running = find(tables.review, 'active_revision', id(revision));
@@ -300,6 +304,7 @@ export function runReview(request, response) {
     run.setValue('state', 'running');
     run.setValue('model', model);
     run.setValue('request_json', JSON.stringify(prepared));
+    if (revisionDiff) run.setValue('revision_diff_json', JSON.stringify(revisionDiff));
     const runId = run.insert();
     if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
     if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
@@ -309,7 +314,7 @@ export function runReview(request, response) {
       const sources = readSavedSources(input.candidate_revision.source_urls, input.source_rule_ids.length > 0);
       run.setValue('source_evidence_json', JSON.stringify(sources));
       input.source_material = sourceMaterial(sources);
-      const message = geminiMessage(key, model, reviewData.prompt, input, reviewData.providerSchema);
+      const message = geminiMessage(key, model, reviewData.prompt, { ...input, literal_edits: revisionDiff }, reviewData.providerSchema);
       const reply = executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', fallback => {
         prepared['provider'] = {
           requested_model: model, prompt_version: reviewData.promptVersion,
@@ -320,7 +325,7 @@ export function runReview(request, response) {
       });
       run.setValue('model', reply.model);
       return reply.raw;
-    }, validators, result => prepared.decision_check_requested ? addDecisionConfidence(input, result, key) : result);
+    }, validators, result => prepared.decision_check_requested ? addDecisionConfidence(input, result, key) : result, revisionDiff);
     return runView(run);
   });
 }

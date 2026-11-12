@@ -2,6 +2,7 @@ import { checkAssessmentEvidence, ReviewValidationError, validateReviewInput } f
 import { parseProviderJson } from './provider-json.js';
 import { ruleApplicability } from './editorial-rules.js';
 import { collectClaimChecks, claimRuleOutcome, overlapsPassage } from './claim-evidence.js';
+import { combineRepeatedChanges, fitsLiteralEdit } from './revision-diff.js';
 
 const firstDraftNote = 'No baseline revision was supplied; revision comparison was not performed.';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -21,7 +22,7 @@ export async function reviewWorkbench(request, provider, validators) {
   return checkWorkbenchResult(snapshot, parseProviderJson(await provider.generate(snapshot)), validators);
 }
 
-export function checkWorkbenchResult(request, raw, validators, { requireOverviewEvidence = false } = {}) {
+export function checkWorkbenchResult(request, raw, validators, { requireOverviewEvidence = false, revisionDiff } = {}) {
   validateReviewInput(request, validators.validateRequest);
   if (!validators.validateWorkbenchShell(raw)) {
     throw new ReviewValidationError('INVALID_WORKBENCH_FORMAT', 'Gemini returned an incomplete review format. Your saved version is available for a retry.');
@@ -179,7 +180,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     report('INVALID_COVERAGE', '/assessment/coverage', 'The comparison coverage did not match the saved input. Its completion could not be confirmed.');
     if (request.baseline_revision) coverage.revision_comparison = 'incomplete';
   }
-  const changes = [];
+  let changes = [];
   const changeIds = new Set();
   const rawChanges = list(original.changes, 6, '/assessment/changes');
   if (!Array.isArray(original.changes) || original.changes.length > 6) {
@@ -200,10 +201,20 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       return;
     }
     changeIds.add(change.change_id);
-    if (references(change.before, request.baseline_revision.revision_id, `${path}/before`)
-        && references(change.after, currentId, `${path}/after`)) changes.push(clone(change));
-    else coverage.revision_comparison = 'incomplete';
+    if (!references(change.before, request.baseline_revision.revision_id, `${path}/before`)
+        || !references(change.after, currentId, `${path}/after`)) {
+      coverage.revision_comparison = 'incomplete';
+      return;
+    }
+    if (revisionDiff && !fitsLiteralEdit(change, request.baseline_revision, request.candidate_revision, revisionDiff)) {
+      report('CHANGE_NOT_IN_SAVED_EDITS', path, 'These passages do not show the edit Gemini described. The summary was left out.');
+      coverage.revision_comparison = 'incomplete';
+      return;
+    }
+    changes.push(clone(change));
   });
+  if (revisionDiff?.limited || (revisionDiff?.changes.length && !changes.length)) coverage.revision_comparison = 'incomplete';
+  if (revisionDiff?.changes.length) changes = combineRepeatedChanges(changes, request.baseline_revision, request.candidate_revision, revisionDiff);
 
   const empty = {
     section: { suggested_id: null, reason: 'No checked section suggestion is available.', evidence: [] },
@@ -270,6 +281,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     if (!limitations.includes(text)) (limitations.length < 12 ? limitations : notes).push(text);
   };
   if (!request.baseline_revision) notice(firstDraftNote);
+  if (revisionDiff?.limited) notice('Some saved text changes could not be included in the comparison. Open the saved versions to check the full text.');
   if (issues.length) notice('Some observations could not be checked. The retained sections and remaining gaps are shown separately.');
   const unresolved = policies.some(rule => rule.status === 'not_assessable');
   const unresolvedClaims = incompleteClaims.size > 0 || claimChecks.some(check => check.status === 'insufficient');

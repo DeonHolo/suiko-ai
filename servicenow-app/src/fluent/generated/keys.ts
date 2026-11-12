@@ -55,6 +55,14 @@ declare global {
                         table: 'sys_module'
                         id: '2b56dd9171ea4623ae91d4506313e30c'
                     }
+                    'diff@9.0.0/index.js': {
+                        table: 'sys_module'
+                        id: '80b5e6021f7d459a8c86d0cccaeacc11'
+                    }
+                    'diff@9.0.0/package.json': {
+                        table: 'sys_module'
+                        id: '7f6958deaccc4422bbcc9fcff113fb44'
+                    }
                     'jsonc-parser@3.3.1/index.js': {
                         table: 'sys_module'
                         id: '5b7a401956b74c05a95a6bbdb11774e9'
@@ -142,6 +150,10 @@ declare global {
                     'src_server_generated_review-data_js': {
                         table: 'sys_module'
                         id: '808a3fec8dd947a68b7ef6e8bc17c63a'
+                    }
+                    'src_server_generated_revision-diff_js': {
+                        table: 'sys_module'
+                        id: 'c37b4ef4328944178dbccbb9c4bddba5'
                     }
                     'src_server_generated_source-reader_js': {
                         table: 'sys_module'
