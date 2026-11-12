@@ -83,5 +83,9 @@ export function runRevisionComparisonRegression() {
     ]);
   expect(dates.assessment.changes.length === 2 && dates.assessment.changes[1].change_id === 'deadline',
     'Independent facts with the same date replacement were merged.');
+  const sharedWords = compare('The crew sings. The crew dances.', 'The crew dances.', old => [
+    { change_id: 'sentence', kind: 'removed', summary: 'The singing sentence was removed.', before: [old('The crew sings.')], after: [] },
+  ]);
+  expect(sharedWords.assessment.changes.length === 1, 'Shared words prevented a valid sentence removal.');
   return 'Passed saved-version comparisons: retained caption text cannot be called removed or added; valid disclosure/day edits survive; independent dates retain their summaries and evidence after reload.';
 }

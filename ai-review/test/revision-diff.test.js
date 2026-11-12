@@ -46,3 +46,12 @@ test('shortening a caption permits a two-sided edit or a removal of just the del
   assert.equal(fitsLiteralEdit(modified, before, after, diff), true);
   assert.equal(fitsLiteralEdit({ ...modified, after: [quote(after, 'end-card')] }, before, after, diff), false);
 });
+
+test('shared words can realign when a complete sentence is removed or inserted', () => {
+  const before = { revision_id: 'before', segments: [{ segment_id: 'body', field: 'body', text: 'The crew sings. The crew dances.' }] };
+  const after = { revision_id: 'after', segments: [{ segment_id: 'body', field: 'body', text: 'The crew dances.' }] };
+  assert.equal(fitsLiteralEdit({ kind: 'removed', before: [quote(before, 'body', 'The crew sings.')], after: [] },
+    before, after, literalChanges(before, after)), true);
+  assert.equal(fitsLiteralEdit({ kind: 'added', before: [], after: [quote(before, 'body', 'The crew sings.')] },
+    after, before, literalChanges(after, before)), true);
+});
