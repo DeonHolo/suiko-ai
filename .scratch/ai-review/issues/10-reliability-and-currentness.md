@@ -27,6 +27,17 @@ Joint integration fixtures demonstrate the specified states and authority bounda
 
 On 12 November, a Gemini busy response left the draft saved, and retry created a new attempt on the same version. An initial lock-clearing issue was fixed and the retry then completed. The editor's metadata choice was saved separately from the AI suggestion and survived an app update. Quote and input checks pass in the 23-test local suite. Concurrent-user, timeout, quota, and changing-draft simulations remain. Wider manual sign-off actions belong to AI-13.
 
+## Fixes deferred after the radio story test
+
+Recorded on 12 November 2026 for a later implementation pass. The current discussion is about the product's editorial policy workflow.
+
+- Make the sourcing status agree with the findings. The radio story retry reported two missing sources while marking the sourcing rule clear.
+- Check how an outside-media rule reports an inapplicable case. Both radio replies used a clear status with an empty evidence array, which the shared validator rejected.
+- Give missing evidence its own error message. The current screen calls an empty evidence array a quote mismatch and shows empty quote/source fields.
+- After those fixes, rerun the exact radio story and retain both the earlier failures and the new result.
+
+The pre-run scorecard, both rejected replies, screenshot, and analysis are in Deon's local `ai-review/output/ai-11-2026-11-12/radio-story-results.md`.
+
 ## References
 
 - [03-ai-review-specification.md](../../../docs/03-ai-review-specification.md)

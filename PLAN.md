@@ -4,6 +4,8 @@ Team Backyardigans · 12 November 2026 · First-build workflow confirmed with De
 
 Claim work in [Team tasks](TEAM-TASKS.md). It has the next steps for each teammate and the status of the five assignment requirements.
 
+**AI review redesign, 12 November:** Deon confirmed the [company-policy review specification](.scratch/ai-review/company-policy-review-spec.md) and [eight-ticket breakdown](.scratch/ai-review/company-policy-review-tickets-proposed.md). The individual local tickets below are published and belong to Deon. He authorized implementation with a separate commit/PR to main per ticket and retains review/merge authority. [Execution log](.scratch/ai-review/implementation-log.md) · [Decisions](.scratch/ai-review/policy-redesign-interview.md) · [Reusable tools](docs/15-reusable-tools-research.md).
+
 Suiko AI is a private ServiceNow workspace for a small media team. One **Editor** can enter drafts, review them, ask for fixes, and sign off. A designated editor can manage shared rules. A legal reviewer joins when assigned a specific draft to clear. [Team build guide](Suiko%20AI%20Build%20Guide.md) · [Product brief](docs/12-suiko-ai-product-brief.md) · [Decision register](docs/06-sources-and-open-decisions.md#decision-register)
 
 ## How a story moves through the app
@@ -44,11 +46,30 @@ Each row opens an editable checklist. Dependencies describe what the team needs 
 | AI-07 | [Return a fixed review through ServiceNow](.scratch/ai-review/issues/07-pdi-fixed-response.md) | Deon + integration teammates | A saved revision | superseded · live PDI path proved directly |
 | AI-09 | [Return a real review through the PDI](.scratch/ai-review/issues/09-pdi-live-review.md) | Deon + integration teammates | AI-06, saved revisions, AI-14 | in-progress · live Gemini results saved, broader verification remains |
 | AI-10 | [Handle failure, duplicate, and outdated reviews](.scratch/ai-review/issues/10-reliability-and-currentness.md) | Deon + backend teammate | AI-08, AI-09 | in-progress · busy-provider retry proved, simulated cases remain |
-| AI-11 | [Evaluate AI quality against held-out cases](.scratch/ai-review/issues/11-evaluation.md) | Deon | AI-06 | draft |
+| AI-11 | [Evaluate AI quality against held-out cases](.scratch/ai-review/issues/11-evaluation.md) | Deon | AI-06 | in-progress · fresh story found status and validation failures |
 | AI-12 | [Prepare the integrated demo and handoff](.scratch/ai-review/issues/12-demo-and-handoff.md) | Whole team | AI-10, AI-11, AI-13 | draft |
 | AI-15 | [Push and check the shared ServiceNow app](.scratch/ai-review/issues/15-pdi-pipeline.md) | Deon | AI-03 | Local deployment and GitHub build checks |
 
-## What the first demo needs to prove
+## Company-policy review follow-up
+
+The [approved specification](.scratch/ai-review/company-policy-review-spec.md) defines the next AI build. The existing steps above retain their implementation/evidence history. All eight follow-up slices belong to **Deon** and now have individual local ticket files.
+
+| ID | What it delivers | Blocked by | Status |
+| --- | --- | --- | --- |
+| [AI-16](.scratch/ai-review/issues/16-useful-partial-reviews.md) | Useful partial results, consistent statuses and clear failures | None | in-progress |
+| [AI-17](.scratch/ai-review/issues/17-story-inputs-and-context.md) | Format/kind, source URLs and context saved with each version | None | ready-for-agent |
+| [AI-18](.scratch/ai-review/issues/18-approved-editorial-rules.md) | Approved editable starter/manual rules and applicability | AI-17 | ready-for-agent |
+| [AI-19](.scratch/ai-review/issues/19-policy-to-proposed-checks.md) | Company policy and refinements turned into editable proposed checks | AI-18 | ready-for-agent |
+| [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | ready-for-agent |
+| [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Relevant claims matched to source passages under approved rules | AI-16, AI-20 | ready-for-agent |
+| [AI-22](.scratch/ai-review/issues/22-grounded-revision-comparison.md) | Revision summaries grounded in actual saved-text changes | AI-16 | ready-for-agent |
+| [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | ready-for-agent |
+
+Start with AI-16 to address the confusing behaviour already observed. AI-17 is also unblocked. Reader/difference libraries require a compatibility proof before adoption. LangExtract remains optional; the first policy-proposal implementation uses the existing Gemini route.
+
+Teammates retain FE-01 through QA-01. Their human/legal workflow is required for the whole-app demo, while this AI feature can be developed and evaluated independently against the existing saved-story path.
+
+## What the earlier prototype demo needs to prove
 
 - Open an article and an unrelated script as separate first drafts. Each gets a useful overview. A shared sourcing rule can apply to both, and an outside-footage rule applies only when relevant.
 - Revise a story and review it again. The comparison groups a changed fact once, cites the old and new passages, and names any source that was dropped. Suggested public copy leaves out claims flagged for verification.

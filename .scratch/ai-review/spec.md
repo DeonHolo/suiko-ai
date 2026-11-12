@@ -1,9 +1,9 @@
-# AI review specification pointer
+# AI review specifications
 
-**Status: draft contract — local validation implemented; integration remains planned**
+**Next-build scope:** approved on 12 November 2026. **Specification status:** ready-for-agent. **Ticket breakdown:** approved and published as eight local tickets.
 
-The canonical draft is [AI review specification](../../docs/03-ai-review-specification.md), with [scope](../../docs/01-scope-and-project-brief.md), [contract examples](../../contracts/README.md), and [review UX/UI](../../docs/04-ai-review-ux-ui.md).
+The [company-policy review specification](company-policy-review-spec.md) is the agreed next build. It covers editor-approved policy checks, editable starter rules, actual source reading, evidence retention and useful partial results. [Confirmed decisions](policy-redesign-interview.md) · [Approved ticket breakdown](company-policy-review-tickets-proposed.md) · [Implementation log](implementation-log.md).
 
-Use [PLAN.md](../../PLAN.md) for the agreed first-build workflow and editable order. Deon owns AI review and its panel. The wider frontend and backend belong to the respective teammates.
+The [prototype contract](../../docs/03-ai-review-specification.md), [contract examples](../../contracts/README.md) and [earlier panel design](../../docs/04-ai-review-ux-ui.md) describe the existing foundation. Their recorded limitations remain relevant until implementation changes them; the new specification does not mean those features are already deployed.
 
-These files are a planning baseline, not deployed code or approved implementation tickets. Resolve contract and connection decisions before changing the shared ServiceNow app.
+Use [PLAN.md](../../PLAN.md) for current evidence and editable work order. Deon owns the new AI feature, panel, feature-specific integration and tests. Teammates retain their existing Inbox, human/legal decision and wider history/access tickets.
