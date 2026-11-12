@@ -2,7 +2,7 @@ import { checkAssessmentEvidence, ReviewValidationError, validateReviewInput } f
 import { parseProviderJson } from './provider-json.js';
 import { ruleApplicability } from './editorial-rules.js';
 import { collectClaimChecks, claimRuleOutcome, overlapsPassage } from './claim-evidence.js';
-import { combineRepeatedChanges, fitsLiteralEdit } from './revision-diff.js';
+import { fitsLiteralEdit } from './revision-diff.js';
 
 const firstDraftNote = 'No baseline revision was supplied; revision comparison was not performed.';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -195,7 +195,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     report('INVALID_COVERAGE', '/assessment/coverage', 'The comparison coverage did not match the saved input. Its completion could not be confirmed.');
     if (request.baseline_revision) coverage.revision_comparison = 'incomplete';
   }
-  let changes = [];
+  const changes = [];
   const changeIds = new Set();
   const rawChanges = list(original.changes, 6, '/assessment/changes');
   if (!Array.isArray(original.changes) || original.changes.length > 6) {
@@ -229,7 +229,6 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     changes.push(clone(change));
   });
   if (revisionDiff?.limited || (revisionDiff?.changes.length && !changes.length)) coverage.revision_comparison = 'incomplete';
-  if (revisionDiff?.changes.length) changes = combineRepeatedChanges(changes, request.baseline_revision, request.candidate_revision, revisionDiff);
 
   const empty = {
     section: { suggested_id: null, reason: 'No checked section suggestion is available.', evidence: [] },
