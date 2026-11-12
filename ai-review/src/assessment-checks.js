@@ -30,6 +30,18 @@ export function validateReviewInput(request, validator) {
       throw new ReviewValidationError('INVALID_REQUEST', 'Each revision needs unique segments and readable text within the 12,000-character limit.');
     }
   }
+  if (request.schema_version === '0.5.0') {
+    const sources = request.source_material;
+    const urls = request.candidate_revision.source_urls || [];
+    const rules = new Set(request.policy_pack.rules.map(rule => rule.rule_id));
+    if (request.source_rule_ids.some(id => !rules.has(id)) || !unique(sources.map(source => source.source_id))
+        || sources.length !== urls.length || sources.some((source, index) => source.url !== urls[index]
+          || !unique(source.passages.map(passage => passage.passage_id))
+          || source.passages.reduce((sum, passage) => sum + passage.text.length, 0) > 6000
+          || (source.passages.length > 0) !== ['read', 'partial'].includes(source.status))) {
+      throw new ReviewValidationError('INVALID_SOURCE_MATERIAL', 'The saved source references do not match this review.');
+    }
+  }
 }
 
 function verifyEvidence(request, assessment) {

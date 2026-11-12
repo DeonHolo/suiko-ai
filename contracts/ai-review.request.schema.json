@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Editorial AI review request 0.2 / 0.3 / 0.4",
+  "title": "Editorial AI review request 0.2 through 0.5",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -20,7 +20,8 @@
       "enum": [
         "0.2.0",
         "0.3.0",
-        "0.4.0"
+        "0.4.0",
+        "0.5.0"
       ]
     },
     "request_id": {
@@ -164,6 +165,17 @@
         }
       }
     },
+    "source_material": {
+      "type": "array",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/retrieved_source" }
+    },
+    "source_rule_ids": {
+      "type": "array",
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+    },
     "capabilities": {
       "type": "object",
       "additionalProperties": false,
@@ -183,6 +195,30 @@
     }
   },
   "$defs": {
+    "retrieved_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "url", "status", "passages"],
+      "properties": {
+        "source_id": { "type": "string", "pattern": "^source-[1-5]$" },
+        "url": { "type": "string", "minLength": 1, "maxLength": 1500 },
+        "final_url": { "type": "string", "minLength": 1, "maxLength": 1500 },
+        "status": { "type": "string", "enum": ["read", "partial", "unavailable", "not_read"] },
+        "passages": {
+          "type": "array",
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["passage_id", "text"],
+            "properties": {
+              "passage_id": { "type": "string", "pattern": "^passage-[1-9]$" },
+              "text": { "type": "string", "minLength": 1, "maxLength": 1500 }
+            }
+          }
+        }
+      }
+    },
     "revision": {
       "type": "object",
       "additionalProperties": false,
@@ -470,7 +506,8 @@
           "schema_version": {
             "enum": [
               "0.3.0",
-              "0.4.0"
+              "0.4.0",
+              "0.5.0"
             ]
           }
         }
@@ -504,7 +541,7 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "0.4.0"
+            "enum": ["0.4.0", "0.5.0"]
           }
         }
       },
@@ -564,6 +601,21 @@
             },
             "type": "object"
           }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "schema_version": { "const": "0.5.0" } } },
+      "then": {
+        "required": ["source_material", "source_rule_ids"],
+        "properties": { "source_material": {}, "source_rule_ids": {} }
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            { "required": ["source_material"], "properties": { "source_material": {} } },
+            { "required": ["source_rule_ids"], "properties": { "source_rule_ids": {} } }
+          ]
         }
       }
     }

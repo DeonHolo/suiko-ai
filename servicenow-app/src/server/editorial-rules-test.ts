@@ -1,7 +1,9 @@
 import { GlideRecord, gs } from '@servicenow/glide';
-import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolicy, getPolicies, suggestPolicyChecks, executeGemini, proposePolicyChecks } from './workbench.ts';
+import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolicy, getPolicies, suggestPolicyChecks, executeGemini, proposePolicyChecks, reviewSavedVersion } from './workbench.ts';
 import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
+import { readSavedSources } from './read-sources.ts';
+import { addDecisionConfidence } from './decision-check.ts';
 
 function expect(value, message) {
   if (!value) throw new Error(message);
@@ -164,4 +166,129 @@ export function runPolicySetupRegression() {
   expect(failed, 'A failed suggestion was accepted.');
   expect(JSON.stringify(listEditorialRules()) === before, 'The suggestion or failed reply changed the approved rules.');
   return 'Passed as rules editor: saved copies, repeat saves, exact passage references, approval, fallback from a simulated 503, and unchanged rules after a failed reply. No live Gemini calls.';
+}
+
+export function runClaimEvidenceRegression() {
+  expect(gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated rules-editor test user.');
+  const sourceId = 'ATF-source-' + gs.generateGUID();
+  const secondSourceId = 'ATF-second-source-' + gs.generateGUID();
+  const headlineId = 'ATF-headline-' + gs.generateGUID();
+  const scope = { formats: ['article'], content_kinds: ['news'], origin: { kind: 'manual' }, priority: 'standard' };
+  for (const definition of [
+    { ...scope, rule_id: sourceId, title: 'ATF supplied brief', text: 'Check the times and seats against the brief.', requires_sources: true },
+    { ...scope, rule_id: secondSourceId, title: 'ATF second source requirement', text: 'Confirm the room capacity with a signed venue notice.', requires_sources: true },
+    { ...scope, rule_id: headlineId, title: 'ATF headline', text: 'Do not say a proposed opening is confirmed.' },
+  ]) {
+    const draft = current(action(saveRule, definition), definition.rule_id);
+    const approval = action(approveRule, approvalInput(draft));
+    expect(current(approval, definition.rule_id).active, 'The fixture rule was not approved.');
+  }
+  const title = 'The opening has been confirmed';
+  const time = 'The screening starts at 6 p.m.';
+  const actualTime = 'The screening starts at 7 p.m.';
+  const price = 'Admission costs three dollars.';
+  const seating = Array.from({ length: 12 }, (_, index) => `Screen ${index + 1} has 120 seats.`);
+  const requestedUrl = 'https://example.org/brief';
+  const openedUrl = 'https://example.org/opened-brief';
+  const missingUrl = 'https://example.org/missing';
+  const saved = action(saveRevision, {
+    request_key: 'ATF-draft-' + gs.generateGUID(), title, text: [...seating, time, price].join(' '),
+    notes: 'The opening is still proposed.', content_format: 'article', content_kind: 'news', source_urls: [requestedUrl, missingUrl],
+  });
+  expect(saved.status === 200, 'The fictional story could not be saved.');
+  const fixtureRead = (urls, needed) => readSavedSources(urls, needed, url => ({
+    status: 200,
+    body: JSON.stringify({ data: url === missingUrl ? { httpStatus: 404 } : {
+      httpStatus: 200, url: requestedUrl, finalUrl: openedUrl, text: [...seating, actualTime].join(' '),
+    } }),
+  }));
+  const ref = (segment_id, quote) => ({ revision_id: 'draft-1', segment_id, quote });
+  const check = (claim, status, quote) => ({
+    rule_id: sourceId, claim: ref('body-1', claim), status,
+    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote }],
+    context: [], reason: 'Compare the event brief.', action: 'Confirm the details with the editor.',
+  });
+  const seats = seating.map(claim => check(claim, 'supported', claim));
+  const conflict = check(time, 'contradicted', actualTime);
+  function run(checks, includeSourceFinding, reportedStatus, { decision = false, description = price, secondSourceGap = false } = {}) {
+    const result = action((request, response) => reviewSavedVersion(request, response, () => ({
+      model: 'injected-claim-fixture',
+      generate(input) {
+        expect(input.source_material[0].final_url === openedUrl, 'The model input lost the opened address.');
+        expect(input.source_material[1].status === 'unavailable', 'The missing link was treated as retrieved evidence.');
+        const finding = { rule_id: headlineId, summary: 'The headline overstates a proposed opening.',
+          action: 'Describe it as proposed.', evidence: [ref('title', title)], concern_evidence: [] };
+        const findings = includeSourceFinding ? [finding, {
+          rule_id: sourceId, summary: 'The brief gives a different time.', action: 'Check the screening time.',
+          evidence: [ref('body-1', time)],
+        }] : [finding];
+        const statuses = {
+          [sourceId]: reportedStatus, [headlineId]: 'no_potential_conflict_observed',
+          [secondSourceId]: secondSourceGap ? 'not_assessable' : 'not_applicable',
+        };
+        const evidence = {
+          [headlineId]: [ref('title', title)],
+          [sourceId]: reportedStatus === 'not_assessable' ? [ref('body-1', [...seating, time, price].join(' '))] : [],
+          [secondSourceId]: secondSourceGap ? [ref('body-1', seating[0])] : [],
+        };
+        return { model: 'injected-claim-fixture', raw: JSON.stringify({
+          overview: 'The draft covers a screening.', overview_evidence: [ref('body-1', seating[0])], findings, claim_checks: checks,
+          assessment: {
+            status: 'reviewed', coverage: { revision_comparison: 'not_requested', metadata_suggestions: 'complete' }, changes: [], limitations: [],
+            policy_assessments: input.policy_pack.rules.map(rule => ({
+              rule_id: rule.rule_id,
+              status: statuses[rule.rule_id] || 'not_applicable',
+              reason: 'Fixture rule assessment.', evidence: evidence[rule.rule_id] || [],
+              suggested_action: null,
+            })),
+            metadata_suggestions: {
+              section: { suggested_id: null, reason: 'No section selected.', evidence: [] },
+              tags: { suggested_ids: [], reason: 'No tags selected.', evidence: [] },
+              short_description: reportedStatus === 'not_assessable' || secondSourceGap
+                ? { suggested_text: description, reason: 'From the draft.', evidence: [ref('body-1', description)] }
+                : { suggested_text: title, reason: 'From the draft title.', evidence: [ref('title', title)] },
+            },
+          },
+        }) };
+      },
+      finish(input, result) {
+        return addDecisionConfidence(input, result, '', request => ({
+          getStatusCode: () => 200,
+          getBody: () => JSON.stringify({ answers: Object.fromEntries(Object.keys(request.questions).map(id => [id, {
+            type: 'choice', choice: 'supported', confidence: 0.8, probabilities: { supported: 0.8, contradicted: 0.1, insufficient: 0.1 },
+          }])) }),
+        }));
+      },
+    }), fixtureRead), { request_key: 'ATF-review-' + gs.generateGUID(), revision_id: saved.body.id, decision_check: decision });
+    expect(result.status === 200 && result.body.state === 'complete', 'Review did not retain usable results: ' + JSON.stringify(result.body.error));
+    return result.body;
+  }
+  const mixed = run([...seats, conflict], false, 'potential_conflict', { decision: true });
+  const sourceRule = review => review.result.assessment.policy_assessments.find(rule => rule.rule_id === sourceId);
+  expect(sourceRule(mixed).status === 'potential_conflict' && sourceRule(mixed).evidence[0].quote === time, 'The conflict was displaced by the supported claims.');
+  expect(mixed.result.decision_check.status === 'partial' && mixed.result.decision_check.skipped_claim_ids[0] === 'claim-13', 'The confidence coverage limit was not saved.');
+  expect(mixed.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'An empty concern list let the flagged headline into the description.');
+  expect(mixed.result.checks.issues.some(issue => issue.code === 'CONTRADICTORY_RULE_STATUS'), 'The headline rule cleared a retained finding.');
+  const omitted = run([seats[0]], true, 'no_potential_conflict_observed');
+  expect(sourceRule(omitted).status === 'not_assessable' && omitted.result.findings.some(finding => finding.rule_id === sourceId), 'A supported claim hid an unmatched concern.');
+  const gap = run([seats[0]], false, 'not_assessable');
+  expect(sourceRule(gap).evidence[0].quote.includes(price) && gap.result.claim_checks[0].status === 'supported'
+    && gap.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'The unconfirmed price was lost or accepted into the public description.');
+  const supportedDescription = run([seats[0]], false, 'not_assessable', { description: seating[0] });
+  expect(supportedDescription.result.assessment.metadata_suggestions.short_description.suggested_text === seating[0],
+    'A broad gap quote withheld the separately supported seats sentence.');
+  const crossRule = run([seats[0]], false, 'no_potential_conflict_observed', { description: seating[0], secondSourceGap: true });
+  expect(crossRule.result.assessment.policy_assessments.find(rule => rule.rule_id === secondSourceId).status === 'not_assessable'
+    && crossRule.result.claim_checks[0].status === 'supported'
+    && crossRule.result.assessment.metadata_suggestions.short_description.suggested_text === null,
+    'Support under one rule cleared an unresolved requirement under another rule.');
+  const badQuote = run([seats[0], { ...conflict, sources: [{ ...conflict.sources[0], quote: 'The screening starts at 8 p.m.' }] }], false, 'no_potential_conflict_observed');
+  expect(sourceRule(badQuote).status === 'not_assessable' && badQuote.result.claim_checks[0].status === 'supported'
+    && badQuote.result.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'), 'A bad quote erased valid support or cleared the rule.');
+  expect(badQuote.result.checks.overview_available && badQuote.result.assessment.status === 'partial', 'The partial review lost its useful overview.');
+  const history = action(getState, {}, { story: saved.body.story_id });
+  const reopened = history.body.runs.find(review => review.id === mixed.id);
+  expect(reopened.request.sources[1].http_status === 404 && reopened.request.input.source_material[0].final_url === openedUrl
+    && reopened.result.decision_check.skipped_claim_ids[0] === 'claim-13', 'Saved retrieval and confidence coverage did not reopen.');
+  return 'Passed saved-story review with injected reader and provider: redirect, 404, late conflict, omitted claim, bad quote, contradictory status, partial overview, metadata guard and saved Decision 1 limit.';
 }

@@ -1,6 +1,7 @@
 import { checkAssessmentEvidence, ReviewValidationError, validateReviewInput } from './assessment-checks.js';
 import { parseProviderJson } from './provider-json.js';
 import { ruleApplicability } from './editorial-rules.js';
+import { collectClaimChecks, claimRuleOutcome, overlapsPassage } from './claim-evidence.js';
 
 const firstDraftNote = 'No baseline revision was supplied; revision comparison was not performed.';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -81,6 +82,8 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   const currentId = request.candidate_revision.revision_id;
   const scopes = Object.fromEntries(request.policy_pack.rules.filter(rule => rule.applicability)
     .map(rule => [rule.rule_id, ruleApplicability(rule.applicability, request.candidate_revision)]));
+  const sourceRuleIds = request.source_rule_ids || [];
+  const { checks: claimChecks, incomplete: incompleteClaims } = collectClaimChecks(request, raw.claim_checks, { report, references, shaped, scopes });
   const findings = [];
   const rawFindings = list(raw.findings, 24, '/findings');
   if (!Array.isArray(raw.findings) || raw.findings.length > 24) expected.forEach(id => uncertainRules.add(id));
@@ -101,7 +104,21 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
     if (shaped('validateWorkbenchFinding', finding, path, 'This finding')
         && references(finding.evidence, currentId, `${path}/evidence`, true)) {
-      findings.push(clone(finding));
+      const checked = clone(finding);
+      if (checked.concern_evidence && (!references(checked.concern_evidence, currentId, `${path}/concern_evidence`, false, true)
+          || checked.concern_evidence.some(reference => !checked.evidence.some(item => item.segment_id === reference.segment_id && item.quote.includes(reference.quote))))) {
+        report('INVALID_CONCERN_PASSAGE', path, 'The passage marked as the concern could not be separated from its supporting context.');
+        delete checked.concern_evidence;
+      }
+      if (sourceRuleIds.includes(finding.rule_id)) {
+        const concern = checked.concern_evidence?.length ? checked.concern_evidence : checked.evidence;
+        if (concern.every(reference => claimChecks.some(check => check.rule_id === finding.rule_id
+            && ['contradicted', 'insufficient'].includes(check.status)
+            && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote)))) return;
+        incompleteClaims.add(finding.rule_id);
+        report('UNMATCHED_SOURCE_FINDING', path, 'This source concern has no matching individual claim check. Review the saved passages.', { rule_id: finding.rule_id });
+      }
+      findings.push(checked);
     } else {
       uncertainRules.add(finding.rule_id);
       for (const reference of Array.isArray(finding.evidence) ? finding.evidence : []) {
@@ -110,11 +127,22 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
   });
 
+  const sourceGaps = [];
   const policies = original.policy_assessments.map((item, index) => {
     const path = `/assessment/policy_assessments/${index}`;
     if (scopes[item.rule_id]?.applies === false) {
       if (item.status !== 'not_applicable') report('RULE_SCOPE_MISMATCH', path, 'The saved format and content kind place this rule outside the review scope.', { rule_id: item.rule_id });
       return { rule_id: item.rule_id, status: 'not_applicable', reason: scopes[item.rule_id].reason, evidence: [], suggested_action: null };
+    }
+    if (sourceRuleIds.includes(item.rule_id)) {
+      const checks = claimChecks.filter(check => check.rule_id === item.rule_id);
+      const reportedGap = item.status === 'not_assessable' || (item.status === 'potential_conflict' && !checks.some(check => check.status === 'contradicted'));
+      const gapEvidence = reportedGap && shaped('validateWorkbenchPolicy', item, path, 'This source-rule assessment')
+        ? item.evidence.filter((reference, index) => references([reference], currentId, `${path}/evidence/${index}`)
+          && !checks.some(check => check.status === 'supported' && check.claim.segment_id === reference.segment_id
+            && check.claim.quote.includes(reference.quote))) : [];
+      sourceGaps.push(...gapEvidence.map(reference => ({ rule_id: item.rule_id, reference })));
+      return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap, gapEvidence);
     }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
     const shapedRule = shaped('validateWorkbenchPolicy', item, path, 'This rule assessment');
@@ -219,11 +247,22 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       coverage.metadata_suggestions = 'incomplete';
       continue;
     }
-    const concernEvidence = policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))
-      .flatMap(rule => rule.evidence).concat(findings.flatMap(finding => finding.evidence));
-    const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference =>
-      suspectSegments.has(reference.segment_id) || concernEvidence.some(concern => concern.segment_id === reference.segment_id
-        && (concern.quote.includes(reference.quote) || reference.quote.includes(concern.quote))));
+    const concernEvidence = request.schema_version === '0.5.0'
+      ? claimChecks.filter(check => ['contradicted', 'insufficient'].includes(check.status)).map(check => check.claim)
+        .concat(findings.flatMap(finding => finding.concern_evidence?.length ? finding.concern_evidence : finding.evidence))
+        .concat(policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status)
+          && !sourceRuleIds.includes(rule.rule_id) && !findings.some(finding => finding.rule_id === rule.rule_id)).flatMap(rule => rule.evidence))
+      : policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))
+        .flatMap(rule => rule.evidence).concat(findings.flatMap(finding => finding.evidence));
+    const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference => {
+      const sourceGap = sourceGaps.some(({ rule_id, reference: gap }) => overlapsPassage(request.candidate_revision, gap, reference)
+        && !claimChecks.some(check => check.rule_id === rule_id && check.status === 'supported'
+          && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote)));
+      return sourceGap || suspectSegments.has(reference.segment_id)
+        || concernEvidence.some(concern => concern.segment_id === reference.segment_id
+          && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)
+            : concern.quote.includes(reference.quote) || reference.quote.includes(concern.quote)));
+    });
     if (overlapsConcern) {
       report('DESCRIPTION_NEEDS_CONFIRMATION', path, 'The suggested public description relies on a passage that needs editorial confirmation. It was withheld.', {
         rejected_suggestion: suggestion.suggested_text,
@@ -253,7 +292,9 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   if (!request.baseline_revision) notice(firstDraftNote);
   if (issues.length) notice('Some observations could not be checked. The retained sections and remaining gaps are shown separately.');
   const unresolved = policies.some(rule => rule.status === 'not_assessable');
+  const unresolvedClaims = incompleteClaims.size > 0 || claimChecks.some(check => check.status === 'insufficient');
   if (unresolved) notice('Some requested editorial checklist criteria could not be assessed.');
+  if (unresolvedClaims) notice('Some claims need source confirmation.');
   const overviewValid = validators.validateWorkbenchOverview(raw.overview);
   if (!overviewValid) report('INVALID_OVERVIEW', '/overview', 'Gemini did not supply a usable internal overview.');
   let overviewEvidence = [];
@@ -273,10 +314,10 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   }
   const overviewAvailable = overviewValid && (issues.length === 0 || independentOverview);
   if (!overviewAvailable) notes.push('The AI overview was withheld because part of the reply could not be checked.');
-  const incomplete = issues.length > 0 || unresolved || Object.values(coverage).includes('incomplete')
+  const incomplete = issues.length > 0 || unresolved || unresolvedClaims || Object.values(coverage).includes('incomplete')
     || limitations.some(note => request.baseline_revision || note !== firstDraftNote)
     || original.status !== 'reviewed';
-  const usable = findings.length > 0 || changes.length > 0 || policies.some(rule => rule.status !== 'not_assessable')
+  const usable = findings.length > 0 || claimChecks.length > 0 || changes.length > 0 || policies.some(rule => rule.status !== 'not_assessable')
     || metadata.section.suggested_id !== null || metadata.tags.suggested_ids.length > 0
     || metadata.short_description.suggested_text !== null || overviewAvailable;
   const assessment = {
@@ -287,6 +328,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   const result = {
     overview: overviewAvailable ? raw.overview : 'The AI overview is unavailable for this attempt.',
     overview_evidence: overviewAvailable ? overviewEvidence : [], assessment, findings,
+    ...(request.schema_version === '0.5.0' ? { claim_checks: claimChecks } : {}),
   };
   if (!validators.validateReview(result)) {
     throw new ReviewValidationError('INVALID_CHECKED_RESULT', 'The usable parts of this review could not be prepared safely. Your saved draft is available for a retry.');

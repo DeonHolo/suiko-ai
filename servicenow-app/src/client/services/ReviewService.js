@@ -16,7 +16,9 @@ async function call(path, payload) {
 export const reviewService = {
   state: storyId => call('/state' + (storyId ? '?story=' + encodeURIComponent(storyId) : '')),
   save: payload => call('/revisions', payload),
-  review: revisionId => call('/reviews', { revision_id: revisionId, request_key: crypto.randomUUID() }),
+  review: (revisionId, decisionCheck) => call('/reviews', {
+    revision_id: revisionId, request_key: crypto.randomUUID(), decision_check: decisionCheck,
+  }),
   metadata: (review, metadata) => call('/metadata', {
     review_id: review.id, expected_modified: review.modified, metadata,
   }),

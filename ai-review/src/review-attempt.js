@@ -4,7 +4,7 @@ import { checkWorkbenchResult } from './workbench-review.js';
 
 // The production handler and the ServiceNow server test use this same save path.
 // generate is synchronous because ServiceNow's RESTMessageV2 executes on the server.
-export function persistReviewAttempt(run, input, generate, validators) {
+export function persistReviewAttempt(run, input, generate, validators, finish = result => result) {
   try {
     const raw = generate();
     if (typeof raw !== 'string') throw new ReviewValidationError('INVALID_PROVIDER_JSON', 'Gemini did not return readable review text. Your saved version is available for a retry.');
@@ -13,7 +13,7 @@ export function persistReviewAttempt(run, input, generate, validators) {
     const unchecked = JSON.stringify(reply);
     run.setValue('response_json', unchecked.length <= 199000 ? unchecked
       : JSON.stringify({ unverified_excerpt: unchecked.slice(0, 12000), truncated: true }));
-    const checked = JSON.stringify(checkWorkbenchResult(input, reply, validators, { requireOverviewEvidence: true }));
+    const checked = JSON.stringify(finish(checkWorkbenchResult(input, reply, validators, { requireOverviewEvidence: true })));
     if (checked.length > 199000) throw new ReviewValidationError('SAVED_RESULT_LIMIT', 'The review exceeded the saved-result limit. Your saved version is available for a retry.');
     run.setValue('response_json', checked);
     run.setValue('error_json', '');

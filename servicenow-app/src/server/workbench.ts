@@ -5,8 +5,9 @@ import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSa
 import { policyState, readPolicyVersion, savePolicyVersion } from './policy-records.ts';
 import { requireRulesEditor } from './rule-access.ts';
 import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } from './generated/policy-proposals.js';
-import { needsPublicSources } from './generated/source-reader.js';
+import { sourceRuleIds, sourceMaterial } from './generated/source-reader.js';
 import { readSavedSources } from './read-sources.ts';
+import { addDecisionConfidence } from './decision-check.ts';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
@@ -72,7 +73,10 @@ function revisionView(row: GlideRecord) {
 function runView(row: GlideRecord) {
   const request = parse(row.getValue('request_json'));
   const sources = parse(row.getValue('source_evidence_json'));
-  if (request && sources) request.sources = sources;
+  if (request && sources) {
+    request.sources = sources;
+    if (request.input.schema_version === '0.5.0') request.input.source_material = sourceMaterial(sources);
+  }
   return {
     id: id(row), revision_id: row.getValue('revision'), state: row.getValue('state'),
     model: row.getValue('model'), request,
@@ -219,7 +223,7 @@ function snapshot(revision: GlideRecord | null) {
   return storySnapshot(revision ? revisionView(revision) : null);
 }
 
-function buildRequest(revision: GlideRecord, requestId: string) {
+function buildRequest(revision: GlideRecord, requestId: string, decisionCheck: boolean) {
   const previous = new GlideRecord(tables.revision);
   previous.addQuery('story', revision.getValue('story'));
   previous.addQuery('version', Number(revision.getValue('version')) - 1);
@@ -231,8 +235,9 @@ function buildRequest(revision: GlideRecord, requestId: string) {
   if (!candidate.content_format || !candidate.content_kind) throw new WorkbenchError('Choose the format and content kind, then save a new version before using approved rules. Earlier reviews remain available.');
   const allRules = rulesView();
   const rules = allRules.filter(rule => rule.active);
+  const sources = candidate.source_urls.map((url, index) => ({ source_id: 'source-' + (index + 1), url, status: 'not_read' }));
   const input = {
-    schema_version: '0.4.0', capabilities: { source_reading: false, rights_verification: false },
+    schema_version: '0.5.0', capabilities: { source_reading: true, rights_verification: false },
     request_id: requestId, content_id: revision.getValue('story'), language: 'en',
     baseline_revision: earlier, candidate_revision: candidate,
     policy_pack: {
@@ -243,6 +248,8 @@ function buildRequest(revision: GlideRecord, requestId: string) {
     },
     taxonomy: reviewData.taxonomy,
     current_metadata: { section_id: null, tag_ids: [], short_description: '' },
+    source_rule_ids: sourceRuleIds(allRules, candidate),
+    source_material: sourceMaterial(sources),
   };
   if (!validators.validateRequest(input)) throw new WorkbenchError('The saved draft or active rules could not be prepared for review.', 400, validators.validateRequest.errors);
   return {
@@ -251,12 +258,33 @@ function buildRequest(revision: GlideRecord, requestId: string) {
       version: rule.approved.version, version_id: rule.approved.version_id, approval: rule.approved.approval,
     })),
     revision_records: { [candidate.revision_id]: id(revision), ...(baseline ? { [earlier.revision_id]: id(baseline) } : {}) },
-    source_reading_requested: needsPublicSources(allRules, candidate),
-    sources: candidate.source_urls.map(url => ({ url, status: 'not_read' })),
+    decision_check_requested: decisionCheck,
+    sources,
+  };
+}
+
+function liveReviewProvider() {
+  const config = providerConfig();
+  const key = config?.getElement('api_key').getDecryptedValue();
+  if (!key) throw new WorkbenchError('Gemini needs its server configuration before you can run a review.', 503);
+  const model = config.getValue('model');
+  return {
+    model,
+    generate(input, onFallback) {
+      const message = geminiMessage(key, model, reviewData.prompt, input, reviewData.providerSchema);
+      return executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', onFallback);
+    },
+    finish(input, result) {
+      return addDecisionConfidence(input, result, key);
+    },
   };
 }
 
 export function runReview(request, response) {
+  return reviewSavedVersion(request, response, liveReviewProvider, readSavedSources);
+}
+
+export function reviewSavedVersion(request, response, createProvider, readSources) {
   respond(response, () => {
     const body = request.body.data;
     if (!body || typeof body.request_key !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(body.request_key)) {
@@ -265,11 +293,9 @@ export function runReview(request, response) {
     const duplicate = find(tables.review, 'request_key', body.request_key);
     if (duplicate) return runView(duplicate);
     const revision = record(tables.revision, body.revision_id);
-    const config = providerConfig();
-    const key = config?.getElement('api_key').getDecryptedValue();
-    if (!key) throw new WorkbenchError('Gemini needs its server configuration before you can run a review.', 503);
-    const model = config.getValue('model');
-    const prepared = buildRequest(revision, body.request_key);
+    const provider = createProvider();
+    const model = provider.model;
+    const prepared = buildRequest(revision, body.request_key, body.decision_check === true);
     prepared['provider'] = { requested_model: model, prompt_version: reviewData.promptVersion };
     if (JSON.stringify(prepared).length > 190000) throw new WorkbenchError('The saved review input is too large. Shorten the active instructions or context before trying again.');
     const running = find(tables.review, 'active_revision', id(revision));
@@ -296,11 +322,13 @@ export function runReview(request, response) {
     const runId = run.insert();
     if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
     if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
-    persistReviewAttempt(run, prepared.input, () => {
-      const sources = readSavedSources(prepared.input.candidate_revision.source_urls, prepared.source_reading_requested);
+    // The source column is the saved copy. The model request and readback use that same text.
+    const input = { ...prepared.input };
+    persistReviewAttempt(run, input, () => {
+      const sources = readSources(input.candidate_revision.source_urls, input.source_rule_ids.length > 0);
       run.setValue('source_evidence_json', JSON.stringify(sources));
-      const message = geminiMessage(key, model, reviewData.prompt, prepared.input, reviewData.providerSchema);
-      const reply = executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', fallback => {
+      input.source_material = sourceMaterial(sources);
+      const reply = provider.generate(input, fallback => {
         prepared['provider'] = {
           requested_model: model, prompt_version: reviewData.promptVersion,
           fallback_model: fallback, fallback_reason: 'Gemini 3.5 returned HTTP 503.',
@@ -310,7 +338,7 @@ export function runReview(request, response) {
       });
       run.setValue('model', reply.model);
       return reply.raw;
-    }, validators);
+    }, validators, result => prepared.decision_check_requested ? provider.finish(input, result) : result);
     return runView(run);
   });
 }

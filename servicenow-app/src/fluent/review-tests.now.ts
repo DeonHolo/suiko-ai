@@ -22,6 +22,7 @@ const approvedRules = Test({
   atf.server.createUser({ $id: Now.ID['ai18-manager-user'], firstName: 'Suiko', lastName: 'Rules Test', roles: [rulesEditor] });
   atf.server.runServerSideScript({ $id: Now.ID['ai18-manager-step'], script: Now.include('./tests/rule-manager.script.js') });
   atf.server.runServerSideScript({ $id: Now.ID['ai19-policy-step'], script: Now.include('./tests/policy-setup.script.js') });
+  atf.server.runServerSideScript({ $id: Now.ID['ai21-claim-step'], script: Now.include('./tests/claim-evidence.script.js') });
   atf.server.createUser({ $id: Now.ID['ai18-editor-user'], firstName: 'Suiko', lastName: 'Editor Test', roles: [editor] });
   atf.server.runServerSideScript({ $id: Now.ID['ai18-editor-step'], script: Now.include('./tests/everyday-editor.script.js') });
 });

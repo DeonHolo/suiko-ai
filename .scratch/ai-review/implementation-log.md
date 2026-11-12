@@ -16,8 +16,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | AI-17 | done | `f1ce321` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
 | AI-18 | done | `c9c8790` · [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
 | AI-19 | done | `f11c6de` · [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
-| AI-20 | implemented and verified | pending | 83 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
-| AI-21 | ready-for-agent | pending | Claim/source matching, uncertainty and metadata. |
+| AI-20 | done | `24845b6` · [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) | 84 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
+| AI-21 | implemented and verified | [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
 | AI-22 | ready-for-agent | pending | Literal edits and accurate change summaries. |
 | AI-23 | ready-for-agent | pending | Full PDI UI evaluation with expectations recorded first. |
 
@@ -81,3 +81,9 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - Branch `codex/ai-20-source-evidence`. The installed app read a fictional brief, a text PDF, an unrelated webpage, a missing link and a long webpage. The first review kept its overview with a 404 and a partly read source visible.
 - A retry saved source material while Gemini was busy. The external reader initially returned 6 p.m. after the fixture was changed. Once it returned the fresh page, a new review saved 7 p.m. and a different fingerprint. The browser reopened the earlier 6 p.m. copy.
 - [Reader setup and evidence](../../docs/20-source-reading.md). The Decision 1 trial for AI-21 used the frozen first review.
+
+## AI-21 delivery
+
+- Branch `codex/ai-21-claim-evidence`. ServiceNow supplies retrieved text to the review. Each claim has a saved rule, draft quote, source or context quote, and suggested action. The public description guard checks the flagged passage and can retain nearby supported text.
+- The nine-case Decision 1 trial matched eight expected answers, as did Flash-Lite. The installed rerun showed both models' judgments about an unannounced exhibition time. Decision 1 returned Needs confirmation at 97% while Flash-Lite called it a conflict. The editor can open the exact source and confidence distribution.
+- The live example supported the seat count, found a conflicting screening time, and separated the unsupported price from the editor's note. The rerun's description omitted all three disputed or unconfirmed details. [Results](../../docs/21-claim-and-source-review.md).

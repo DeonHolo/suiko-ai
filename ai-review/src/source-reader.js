@@ -3,9 +3,19 @@ import { ruleApplicability } from './editorial-rules.js';
 
 export const readerLimits = { text: 6000, response: 750000, perLinkMs: 7000, batchMs: 18000 };
 
+export function sourceRuleIds(rules, candidate) {
+  return rules.filter(rule => rule.active && rule.approved?.definition?.requires_sources
+    && ruleApplicability(rule.approved.definition, candidate).applies === true).map(rule => rule.rule_id);
+}
+
 export function needsPublicSources(rules, candidate) {
-  return rules.some(rule => rule.active && rule.approved?.definition?.requires_sources
-    && ruleApplicability(rule.approved.definition, candidate).applies === true);
+  return sourceRuleIds(rules, candidate).length > 0;
+}
+
+export function sourceMaterial(sources) {
+  return sources.map(({ source_id, url, final_url, status, passages }) => ({
+    source_id, url, ...(final_url && final_url !== url ? { final_url } : {}), status, passages: passages || [],
+  }));
 }
 
 export function publicReaderUrl(value) {
