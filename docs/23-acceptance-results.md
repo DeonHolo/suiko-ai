@@ -37,6 +37,7 @@ Installed suite `9aafcf458328db106fffc629feaad371` passed. It used saved story/r
 - Revised review `1a88078583e4db106fffc629feaad3e1`, Gemini 3.1 Flash-Lite.
 - Script story `eaa8c78583e4db106fffc629feaad33e`, review `c3a84b8583e4db106fffc629feaad338`, Gemini 3.5 Flash-Lite.
 - Changed-source API review `c20d0b018328db106fffc629feaad359`, Gemini 3.1 Flash-Lite.
+- Headline rule `c1484b4583e4db106fffc629feaad326`. Proposal A is version 2, `c4e8034583e4db106fffc629feaad39a`, which remains unapproved. Replacement B is version 3, `49f843c583e4db106fffc629feaad3dd`, which the admin explicitly approved after reloading.
 - Local inputs, full saved responses and screenshots are under `ai-review/output/ai-23-2026-11-13/`.
 
 ## Team handoff

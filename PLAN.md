@@ -63,7 +63,7 @@ The [approved specification](.scratch/ai-review/company-policy-review-spec.md) d
 | [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | done, [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) merged |
 | [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Advisory claim/source matches, confidence and Decision 1 trial | AI-16, AI-20 | done, [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) merged |
 | [AI-22](.scratch/ai-review/issues/22-grounded-revision-comparison.md) | Revision summaries grounded in actual saved-text changes | AI-16 | implemented and verified in ServiceNow, [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) |
-| [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | ready-for-agent |
+| [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | [PR #18](https://github.com/DeonHolo/suiko-ai/pull/18), final UI history reopen pending |
 
 Start with AI-16 to address the confusing behaviour already observed. AI-17 is also unblocked. Reader/difference libraries require a compatibility proof before adoption. LangExtract remains optional; the first policy-proposal implementation uses the existing Gemini route.
 

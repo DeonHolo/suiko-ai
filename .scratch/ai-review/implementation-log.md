@@ -19,7 +19,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | AI-20 | done | `24845b6` · [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) | 84 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
 | AI-21 | done | `5f9cf3f` · [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
 | AI-22 | implemented and verified | [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) | Library and caption comparisons with exact saved text. First drafts and unchanged text produce no change entries. |
-| AI-23 | ready-for-agent | pending | Full PDI UI evaluation with expectations recorded first. |
+| AI-23 | final UI reopen pending | [PR #18](https://github.com/DeonHolo/suiko-ai/pull/18) | Fresh UI article, script and revision, stale approval, source-change API history and installed role/failure tests. |
 
 ## Working notes
 
@@ -95,3 +95,10 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - The library comparison grouped the date update, identified the removed attribution and kept the estimate out of the description. The shortened caption kept the cast-interview sentence and showed only the removed sponsorship wording and the release-day change.
 - A version with the same text and a changed content kind reported unchanged text. A source-link-only edit showed a literal link addition even though Gemini omitted it from the summary. [Results and limits](../../docs/22-revision-comparisons.md).
 - CodeRabbit caught whole-caption additions/removals and the numeric grouping of unrelated facts. One-sided quotations now preserve the text matched to the opposite version. Gemini groups related facts in its explanation, and the checker retains independent summaries. The installed suite `9aafcf458328db106fffc629feaad371` verified the caption and independent-date cases.
+
+## AI-23 evaluation
+
+- [Expected cases](../../docs/23-acceptance-cases.md) were committed before the first live review. The browser runs matched the expected article headline, time, seats and price findings. The revised article retained the corrected details. The unrelated script identified the outside photograph and next action, with its status mismatch recorded.
+- Two editor views verified a stale approval. B remained pending until it was explicitly approved after reload. The supplemental API history review used the noon source and rule version 3, while earlier reviews retained the 11 a.m. source, version 1 and the saved metadata choice.
+- The installed suite passed the fixed-response failures and the non-admin Editor/Rules Editor boundary. [Results and team handoff](../../docs/23-acceptance-results.md).
+- The final on-screen history reopen awaits the in-app browser connection. All seven teammate issues remain open and unassigned.

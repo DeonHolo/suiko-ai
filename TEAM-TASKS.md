@@ -25,10 +25,10 @@ Three of the five requirement areas have a working demo path. The human approval
 | Assignment asks for | What we can show today | What remains |
 | --- | --- | --- |
 | **App Engine** | Suiko AI runs as a scoped app on the team's developer instance. Studio shows its app files. | Extend the shared app with the workflow. |
-| **Content and revision records** | One story holds several saved copies. The river script has Version 1 and Version 2, each with its own text and notes. | Verify saving and reading with a regular Editor account. |
-| **AI comparison and classification** | Gemini 3.5 reviewed both river versions. It compared the schedules, flagged the outside clip, and suggested a section, tags, and a description. The editor's saved metadata choice can be reopened. | Check more articles, scripts, and captions for missed concerns or invented details. |
+| **Content and revision records** | One story holds saved copies with format, kind, text, context and links. Dedicated non-admin Editor tests passed saving and reopening. | Connect these records to the human workflow and Inbox. |
+| **AI comparison and classification** | The library and caption comparisons, editable approved rules, company-policy suggestions, source matches and optional confidence check have working examples. Editors can save their metadata choices. | Finish the final UI history check and keep evaluating missed concerns and inaccurate judgments. [AI results](docs/23-acceptance-results.md) |
 | **Review workflows** | An editor can run, retry, and reopen AI review for a saved version. | Add the Inbox, requests for changes, legal routing, and final editor sign-off. |
-| **Audit history** | The app keeps old drafts, AI results, rule snapshots, and metadata choices. Auditing is enabled in the table definitions. | Record human decisions with person, time, reason, and exact version. |
+| **Audit history** | The app keeps old drafts, AI results, exact rule versions, retrieved passages and metadata choices. The source-change API test preserved older evidence. | Reopen that final example in the browser, and record human decisions with person, time, reason, and exact version. |
 
 See it under **Saved stories → River cleanup video package → Review history**. The Scripted REST API calls the AI logic from a server module, which Studio lists under **ECMAScript Module**. [Open Suiko AI](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do) · [Server code](servicenow-app/src/server/workbench.ts) · [ServiceNow module guide](https://servicenow.github.io/sdk/guides/module-guide)
 
