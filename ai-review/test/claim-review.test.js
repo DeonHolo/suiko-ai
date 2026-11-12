@@ -119,8 +119,13 @@ test('one supported check cannot hide an unmatched source concern or a reported 
   const returnedOnly = await review(request, reply);
   assert.match(returnedOnly.assessment.policy_assessments[0].reason, /Returned claims: 1 supported/);
   reply.assessment.policy_assessments[0].status = 'not_assessable';
+  reply.assessment.policy_assessments[0].evidence = [ref('body-1', tickets), ref('body-1', seats)];
   const reportedGap = await review(request, reply);
   assert.equal(reportedGap.assessment.policy_assessments[0].status, 'not_assessable');
+  assert.equal(reportedGap.assessment.policy_assessments[0].evidence[0].quote, tickets);
+  assert.equal(reportedGap.assessment.metadata_suggestions.short_description.suggested_text, seats);
+  reply.assessment.metadata_suggestions.short_description = { suggested_text: tickets, reason: 'Uses the stated price.', evidence: [ref('body-1', tickets)] };
+  assert.equal((await review(request, reply)).assessment.metadata_suggestions.short_description.suggested_text, null);
 
   reply.assessment.policy_assessments[0].status = 'no_potential_conflict_observed';
   const evidence = [ref('body-1', time)];
