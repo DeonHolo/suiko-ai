@@ -3,7 +3,7 @@ import {
   Acl, Role, Table, StringColumn, IntegerColumn, ReferenceColumn,
   BooleanColumn, GenericColumn, Form, default_view, RestApi, ApplicationMenu, Record,
 } from '@servicenow/sdk/core';
-import { getState, saveRevision, runReview, saveMetadata, saveRule, configureProvider } from '../server/workbench';
+import { getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive, configureProvider } from '../server/workbench';
 
 export const editor = Role({
   $id: Now.ID['suiko-editor-role'], name: 'x_2236136_suiko_ai.editor',
@@ -64,6 +64,10 @@ export const x_2236136_suiko_ai_rule = Table({
     priority: StringColumn({ label: 'Priority', maxLength: 20 }),
     active: BooleanColumn({ label: 'Active', default: true }),
     version: IntegerColumn({ label: 'Version', default: 1 }),
+    managed: BooleanColumn({ label: 'Uses explicit approval', default: false }),
+    draft_version_id: StringColumn({ label: 'Current proposed version', maxLength: 32 }),
+    approved_json: StringColumn({ label: 'Approved rule snapshot', maxLength: 16000 }),
+    change_key: StringColumn({ label: 'Last settings action', maxLength: 80 }),
   },
   allowWebServiceAccess: false,
   index: [{ element: 'rule_id', unique: true }],

@@ -1,5 +1,7 @@
 import { GlideRecord, GlideDateTime, gs } from '@servicenow/glide';
 import { RESTMessageV2 } from '@servicenow/glide/sn_ws';
+import { WorkbenchError } from './workbench-error.ts';
+import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSavedRuleActive, starterTemplates, supportedChecks } from './editorial-rules.ts';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
@@ -16,18 +18,6 @@ const tables = {
 const parse = (text: string) => text ? JSON.parse(text) : null;
 const id = (record: GlideRecord) => String(record.getUniqueValue());
 const now = () => new GlideDateTime().getValue();
-
-class WorkbenchError extends ReviewValidationError {
-  message: string;
-  status: number;
-  details: unknown;
-  constructor(message: string, status = 400, details: unknown = null) {
-    super('WORKBENCH_ERROR', message, details);
-    this.message = message;
-    this.status = status;
-    this.details = details;
-  }
-}
 
 function respond(response, action) {
   try {
@@ -82,23 +72,6 @@ function runView(row: GlideRecord) {
     metadata: parse(row.getValue('metadata_json')), modified: row.getValue('sys_mod_count'),
     saved_at: row.getValue('sys_created_on'),
   };
-}
-
-function rulesView() {
-  const row = new GlideRecord(tables.rule);
-  row.orderBy('rule_id');
-  row.setLimit(12);
-  row.query();
-  const rules = [];
-  while (row.next()) {
-    rules.push({
-      id: id(row), rule_id: row.getValue('rule_id'), title: row.getValue('title'),
-      text: row.getValue('instruction'), priority: row.getValue('priority'),
-      active: row.getValue('active') === '1', version: Number(row.getValue('version')),
-      modified: row.getValue('sys_mod_count'), updated_at: row.getValue('sys_updated_on'),
-    });
-  }
-  return rules;
 }
 
 function providerConfig() {
@@ -160,7 +133,7 @@ export function getState(request, response) {
     }
     const config = providerConfig();
     return {
-      stories, revisions, runs, rules: rulesView(), taxonomy: reviewData.taxonomy,
+      stories, revisions, runs, rules: rulesView(), starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
       capabilities: { source_reading: false },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },
@@ -367,51 +340,15 @@ export function saveMetadata(request, response) {
 }
 
 export function saveRule(request, response) {
-  respond(response, () => {
-    if (!gs.hasRole('admin') && !gs.hasRole('x_2236136_suiko_ai.rules_editor')) {
-      throw new WorkbenchError('Rule settings are available to the designated editor.', 403);
-    }
-    const input = request.body.data;
-    if (!input || typeof input.rule_id !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(input.rule_id)
-      || typeof input.title !== 'string' || !input.title.trim() || input.title.length > 160
-      || typeof input.text !== 'string' || !input.text.trim() || input.text.length > 3000
-      || !['high', 'standard'].includes(input.priority) || typeof input.active !== 'boolean') {
-      throw new WorkbenchError('Give the rule a title, instructions, and a valid priority.');
-    }
-    let rule = find(tables.rule, 'rule_id', input.rule_id);
-    if (!rule) {
-      if (rulesView().length >= 12) throw new WorkbenchError('This first build supports up to twelve rules.');
-      rule = new GlideRecord(tables.rule);
-      rule.initialize();
-      rule.setValue('rule_id', input.rule_id);
-      rule.setValue('version', 1);
-    } else if (Number(input.version) !== Number(rule.getValue('version'))) {
-      throw new WorkbenchError('This rule changed elsewhere. Reload before saving.', 409);
-    } else {
-      rule.setValue('version', Number(rule.getValue('version')) + 1);
-    }
-    rule.setValue('title', input.title.trim());
-    rule.setValue('instruction', input.text.trim());
-    rule.setValue('priority', input.priority);
-    rule.setValue('active', input.active);
-    if (rule.isNewRecord()) {
-      if (!rule.insert()) throw new WorkbenchError('The rule could not be saved. Reload and try again.', 409);
-    } else {
-      const update = new GlideRecord(tables.rule);
-      update.addQuery('sys_id', id(rule));
-      update.addQuery('version', Number(input.version));
-      for (const field of ['title', 'instruction', 'priority', 'active', 'version']) {
-        update.setValue(field, rule.getValue(field));
-      }
-      update.updateMultiple();
-      const refreshed = record(tables.rule, id(rule));
-      if (['title', 'instruction', 'priority', 'active', 'version'].some(
-        field => refreshed.getValue(field) !== rule.getValue(field))) {
-        throw new WorkbenchError('This rule changed elsewhere. Reload before saving.', 409);
-      }
-    }
-    return { rules: rulesView() };
-  });
+  respond(response, () => saveRuleDraft(request.body.data));
+}
+
+export function approveRule(request, response) {
+  respond(response, () => approveSavedRule(request.body.data));
+}
+
+export function setRuleActive(request, response) {
+  respond(response, () => setSavedRuleActive(request.body.data));
 }
 
 export function configureProvider(request, response) {
