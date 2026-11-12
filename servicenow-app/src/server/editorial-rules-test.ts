@@ -184,12 +184,13 @@ export function runClaimEvidenceRegression() {
   const title = 'The opening has been confirmed';
   const time = 'The screening starts at 6 p.m.';
   const actualTime = 'The screening starts at 7 p.m.';
+  const price = 'Admission costs three dollars.';
   const seating = Array.from({ length: 12 }, (_, index) => `Screen ${index + 1} has 120 seats.`);
   const requestedUrl = 'https://example.org/brief';
   const openedUrl = 'https://example.org/opened-brief';
   const missingUrl = 'https://example.org/missing';
   const saved = action(saveRevision, {
-    request_key: 'ATF-draft-' + gs.generateGUID(), title, text: [...seating, time].join(' '),
+    request_key: 'ATF-draft-' + gs.generateGUID(), title, text: [...seating, time, price].join(' '),
     notes: 'The opening is still proposed.', content_format: 'article', content_kind: 'news', source_urls: [requestedUrl, missingUrl],
   });
   expect(saved.status === 200, 'The fictional story could not be saved.');
@@ -226,13 +227,16 @@ export function runClaimEvidenceRegression() {
             policy_assessments: input.policy_pack.rules.map(rule => ({
               rule_id: rule.rule_id,
               status: rule.rule_id === sourceId ? reportedStatus : rule.rule_id === headlineId ? 'no_potential_conflict_observed' : 'not_applicable',
-              reason: 'Fixture rule assessment.', evidence: rule.rule_id === headlineId ? [ref('title', title)] : [],
+              reason: 'Fixture rule assessment.', evidence: rule.rule_id === headlineId ? [ref('title', title)]
+                : rule.rule_id === sourceId && reportedStatus === 'not_assessable' ? [ref('body-1', price)] : [],
               suggested_action: null,
             })),
             metadata_suggestions: {
               section: { suggested_id: null, reason: 'No section selected.', evidence: [] },
               tags: { suggested_ids: [], reason: 'No tags selected.', evidence: [] },
-              short_description: { suggested_text: title, reason: 'From the draft title.', evidence: [ref('title', title)] },
+              short_description: reportedStatus === 'not_assessable'
+                ? { suggested_text: price, reason: 'From the draft.', evidence: [ref('body-1', price)] }
+                : { suggested_text: title, reason: 'From the draft title.', evidence: [ref('title', title)] },
             },
           },
         }) };
@@ -257,6 +261,9 @@ export function runClaimEvidenceRegression() {
   expect(mixed.result.checks.issues.some(issue => issue.code === 'CONTRADICTORY_RULE_STATUS'), 'The headline rule cleared a retained finding.');
   const omitted = run([seats[0]], true, 'no_potential_conflict_observed');
   expect(sourceRule(omitted).status === 'not_assessable' && omitted.result.findings.some(finding => finding.rule_id === sourceId), 'A supported claim hid an unmatched concern.');
+  const gap = run([seats[0]], false, 'not_assessable');
+  expect(sourceRule(gap).evidence[0].quote === price && gap.result.claim_checks[0].status === 'supported'
+    && gap.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'The unconfirmed price was lost or accepted into the public description.');
   const badQuote = run([seats[0], { ...conflict, sources: [{ ...conflict.sources[0], quote: 'The screening starts at 8 p.m.' }] }], false, 'no_potential_conflict_observed');
   expect(sourceRule(badQuote).status === 'not_assessable' && badQuote.result.claim_checks[0].status === 'supported'
     && badQuote.result.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'), 'A bad quote erased valid support or cleared the rule.');

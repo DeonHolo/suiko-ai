@@ -128,6 +128,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
   });
 
+  const sourceGaps = [];
   const policies = original.policy_assessments.map((item, index) => {
     const path = `/assessment/policy_assessments/${index}`;
     if (scopes[item.rule_id]?.applies === false) {
@@ -137,7 +138,12 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     if (sourceRuleIds.includes(item.rule_id)) {
       const checks = claimChecks.filter(check => check.rule_id === item.rule_id);
       const reportedGap = item.status === 'not_assessable' || (item.status === 'potential_conflict' && !checks.some(check => check.status === 'contradicted'));
-      return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap);
+      const gapEvidence = reportedGap && shaped('validateWorkbenchPolicy', item, path, 'This source-rule assessment')
+        ? item.evidence.filter((reference, index) => references([reference], currentId, `${path}/evidence/${index}`)
+          && !checks.some(check => check.status === 'supported' && check.claim.segment_id === reference.segment_id
+            && check.claim.quote.includes(reference.quote))) : [];
+      sourceGaps.push(...gapEvidence);
+      return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap, gapEvidence);
     }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
     const shapedRule = shaped('validateWorkbenchPolicy', item, path, 'This rule assessment');
@@ -254,6 +260,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
     const concernEvidence = request.schema_version === '0.5.0'
       ? claimChecks.filter(check => ['contradicted', 'insufficient'].includes(check.status)).map(check => check.claim)
+        .concat(sourceGaps)
         .concat(findings.flatMap(finding => finding.concern_evidence?.length ? finding.concern_evidence : finding.evidence))
         .concat(policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status)
           && !sourceRuleIds.includes(rule.rule_id) && !findings.some(finding => finding.rule_id === rule.rule_id)).flatMap(rule => rule.evidence))
