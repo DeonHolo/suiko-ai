@@ -31,7 +31,10 @@ export const x_2236136_suiko_ai_revision = Table({
     request_key: StringColumn({ label: 'Save identity', maxLength: 80 }),
     title: StringColumn({ label: 'Title', maxLength: 160 }),
     body: StringColumn({ label: 'Draft', maxLength: 12000 }),
-    notes: StringColumn({ label: 'Sources and production notes', maxLength: 4000 }),
+    notes: StringColumn({ label: 'Review context', maxLength: 4000 }),
+    content_format: StringColumn({ label: 'Content format', maxLength: 20 }),
+    content_kind: StringColumn({ label: 'Content kind', maxLength: 20 }),
+    source_urls_json: StringColumn({ label: 'Saved source links', maxLength: 8000 }),
   },
   allowWebServiceAccess: false,
   index: [{ element: 'version_key', unique: true }, { element: 'request_key', unique: true }],
@@ -116,7 +119,10 @@ Form({
       { type: 'table_field', field: 'request_key' },
       { type: 'table_field', field: 'title' },
       { type: 'table_field', field: 'body' },
-      { type: 'table_field', field: 'notes' }
+      { type: 'table_field', field: 'notes' },
+      { type: 'table_field', field: 'content_format' },
+      { type: 'table_field', field: 'content_kind' },
+      { type: 'table_field', field: 'source_urls_json' }
   ] }] }],
 });
 

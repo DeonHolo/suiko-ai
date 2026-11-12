@@ -57,7 +57,7 @@ The [approved specification](.scratch/ai-review/company-policy-review-spec.md) d
 | ID | What it delivers | Blocked by | Status |
 | --- | --- | --- | --- |
 | [AI-16](.scratch/ai-review/issues/16-useful-partial-reviews.md) | Useful partial results, consistent statuses and clear failures | None | done · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) open |
-| [AI-17](.scratch/ai-review/issues/17-story-inputs-and-context.md) | Format/kind, source URLs and context saved with each version | None | ready-for-agent |
+| [AI-17](.scratch/ai-review/issues/17-story-inputs-and-context.md) | Format/kind, source URLs and context saved with each version | None | in-progress |
 | [AI-18](.scratch/ai-review/issues/18-approved-editorial-rules.md) | Approved editable starter/manual rules and applicability | AI-17 | ready-for-agent |
 | [AI-19](.scratch/ai-review/issues/19-policy-to-proposed-checks.md) | Company policy and refinements turned into editable proposed checks | AI-18 | ready-for-agent |
 | [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | ready-for-agent |

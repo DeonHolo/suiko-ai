@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Editorial AI review request draft 0.2",
+  "title": "Editorial AI review request 0.2 / 0.3",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,7 +17,10 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "0.2.0"
+      "enum": [
+        "0.2.0",
+        "0.3.0"
+      ]
     },
     "request_id": {
       "type": "string",
@@ -41,12 +44,22 @@
           "$ref": "#/$defs/revision"
         },
         {
+          "$ref": "#/$defs/classified_revision"
+        },
+        {
           "type": "null"
         }
       ]
     },
     "candidate_revision": {
-      "$ref": "#/$defs/revision"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/revision"
+        },
+        {
+          "$ref": "#/$defs/classified_revision"
+        }
+      ]
     },
     "policy_pack": {
       "type": "object",
@@ -249,6 +262,124 @@
           "pattern": "\\S"
         }
       }
+    },
+    "classified_revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision_id",
+        "segments",
+        "content_format",
+        "content_kind",
+        "source_urls"
+      ],
+      "properties": {
+        "revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "segment_id",
+              "field",
+              "text"
+            ],
+            "properties": {
+              "segment_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "\\S"
+              },
+              "field": {
+                "type": "string",
+                "enum": [
+                  "title",
+                  "body",
+                  "caption",
+                  "production_notes",
+                  "source_notes"
+                ]
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000,
+                "pattern": "^[^\\r]*$"
+              }
+            }
+          }
+        },
+        "content_format": {
+          "type": "string",
+          "enum": [
+            "article",
+            "script",
+            "caption"
+          ]
+        },
+        "content_kind": {
+          "type": "string",
+          "enum": [
+            "news",
+            "opinion",
+            "sponsored"
+          ]
+        },
+        "source_urls": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1500,
+            "pattern": "^https?://"
+          }
+        }
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "0.3.0"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "candidate_revision": {
+            "$ref": "#/$defs/classified_revision"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "candidate_revision": {
+            "$ref": "#/$defs/revision"
+          },
+          "baseline_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
 }

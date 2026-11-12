@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026. Execution authorized under the active goal.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 

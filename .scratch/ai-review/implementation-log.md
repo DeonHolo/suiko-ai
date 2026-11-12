@@ -11,7 +11,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
 | AI-16 | done; PR open | `1469343` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 42 local tests; SDK/PDI builds; API smoke; three live UI attempts. |
-| AI-17 | ready-for-agent | pending | Saved format/kind/source/context inputs. |
+| AI-17 | in-progress | pending | Saved format/kind/source/context inputs. |
 | AI-18 | ready-for-agent | pending | Approval, applicability and historical rule versions. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
@@ -38,3 +38,11 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - Remaining semantic gap for AI-21/AI-23: model outcomes varied, with unsupported assumptions that the station sourced the six-week duration and 420 registrations. Do not count a passed quote check as source-support accuracy.
 - AX follow-up for AI-17: use short model-facing version labels while retaining actual ServiceNow record identities in saved provenance, reducing long-ID transcription errors without weakening exact-passage checks.
 - AI-16 code/evidence are verified, committed as `1469343`, and published in PR #11 targeting main. No merge was performed. Continue with AI-17; no user question is required.
+
+## AI-17 work in progress
+
+- Branch: `codex/ai-17-story-inputs`, based on the completed AI-16 branch at `a264979`. Its future PR targets main and will state its stacked review dependency on PR #11.
+- AI-16 GitHub check runs `43208537159` and `43208272672` succeeded. Auto-merge is disabled and the PR remains open for Deon.
+- The new saved-input helper validates explicit format/kind, bounded public source URLs and context. The request schema accepts classified 0.3 inputs while preserving legacy 0.2 reviews/baselines.
+- Model-facing revision references use short draft-N labels. The prepared saved input retains a separate mapping to the actual ServiceNow revision records.
+- Finish the Story UI, meaningful input/snapshot tests, SDK record-key generation, PDI save/reopen verification and the per-ticket commit/PR.

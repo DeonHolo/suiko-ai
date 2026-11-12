@@ -4,6 +4,7 @@ import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { parseProviderJson } from './generated/provider-json.js';
 import { checkWorkbenchResult } from './generated/workbench-review.js';
+import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
 import reviewData from './generated/review-data.js';
 
 const tables = {
@@ -31,10 +32,10 @@ function respond(response, action) {
   try {
     response.setBody(action());
   } catch (error) {
-    response.setStatus(error instanceof WorkbenchError ? error.status : 500);
-    response.setBody({ message: error instanceof WorkbenchError
+    response.setStatus(error instanceof WorkbenchError ? error.status : error instanceof ReviewValidationError ? 400 : 500);
+    response.setBody({ message: error instanceof WorkbenchError || error instanceof ReviewValidationError
       ? error.message : 'The workbench could not finish this action. Your saved versions are available in history.',
-      details: error instanceof WorkbenchError ? error.details : null });
+      details: error instanceof WorkbenchError ? error.details : error instanceof ReviewValidationError ? error.issues : null });
   }
 }
 
@@ -67,6 +68,8 @@ function revisionView(row: GlideRecord) {
     id: id(row), story_id: row.getValue('story'), version: Number(row.getValue('version')),
     title: row.getValue('title') || '', text: row.getValue('body') || '',
     notes: row.getValue('notes') || '', saved_at: row.getValue('sys_created_on'),
+    content_format: row.getValue('content_format') || '', content_kind: row.getValue('content_kind') || '',
+    source_urls: parse(row.getValue('source_urls_json')) || [],
   };
 }
 
@@ -157,6 +160,7 @@ export function getState(request, response) {
     const config = providerConfig();
     return {
       stories, revisions, runs, rules: rulesView(), taxonomy: reviewData.taxonomy,
+      capabilities: { source_reading: false },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },
     };
@@ -171,16 +175,8 @@ export function saveRevision(request, response) {
     }
     const existing = find(tables.revision, 'request_key', input.request_key);
     if (existing) return revisionView(existing);
-    if (typeof input.title !== 'string' || typeof input.text !== 'string'
-      || (input.notes !== undefined && typeof input.notes !== 'string')) {
-      throw new WorkbenchError('Enter the draft and optional notes as text.');
-    }
-    const title = String(input.title || '').trim();
-    const text = String(input.text || '').replace(/\r\n?/g, '\n').trim();
-    const notes = String(input.notes || '').replace(/\r\n?/g, '\n').trim();
-    if (!title || title.length > 160 || !text || notes.length > 4000 || title.length + text.length + notes.length > 12000) {
-      throw new WorkbenchError('Enter a title and draft. Notes can use up to 4,000 characters, with 12,000 characters in total.');
-    }
+    const normalized = normalizeStoryInput(input);
+    const { title, text, notes, content_format, content_kind, source_urls } = normalized;
     let story;
     let latest = null;
     if (input.story_id) {
@@ -190,7 +186,9 @@ export function saveRevision(request, response) {
         throw new WorkbenchError('A newer version was saved. Reload the story before saving your edit.', 409);
       }
       if (latest && latest.getValue('title') === title && latest.getValue('body') === text
-        && (latest.getValue('notes') || '') === notes) return revisionView(latest);
+        && (latest.getValue('notes') || '') === notes
+        && latest.getValue('content_format') === content_format && latest.getValue('content_kind') === content_kind
+        && JSON.stringify(parse(latest.getValue('source_urls_json')) || []) === JSON.stringify(source_urls)) return revisionView(latest);
     } else {
       story = new GlideRecord(tables.story);
       story.initialize();
@@ -207,6 +205,9 @@ export function saveRevision(request, response) {
     revision.setValue('title', title);
     revision.setValue('body', text);
     revision.setValue('notes', notes);
+    revision.setValue('content_format', content_format);
+    revision.setValue('content_kind', content_kind);
+    revision.setValue('source_urls_json', JSON.stringify(source_urls));
     if (!revision.insert()) throw new WorkbenchError('This version was saved elsewhere. Reload the story.', 409);
     story.setValue('title', title);
     story.update();
@@ -215,14 +216,7 @@ export function saveRevision(request, response) {
 }
 
 function snapshot(revision: GlideRecord | null) {
-  if (!revision) return null;
-  const segments = [{ segment_id: 'title', field: 'title', text: revision.getValue('title') }];
-  for (const [field, value] of [['body', revision.getValue('body')], ['production_notes', revision.getValue('notes') || '']]) {
-    String(value).split(/\n\s*\n/).filter(part => part.trim()).forEach((text, index) => {
-      segments.push({ segment_id: field + '-' + (index + 1), field, text });
-    });
-  }
-  return { revision_id: id(revision), segments };
+  return storySnapshot(revision ? revisionView(revision) : null);
 }
 
 function buildRequest(revision: GlideRecord, requestId: string) {
@@ -232,11 +226,14 @@ function buildRequest(revision: GlideRecord, requestId: string) {
   previous.setLimit(1);
   previous.query();
   const baseline = previous.next() ? previous : null;
+  const candidate = snapshot(revision);
+  const earlier = snapshot(baseline);
   const allRules = rulesView();
   const rules = allRules.filter(rule => rule.active);
   const input = {
-    schema_version: '0.2.0', request_id: requestId, content_id: revision.getValue('story'), language: 'en',
-    baseline_revision: snapshot(baseline), candidate_revision: snapshot(revision),
+    schema_version: candidate.content_format && candidate.content_kind ? '0.3.0' : '0.2.0',
+    request_id: requestId, content_id: revision.getValue('story'), language: 'en',
+    baseline_revision: earlier, candidate_revision: candidate,
     policy_pack: {
       pack_id: 'suiko-editorial-rules',
       version: allRules.map(rule => String(rule.version)).join('.') || '0',
@@ -247,7 +244,11 @@ function buildRequest(revision: GlideRecord, requestId: string) {
     current_metadata: { section_id: null, tag_ids: [], short_description: '' },
   };
   if (!validators.validateRequest(input)) throw new WorkbenchError('The saved draft or active rules could not be prepared for review.', 400, validators.validateRequest.errors);
-  return { input, rules: allRules };
+  return {
+    input, rules: allRules,
+    revision_records: { [candidate.revision_id]: id(revision), ...(baseline ? { [earlier.revision_id]: id(baseline) } : {}) },
+    sources: revisionView(revision).source_urls.map(url => ({ url, status: 'not_read' })),
+  };
 }
 
 export function runReview(request, response) {

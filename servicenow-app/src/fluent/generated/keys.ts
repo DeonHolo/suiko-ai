@@ -43,6 +43,10 @@ declare global {
                         table: 'sys_module'
                         id: '808a3fec8dd947a68b7ef6e8bc17c63a'
                     }
+                    'src_server_generated_story-input_js': {
+                        table: 'sys_module'
+                        id: '24c00b69d3274fb9ad7e2f90fa67e083'
+                    }
                     src_server_generated_validators_js: {
                         table: 'sys_module'
                         id: 'fdfa80ae7e8447e483ba279e7ff307ed'
@@ -187,6 +191,15 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_review'
                             element: 'state'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '03458ab051934cfb8b8288748ed809f4'
+                        key: {
+                            name: 'x_2236136_suiko_ai_revision'
+                            element: 'content_kind'
                             language: 'en'
                         }
                     },
@@ -350,6 +363,28 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_review'
                             element: 'metadata_json'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: '1d807ee2e5be4a43ab1861a56ad0f0fd'
+                        key: {
+                            sys_ui_section: {
+                                id: '68538cc2b9804a62acc7877c5c2a43be'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_revision'
+                                    caption: 'Details'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'source_urls_json'
+                            position: '9'
                         }
                     },
                     {
@@ -665,6 +700,28 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_element'
+                        id: '3f84ec86821742188711fedc168aa2dd'
+                        key: {
+                            sys_ui_section: {
+                                id: '68538cc2b9804a62acc7877c5c2a43be'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_revision'
+                                    caption: 'Details'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'content_format'
+                            position: '7'
+                        }
+                    },
+                    {
                         table: 'sys_ui_section'
                         id: '4292850d4a92410593cb0de2727fc4b5'
                         key: {
@@ -698,6 +755,28 @@ declare global {
                                 }
                             }
                             element: 'metadata_json'
+                            position: '8'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: '432227d9371f49518dc1bc661e5eb4da'
+                        key: {
+                            sys_ui_section: {
+                                id: '68538cc2b9804a62acc7877c5c2a43be'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_revision'
+                                    caption: 'Details'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'content_kind'
                             position: '8'
                         }
                     },
@@ -811,6 +890,15 @@ declare global {
                         id: '5040b3bb720a410dace7d77146f9289b'
                         key: {
                             name: 'x_2236136_suiko_ai_review'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '50a5c9e8a37d465a96e43cac1b8512ae'
+                        key: {
+                            name: 'x_2236136_suiko_ai_revision'
+                            element: 'source_urls_json'
+                            language: 'en'
                         }
                     },
                     {
@@ -1269,6 +1357,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '8e7b9996191f41d2a8e0603ac93da7a5'
+                        key: {
+                            name: 'x_2236136_suiko_ai_revision'
+                            element: 'content_format'
+                        }
+                    },
+                    {
                         table: 'sys_ui_element'
                         id: '8ecce163cff9477b93e426f1efaa7fad'
                         key: {
@@ -1365,6 +1461,14 @@ declare global {
                             name: 'x_2236136_suiko_ai_review'
                             element: 'metadata_json'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '991b1c4e1eab41c1beb07a353e97cac6'
+                        key: {
+                            name: 'x_2236136_suiko_ai_revision'
+                            element: 'source_urls_json'
                         }
                     },
                     {
@@ -1485,6 +1589,14 @@ declare global {
                                 }
                             }
                             sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'a63c5d2707504b18bd75c1edc104fa35'
+                        key: {
+                            name: 'x_2236136_suiko_ai_revision'
+                            element: 'content_kind'
                         }
                     },
                     {
@@ -1968,6 +2080,15 @@ declare global {
                                 }
                             }
                             sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'e8a21be31a894b638ce3cb47dc149b3d'
+                        key: {
+                            name: 'x_2236136_suiko_ai_revision'
+                            element: 'content_format'
+                            language: 'en'
                         }
                     },
                     {
