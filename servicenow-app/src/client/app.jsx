@@ -230,6 +230,7 @@ function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActiv
     ? draft[key].filter(item => item !== value) : [...draft[key], value]);
   const dirty = ['title', 'text', 'priority', 'conditions'].some(key => draft[key] !== rule[key])
     || ['formats', 'content_kinds'].some(key => JSON.stringify([...draft[key]].sort()) !== JSON.stringify([...rule[key]].sort()))
+    || Boolean(draft.requires_sources) !== Boolean(rule.requires_sources)
     || draft.human_checks_text !== (rule.human_checks || []).join('\n');
   const valid = draft.title.trim() && draft.text.trim() && draft.formats.length && draft.content_kinds.length;
   const status = rule.legacy_approval_missing ? 'Approval not recorded'

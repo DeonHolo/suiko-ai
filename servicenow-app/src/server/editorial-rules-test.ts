@@ -1,5 +1,5 @@
 import { GlideRecord, gs } from '@servicenow/glide';
-import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolicy, getPolicies, suggestPolicyChecks } from './workbench.ts';
+import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolicy, getPolicies, suggestPolicyChecks, executeGemini, proposePolicyChecks } from './workbench.ts';
 import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
 
@@ -134,5 +134,34 @@ export function runPolicySetupRegression() {
   expect(draft.pending && !draft.active && draft.text === policy.passages[0].text, 'The original wording was changed or activated without approval.');
   const approved = approveSavedRule(approvalInput(draft), () => 0).rules.find(rule => rule.rule_id === ruleId);
   expect(approved.active && approved.approved.definition.origin.policy_version_id === policy.id && approved.approved.definition.text === policy.passages[0].text, 'Approval lost the saved policy reference or verbatim wording.');
-  return 'Passed as rules editor: immutable policy copies, idempotent save, original wording, forged-reference rejection and explicit approval. No Gemini calls.';
+
+  const before = JSON.stringify(listEditorialRules());
+  let calls = 0;
+  let fallbackEndpoint = '';
+  const fakeReply = { proposals: [{ ...definition, conditions: '', human_checks: [], checks: ['text_review'],
+    evidence: [{ passage_id: 'policy-1', quote: policy.passages[0].text }] }], questions: [] };
+  const message = {
+    setEndpoint: url => { fallbackEndpoint = url; },
+    execute: () => {
+      calls++;
+      return calls === 1 ? { getStatusCode: () => 503 } : {
+        getStatusCode: () => 200,
+        getBody: () => JSON.stringify({ modelVersion: 'gemini-3.1-flash-lite',
+          candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(fakeReply) }] } }] }),
+      };
+    },
+  };
+  const suggestions = proposePolicyChecks({ policy_version_id: policy.id },
+    () => executeGemini(message, 'gemini-3.5-flash-lite', 'suggest checks', 'The saved policy is available.'));
+  expect(calls === 2 && fallbackEndpoint.endsWith('/gemini-3.1-flash-lite:generateContent'), 'Policy suggestions did not retry the expected model.');
+  expect(suggestions.model === 'gemini-3.1-flash-lite' && suggestions.proposals.length === 1, 'The fallback did not retain a usable suggestion.');
+  let failed = false;
+  try {
+    proposePolicyChecks({ policy_version_id: policy.id }, () => ({ raw: 'Unreadable JSON' }));
+  } catch (error) {
+    failed = error.code === 'INVALID_POLICY_INPUT';
+  }
+  expect(failed, 'A failed suggestion was accepted.');
+  expect(JSON.stringify(listEditorialRules()) === before, 'The suggestion or failed reply changed the approved rules.');
+  return 'Passed as rules editor: saved copies, repeat saves, exact passage references, approval, fallback from a simulated 503, and unchanged rules after a failed reply. No live Gemini calls.';
 }

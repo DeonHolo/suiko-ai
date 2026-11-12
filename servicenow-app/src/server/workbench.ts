@@ -122,6 +122,15 @@ function geminiReply(response, model, task, savedMessage) {
   return { raw, model: payload.modelVersion || model };
 }
 
+export function executeGemini(message, model, task, savedMessage, onFallback = null) {
+  const response = message.execute();
+  if (response.getStatusCode() !== 503 || model !== 'gemini-3.5-flash-lite') return geminiReply(response, model, task, savedMessage);
+  const fallback = 'gemini-3.1-flash-lite';
+  onFallback?.(fallback);
+  message.setEndpoint(geminiEndpoint(fallback));
+  return { ...geminiReply(message.execute(), fallback, task, savedMessage), fallback_model: fallback };
+}
+
 export function getState(request, response) {
   respond(response, () => {
     const stories = [];
@@ -291,20 +300,14 @@ export function runReview(request, response) {
       const sources = readSavedSources(prepared.input.candidate_revision.source_urls, prepared.source_reading_requested);
       run.setValue('source_evidence_json', JSON.stringify(sources));
       const message = geminiMessage(key, model, reviewData.prompt, prepared.input, reviewData.providerSchema);
-      let providerResponse = message.execute();
-      let modelUsed = model;
-      if (providerResponse.getStatusCode() === 503 && model === 'gemini-3.5-flash-lite') {
-        modelUsed = 'gemini-3.1-flash-lite';
+      const reply = executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', fallback => {
         prepared['provider'] = {
           requested_model: model, prompt_version: reviewData.promptVersion,
-          fallback_model: modelUsed, fallback_reason: 'Gemini 3.5 returned HTTP 503.',
+          fallback_model: fallback, fallback_reason: 'Gemini 3.5 returned HTTP 503.',
         };
         run.setValue('request_json', JSON.stringify(prepared));
-        run.setValue('model', modelUsed);
-        message.setEndpoint(geminiEndpoint(modelUsed));
-        providerResponse = message.execute();
-      }
-      const reply = geminiReply(providerResponse, modelUsed, 'complete this review', 'Your draft is saved and you can retry.');
+        run.setValue('model', fallback);
+      });
       run.setValue('model', reply.model);
       return reply.raw;
     }, validators);
@@ -362,23 +365,24 @@ export function savePolicy(request, response) {
   respond(response, () => savePolicyVersion(request.body.data));
 }
 
+export function proposePolicyChecks(body, generate) {
+  requireRulesEditor();
+  const policy = readPolicyVersion(body?.policy_version_id);
+  const focus = body.passage_id || null;
+  if (focus && !policy.passages.some(passage => passage.id === focus)) throw new WorkbenchError('Choose a passage from this saved policy.');
+  const reply = generate({ passages: policy.passages, focus_passage_id: focus, available_checks: supportedChecks });
+  return { ...checkPolicySuggestions(reply.raw, policy, focus), policy_version_id: policy.id, model: reply.model, fallback_model: reply.fallback_model };
+}
+
 export function suggestPolicyChecks(request, response) {
-  respond(response, () => {
-    requireRulesEditor();
-    const body = request.body.data;
-    const policy = readPolicyVersion(body?.policy_version_id);
-    const focus = body.passage_id || null;
-    if (focus && !policy.passages.some(passage => passage.id === focus)) throw new WorkbenchError('Choose a passage from this saved policy.');
+  respond(response, () => proposePolicyChecks(request.body.data, input => {
     const config = providerConfig();
     const key = config?.getElement('api_key').getDecryptedValue();
     if (!key) throw new WorkbenchError('Gemini needs its server configuration. You can use the saved policy wording now.', 503);
     const model = config.getValue('model');
-    const message = geminiMessage(key, model, policyProposalPrompt, {
-      passages: policy.passages, focus_passage_id: focus, available_checks: supportedChecks,
-    }, policyProposalSchema);
-    const reply = geminiReply(message.execute(), model, 'suggest checks', 'Your policy is saved. Try again or use the original wording.');
-    return { ...checkPolicySuggestions(reply.raw, policy, focus), policy_version_id: policy.id, model: reply.model };
-  });
+    const message = geminiMessage(key, model, policyProposalPrompt, input, policyProposalSchema);
+    return executeGemini(message, model, 'suggest checks', 'Your policy is saved. Try again or use the original wording.');
+  }));
 }
 
 export function configureProvider(request, response) {

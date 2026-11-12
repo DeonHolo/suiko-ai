@@ -148,6 +148,7 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
       </details>
       {result && <div className="policy-suggestions">
         {!!result.proposals.length && <h3>Suggested checks</h3>}
+        {result.fallback_model && <p className="hint">Gemini 3.5 was busy. These suggestions used Gemini 3.1 Flash-Lite.</p>}
         {result.skipped > 0 && <p className="notice">Suiko left out {result.skipped} suggestions or questions it could not use. You can use the original wording or ask again.</p>}
         {result.proposals.map(proposal => <article key={proposal.index} className="change">
           <h4>{proposal.definition.title}</h4><p>{proposal.definition.text}</p>
