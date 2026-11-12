@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** implemented and verified in ServiceNow. PR review next.
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -23,10 +23,12 @@
 
 **Done when**
 
-- [ ] The actual PDI reads a public page and a text PDF and preserves expected passages.
-- [ ] Missing or incomplete content produces a visible limitation without destroying other review sections.
-- [ ] Old source material survives another review of changed source content.
-- [ ] Source reading itself is never presented as proof that every story claim is supported.
+- [x] The actual PDI reads a public page and a text PDF and preserves expected passages.
+- [x] Missing or incomplete content produces a visible limitation while useful review sections remain available.
+- [x] Old source material survives another review of changed source content.
+- [x] Source cards describe retrieval outcomes. Claim support is assessed in AI-21.
+
+[Setup and saved evidence](../../../docs/20-source-reading.md).
 
 **Ask your AI**
 

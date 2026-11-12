@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested in ServiceNow. Review and merge remain.
+**Status:** done. [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) merged as `f11c6de`.
 
 **Approved:** 12 November 2026.
 

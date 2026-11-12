@@ -131,6 +131,10 @@ declare global {
                         table: 'sys_module'
                         id: '808a3fec8dd947a68b7ef6e8bc17c63a'
                     }
+                    'src_server_generated_source-reader_js': {
+                        table: 'sys_module'
+                        id: 'c1837ca8406645fdb3dc907321c45024'
+                    }
                     'src_server_generated_story-input_js': {
                         table: 'sys_module'
                         id: '24c00b69d3274fb9ad7e2f90fa67e083'
@@ -146,6 +150,10 @@ declare global {
                     'src_server_policy-records_ts': {
                         table: 'sys_module'
                         id: 'd54e3130f3db4c9f92c877eaa39b1071'
+                    }
+                    'src_server_read-sources_ts': {
+                        table: 'sys_module'
+                        id: '2ebc8a6006ac407c9d16edcf654f8771'
                     }
                     'src_server_review-persistence-test_ts': {
                         table: 'sys_module'
@@ -1531,6 +1539,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '697e0f0c4a274670b99197ad4ac65bc9'
+                        key: {
+                            name: 'x_2236136_suiko_ai_review'
+                            element: 'source_evidence_json'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '6ba575ac2ba047f19ced603ebe0ff455'
                         key: {
@@ -1680,6 +1696,15 @@ declare global {
                         id: '7917820115ab4b8ebe496dc17116fbea'
                         key: {
                             name: 'x_2236136_suiko_ai_review.do - BYOUI Files'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '7b9c4f039c6d4357bf69d1557c1c3340'
+                        key: {
+                            name: 'x_2236136_suiko_ai_review'
+                            element: 'source_evidence_json'
+                            language: 'en'
                         }
                     },
                     {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { reviewService } from './services/ReviewService';
 import PolicySetup, { OriginalPolicy } from './PolicySetup';
+import Sources, { hasSourceGaps } from './Sources';
 import './app.css';
 
 const blank = { title: '', text: '', notes: '', content_format: '', content_kind: '', source_urls_text: '' };
@@ -84,7 +85,7 @@ function reviewStatus(run) {
   if (run.state === 'running') return 'In progress';
   if (run.state !== 'complete') return 'Retry needed';
   const status = run.result?.assessment?.status;
-  if (status === 'partial') return 'Some checks pending';
+  if (status === 'partial' || hasSourceGaps(run)) return 'Some checks pending';
   if (status === 'unable_to_assess') return 'Needs confirmation';
   return 'Reviewed';
 }
@@ -125,28 +126,30 @@ function ReviewChecks({ result, run }) {
 
 function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules }) {
   if (!run) return <section className="card empty"><h2>Your review will appear here</h2><p>Save a version, then click Review this version.</p></section>;
-  if (run.state === 'running') return <section className="card"><h2>Review in progress</h2><p>Gemini is reading the saved draft and rules.</p></section>;
-  if (run.state !== 'complete') return <section className="card failure">
+  if (run.state === 'running') return <section className="card"><h2>Review in progress</h2><p>Suiko is working with the saved draft and rules.</p></section>;
+  if (run.state !== 'complete') return <><section className="card failure">
     <h2>This review needs a retry</h2><p>{run.error?.message || 'The review could not finish. Your draft is saved.'}</p>
     <p className="hint">{run.model} · {run.saved_at} UTC</p>
     {run.error?.details && <details><summary>What could not be verified</summary><pre>{JSON.stringify(run.error.details, null, 2)}</pre></details>}
     <details><summary>Saved input and rules</summary><pre>{JSON.stringify(run.request, null, 2)}</pre></details>
     {run.result && <details><summary>Unverified Gemini reply</summary><pre>{JSON.stringify(run.result, null, 2)}</pre></details>}
-  </section>;
+  </section><Sources sources={run.request?.sources} /></>;
   const result = run.result;
   const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
   const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
+  const sourceGaps = hasSourceGaps(run);
   const missingSections = [];
   if (result.assessment.coverage.revision_comparison === 'incomplete') missingSections.push('revision comparison');
   if (result.assessment.coverage.metadata_suggestions === 'incomplete') missingSections.push('metadata suggestions');
   return <>
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
-    {result.assessment.status !== 'reviewed' && <section className="notice" role="status">
-      <strong>{result.assessment.status === 'partial' ? 'Some parts still need checking.' : 'This review could not assess the requested checks.'}</strong>
+    {(result.assessment.status !== 'reviewed' || sourceGaps) && <section className="notice" role="status">
+      <strong>{result.assessment.status === 'unable_to_assess' ? 'This review could not assess the requested checks.' : 'Some parts still need checking.'}</strong>
       {hasDiagnostics ? <p>Open “What could not be checked” for the gaps.</p> : null}
       {!!unresolved.length && <p>See “Needs attention” for what you can confirm.</p>}
       {!!missingSections.length && <p>Incomplete sections include {missingSections.join(' and ')}.</p>}
-      {!hasDiagnostics && !unresolved.length && !missingSections.length && <p>{result.assessment.limitations.length
+      {sourceGaps && <p>See “Source material” for links that could only be read in part or couldn’t be opened.</p>}
+      {!hasDiagnostics && !unresolved.length && !missingSections.length && !sourceGaps && <p>{result.assessment.limitations.length
         ? 'See “Rules and review details” for reported limits. You can retry this saved version.'
         : 'Gemini marked this review incomplete without naming a gap. You can retry this saved version.'}</p>}
     </section>}
@@ -179,11 +182,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
         </article>)}
     </section>
     <ReviewChecks result={result} run={run} />
-    {!!run.request.sources?.length && <section className="card"><h3>Sources</h3>
-      {run.request.sources.map((source, index) => <article className="change" key={index}>
-        <p>{source.url}</p><p className="hint">{source.status === 'not_read' ? 'Not read — saved as a reference only.' : source.status}</p>
-      </article>)}
-    </section>}
+    <Sources sources={run.request.sources} />
     <section className="card"><h3>What changed</h3>
       {!run.request.input.baseline_revision && <p>This is the first submitted version of this story.</p>}
       {run.request.input.baseline_revision && !result.assessment.changes.length && <p>{result.assessment.coverage.revision_comparison === 'incomplete'
