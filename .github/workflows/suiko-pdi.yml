@@ -1,4 +1,4 @@
-name: Suiko AI checks and PDI deployment
+name: Suiko AI checks
 
 on:
   pull_request:
@@ -48,35 +48,3 @@ jobs:
             servicenow-app/dist/
             servicenow-app/target/
           if-no-files-found: error
-
-  deploy:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    needs: validate
-    runs-on: ubuntu-latest
-    concurrency:
-      group: suiko-dev309702-deployment
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.1.0
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: servicenow-app/package-lock.json
-      - run: npm --prefix servicenow-app ci
-      - uses: actions/download-artifact@v8.0.2
-        with:
-          name: suiko-pdi-package
-          path: servicenow-app
-      - name: Install the package that passed validation
-        working-directory: servicenow-app
-        env: &pdi_auth
-          SN_SDK_NODE_ENV: SN_SDK_CI_INSTALL
-          SN_SDK_AUTH_TYPE: basic
-          SN_SDK_INSTANCE_URL: https://dev309702.service-now.com
-          SN_SDK_USER: ${{ secrets.SERVICENOW_USERNAME }}
-          SN_SDK_USER_PWD: ${{ secrets.SERVICENOW_PASSWORD }}
-        run: npm exec -- now-sdk install
-      - name: Check the page and review API
-        env: *pdi_auth
-        run: npm --prefix servicenow-app run smoke:pdi

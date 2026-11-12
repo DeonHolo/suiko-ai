@@ -50,7 +50,7 @@ The assignment lists what the app must do and leaves the screen technology open.
 1. Open the live workbench and try the river example. **ServiceNow Studio** is where developers open app files. The **workbench** is where editors use the app.
 2. Fork the repository, clone your fork, and run the setup and checks. Work in the existing scope, **x_2236136_suiko_ai**. [Setup commands](README.md#work-from-your-computer)
 3. Give your coding assistant this file and your ticket ID. Point it at the repository or open the Suiko AI scope in Studio. Use a branch and fictional test stories.
-4. For changes in Studio, coordinate edits on the shared PDI and bring the app changes into the repository before the next deploy. [Studio and deployment steps](docs/13-servicenow-development-and-cicd.md#changes-made-in-studio)
+4. For changes in Studio, coordinate edits on the shared PDI with Deon. Include the exported app files in your PR. Deon installs the reviewed build. [Studio steps](docs/13-servicenow-development-and-cicd.md#changes-made-in-studio)
 
 ## Frontend tickets
 

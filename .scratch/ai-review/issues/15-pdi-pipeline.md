@@ -1,7 +1,9 @@
 # AI-15 · Push and check the shared ServiceNow app
 
-**Status** in-progress · local push verified, manual GitHub deployment pending  
-**Owner** Deon with the integration teammates  
+**Status** local push verified · GitHub tests and builds
+
+**Owner** Deon
+
 **Depends on** AI-03
 
 ## What to build
@@ -13,9 +15,8 @@ Use the same local source, app ID, and record identities for each update to the 
 - [x] Pin the SDK and package dependencies, retain the generated record identities, and authenticate the local SDK profile.
 - [x] Run the local push sequence and verify the same app ID after an update.
 - [x] Check that saved drafts, reviews, the encrypted provider configuration, and an editor's changed rule persist across app updates.
-- [x] Prepare GitHub checks for pull requests and relevant pushes to main, with manual deployment from main.
-- [ ] Configure the two PDI deployment secrets in the team repository.
-- [ ] Run a manual GitHub deployment and retain the result link.
+- [x] Run GitHub checks for relevant pull requests and pushes to `main`.
+- [x] Keep the shared PDI install command and SDK login on Deon's computer.
 
 ## Evidence
 
