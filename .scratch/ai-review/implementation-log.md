@@ -16,8 +16,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | AI-17 | done | `f1ce321` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
 | AI-18 | done | `c9c8790` · [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
 | AI-19 | done | `f11c6de` · [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
-| AI-20 | implemented and verified | pending | 83 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
-| AI-21 | implemented and verified | pending | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
+| AI-20 | done | `24845b6` · [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) | 84 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
+| AI-21 | implemented and verified | [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
 | AI-22 | ready-for-agent | pending | Literal edits and accurate change summaries. |
 | AI-23 | ready-for-agent | pending | Full PDI UI evaluation with expectations recorded first. |
 

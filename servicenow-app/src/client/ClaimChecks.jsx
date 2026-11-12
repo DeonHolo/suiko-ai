@@ -11,7 +11,9 @@ export default function ClaimChecks({ run }) {
   const decision = run.result.decision_check;
   if (!checks.length) return null;
   return <section className="card"><h3>Claim and source checks</h3>
-    {decision && decision.status !== 'complete' && <p className="hint">The optional confidence check was {decision.status === 'partial' ? 'available for some claims' : 'unavailable'}. The review findings are below.</p>}
+    {decision && decision.status !== 'complete' && <p className="hint">The optional confidence check was {decision.status === 'partial' ? 'available for some claims' : 'unavailable'}.</p>}
+    {!!decision?.skipped_claim_ids?.length && <p className="hint">Decision 1 checks up to 12 claims per review. {decision.skipped_claim_ids.length} additional claims have only the Flash-Lite judgment.</p>}
+    <p className="hint">These are the claims Gemini identified. Check for other claims before sign-off.</p>
     {checks.map(check => {
       const rule = run.request.rules.find(item => item.rule_id === check.rule_id);
       const opinion = decision?.answers?.[check.id];
@@ -27,6 +29,7 @@ export default function ClaimChecks({ run }) {
           return <details key={index} className="evidence" open>
             <summary>Retrieved source · {source?.title || source?.url || 'Saved passage'}</summary>
             <blockquote>{reference.quote}</blockquote>
+            {source?.final_url && source.final_url !== source.url && <p className="hint source-url">Opened {source.final_url}</p>}
             {source?.status === 'partial' && <p className="hint">This source was only partly read.</p>}
           </details>;
         })}

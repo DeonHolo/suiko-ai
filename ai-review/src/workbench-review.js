@@ -102,7 +102,6 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       report('FINDING_OUTSIDE_SCOPE', path, 'This finding was excluded because the saved rule does not apply to this format and content kind.', { rule_id: finding.rule_id });
       return;
     }
-    if (sourceRuleIds.includes(finding.rule_id)) return;
     if (shaped('validateWorkbenchFinding', finding, path, 'This finding')
         && references(finding.evidence, currentId, `${path}/evidence`, true)) {
       const checked = clone(finding);
@@ -110,6 +109,14 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
           || checked.concern_evidence.some(reference => !checked.evidence.some(item => item.segment_id === reference.segment_id && item.quote.includes(reference.quote))))) {
         report('INVALID_CONCERN_PASSAGE', path, 'The passage marked as the concern could not be separated from its supporting context.');
         delete checked.concern_evidence;
+      }
+      if (sourceRuleIds.includes(finding.rule_id)) {
+        const concern = checked.concern_evidence?.length ? checked.concern_evidence : checked.evidence;
+        if (concern.every(reference => claimChecks.some(check => check.rule_id === finding.rule_id
+            && ['contradicted', 'insufficient'].includes(check.status)
+            && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote)))) return;
+        incompleteClaims.add(finding.rule_id);
+        report('UNMATCHED_SOURCE_FINDING', path, 'This source concern has no matching individual claim check. Review the saved passages.', { rule_id: finding.rule_id });
       }
       findings.push(checked);
     } else {
@@ -127,7 +134,9 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       return { rule_id: item.rule_id, status: 'not_applicable', reason: scopes[item.rule_id].reason, evidence: [], suggested_action: null };
     }
     if (sourceRuleIds.includes(item.rule_id)) {
-      return claimRuleOutcome(item, claimChecks.filter(check => check.rule_id === item.rule_id), incompleteClaims.has(item.rule_id));
+      const checks = claimChecks.filter(check => check.rule_id === item.rule_id);
+      const reportedGap = item.status === 'not_assessable' || (item.status === 'potential_conflict' && !checks.some(check => check.status === 'contradicted'));
+      return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap);
     }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
     const shapedRule = shaped('validateWorkbenchPolicy', item, path, 'This rule assessment');
@@ -234,7 +243,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
     const concernEvidence = request.schema_version === '0.5.0'
       ? claimChecks.filter(check => ['contradicted', 'insufficient'].includes(check.status)).map(check => check.claim)
-        .concat(findings.flatMap(finding => finding.concern_evidence ?? finding.evidence))
+        .concat(findings.flatMap(finding => finding.concern_evidence?.length ? finding.concern_evidence : finding.evidence))
         .concat(policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status)
           && !sourceRuleIds.includes(rule.rule_id) && !findings.some(finding => finding.rule_id === rule.rule_id)).flatMap(rule => rule.evidence))
       : policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))

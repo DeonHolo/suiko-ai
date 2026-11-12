@@ -263,7 +263,28 @@ function buildRequest(revision: GlideRecord, requestId: string, decisionCheck: b
   };
 }
 
+function liveReviewProvider() {
+  const config = providerConfig();
+  const key = config?.getElement('api_key').getDecryptedValue();
+  if (!key) throw new WorkbenchError('Gemini needs its server configuration before you can run a review.', 503);
+  const model = config.getValue('model');
+  return {
+    model,
+    generate(input, onFallback) {
+      const message = geminiMessage(key, model, reviewData.prompt, input, reviewData.providerSchema);
+      return executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', onFallback);
+    },
+    finish(input, result) {
+      return addDecisionConfidence(input, result, key);
+    },
+  };
+}
+
 export function runReview(request, response) {
+  return reviewSavedVersion(request, response, liveReviewProvider, readSavedSources);
+}
+
+export function reviewSavedVersion(request, response, createProvider, readSources) {
   respond(response, () => {
     const body = request.body.data;
     if (!body || typeof body.request_key !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(body.request_key)) {
@@ -272,10 +293,8 @@ export function runReview(request, response) {
     const duplicate = find(tables.review, 'request_key', body.request_key);
     if (duplicate) return runView(duplicate);
     const revision = record(tables.revision, body.revision_id);
-    const config = providerConfig();
-    const key = config?.getElement('api_key').getDecryptedValue();
-    if (!key) throw new WorkbenchError('Gemini needs its server configuration before you can run a review.', 503);
-    const model = config.getValue('model');
+    const provider = createProvider();
+    const model = provider.model;
     const prepared = buildRequest(revision, body.request_key, body.decision_check === true);
     prepared['provider'] = { requested_model: model, prompt_version: reviewData.promptVersion };
     if (JSON.stringify(prepared).length > 190000) throw new WorkbenchError('The saved review input is too large. Shorten the active instructions or context before trying again.');
@@ -306,11 +325,10 @@ export function runReview(request, response) {
     // The source column is the saved copy. The model request and readback use that same text.
     const input = { ...prepared.input };
     persistReviewAttempt(run, input, () => {
-      const sources = readSavedSources(input.candidate_revision.source_urls, input.source_rule_ids.length > 0);
+      const sources = readSources(input.candidate_revision.source_urls, input.source_rule_ids.length > 0);
       run.setValue('source_evidence_json', JSON.stringify(sources));
       input.source_material = sourceMaterial(sources);
-      const message = geminiMessage(key, model, reviewData.prompt, input, reviewData.providerSchema);
-      const reply = executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', fallback => {
+      const reply = provider.generate(input, fallback => {
         prepared['provider'] = {
           requested_model: model, prompt_version: reviewData.promptVersion,
           fallback_model: fallback, fallback_reason: 'Gemini 3.5 returned HTTP 503.',
@@ -320,7 +338,7 @@ export function runReview(request, response) {
       });
       run.setValue('model', reply.model);
       return reply.raw;
-    }, validators, result => prepared.decision_check_requested ? addDecisionConfidence(input, result, key) : result);
+    }, validators, result => prepared.decision_check_requested ? provider.finish(input, result) : result);
     return runView(run);
   });
 }

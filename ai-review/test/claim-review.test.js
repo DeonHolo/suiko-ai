@@ -5,6 +5,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { workbenchSchemas } from '../src/workbench-contract.js';
 import { reviewWorkbench } from '../src/workbench-review.js';
 import { buildDecisionRequest, decisionResults } from '../src/decision-review.js';
+import { sourceMaterial } from '../src/source-reader.js';
 
 const read = path => JSON.parse(readFileSync(new URL('../../contracts/' + path, import.meta.url), 'utf8'));
 const ajv = new Ajv2020({ strict: true, allErrors: true, ownProperties: true });
@@ -107,12 +108,35 @@ test('a headline conflict can cite accurate body context without disqualifying t
   reply.assessment.policy_assessments[0] = { rule_id: 'SOURCES', status: 'potential_conflict', reason: 'Different times', evidence, suggested_action: 'Check the headline.' };
   reply.assessment.metadata_suggestions.short_description = { suggested_text: time, reason: 'Uses the body.', evidence: [evidence[1]] };
   assert.equal((await review(request, reply)).assessment.metadata_suggestions.short_description.suggested_text, time);
+  reply.findings[0].concern_evidence = [];
+  reply.assessment.metadata_suggestions.short_description = { suggested_text: badHeadline, reason: 'Uses the title.', evidence: [evidence[0]] };
+  assert.equal((await review(request, reply)).assessment.metadata_suggestions.short_description.suggested_text, null);
+});
+
+test('one supported check cannot hide an unmatched source concern or a reported coverage gap', async () => {
+  const { request, reply } = sample();
+  reply.claim_checks = [reply.claim_checks[1]];
+  const returnedOnly = await review(request, reply);
+  assert.match(returnedOnly.assessment.policy_assessments[0].reason, /Returned claims: 1 supported/);
+  reply.assessment.policy_assessments[0].status = 'not_assessable';
+  const reportedGap = await review(request, reply);
+  assert.equal(reportedGap.assessment.policy_assessments[0].status, 'not_assessable');
+
+  reply.assessment.policy_assessments[0].status = 'no_potential_conflict_observed';
+  const evidence = [ref('body-1', time)];
+  reply.findings = [{ rule_id: 'SOURCES', summary: 'The event brief has a different screening time.', action: 'Check the time.', evidence }];
+  const checked = await review(request, reply);
+  assert.equal(checked.assessment.policy_assessments[0].status, 'not_assessable');
+  assert.equal(checked.findings.length, 1);
+  assert.equal(checked.claim_checks[0].status, 'supported');
+  assert.ok(checked.checks.issues.some(issue => issue.code === 'UNMATCHED_SOURCE_FINDING'));
 });
 
 test('Decision 1 receives checked claims and retrieved passages and preserves an advisory answer', async () => {
   const { request, reply } = sample();
   const checked = await review(request, reply);
-  const extra = buildDecisionRequest(request, checked.claim_checks);
+  const { request: extra, skippedClaimIds } = buildDecisionRequest(request, checked.claim_checks);
+  assert.deepEqual(skippedClaimIds, []);
   assert.deepEqual(Object.keys(extra.questions), ['claim-1', 'claim-2']);
   const input = JSON.parse(extra.input);
   assert.match(input[0].sources[0].text, /7 p.m./);
@@ -125,4 +149,18 @@ test('Decision 1 receives checked claims and retrieved passages and preserves an
   assert.equal(answers['claim-1'].status, 'insufficient');
   assert.equal(answers['claim-2'], undefined);
   assert.equal(checked.claim_checks[0].status, 'contradicted');
+});
+
+test('a redirected source keeps both URLs and Decision 1 reports which claims exceeded its limit', async () => {
+  const { request, reply } = sample();
+  const openedUrl = 'https://example.org/updated-brief';
+  request.source_material = sourceMaterial([{ ...request.source_material[0], final_url: openedUrl }]);
+  const checked = await review(request, reply);
+  const claim = checked.claim_checks[0];
+  const claims = Array.from({ length: 13 }, (_, index) => ({ ...claim, id: `claim-${index + 1}` }));
+  const batch = buildDecisionRequest(request, claims);
+  assert.equal(Object.keys(batch.request.questions).length, 12);
+  assert.deepEqual(batch.skippedClaimIds, ['claim-13']);
+  assert.equal(JSON.parse(batch.request.input)[0].sources[0].url, openedUrl);
+  assert.equal(request.source_material[0].url, 'https://example.org/brief');
 });

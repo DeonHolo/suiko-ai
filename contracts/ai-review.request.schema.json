@@ -202,6 +202,7 @@
       "properties": {
         "source_id": { "type": "string", "pattern": "^source-[1-5]$" },
         "url": { "type": "string", "minLength": 1, "maxLength": 1500 },
+        "final_url": { "type": "string", "minLength": 1, "maxLength": 1500 },
         "status": { "type": "string", "enum": ["read", "partial", "unavailable", "not_read"] },
         "passages": {
           "type": "array",
