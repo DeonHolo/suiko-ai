@@ -15,8 +15,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
 | AI-17 | done | `f1ce321` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
 | AI-18 | done | `c9c8790` · [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
-| AI-19 | implemented and tested | pending | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
-| AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
+| AI-19 | done | `f11c6de` · [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
+| AI-20 | implemented and verified | pending | 83 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
 | AI-21 | ready-for-agent | pending | Claim/source matching, uncertainty and metadata. |
 | AI-22 | ready-for-agent | pending | Literal edits and accurate change summaries. |
 | AI-23 | ready-for-agent | pending | Full PDI UI evaluation with expectations recorded first. |
@@ -74,3 +74,10 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - Native ServiceNow tests passed with separate non-admin accounts. Browser testing saved and reopened the Juniper Cut handbook, discarded a suggestion, approved an edited proposal, saved a revised handbook and reviewed a fictional article against the approved version.
 - The original Gemini schema returned 400. The leaner schema passed a direct 3.5 test and the full ServiceNow example. Gemini preserved the vote and footage exceptions and asked about the sponsor conflict. One vague clause was absent from the reply, so the proposal screen now surfaces uncited passages for the editor.
 - [Setup and observed results](../../docs/19-company-policy-setup.md). No additional extraction service was needed for these cases.
+- CodeRabbit caught the source-checkbox save guard and missing fallback. Both were fixed. The installed suite `4e1b550d83a89b106fffc629feaad30f` proved fallback and unchanged rules after a failed reply. The browser verified the save guard and reopened the original handbook from a saved review. The final handbook run asked about the vague clause. GitHub checks passed and PR #14 merged as `f11c6de`.
+
+## AI-20 delivery
+
+- Branch `codex/ai-20-source-evidence`. The installed app read a fictional brief, a text PDF, an unrelated webpage, a missing link and a long webpage. The first review kept its overview with a 404 and a partly read source visible.
+- A retry saved source material while Gemini was busy. The external reader initially returned 6 p.m. after the fixture was changed. Once it returned the fresh page, a new review saved 7 p.m. and a different fingerprint. The browser reopened the earlier 6 p.m. copy.
+- [Reader setup and evidence](../../docs/20-source-reading.md). The Decision 1 trial for AI-21 used the frozen first review.
