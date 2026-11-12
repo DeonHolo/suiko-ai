@@ -16,6 +16,7 @@
 
 1. Prepare a fictional publisher policy, a fresh article, an unrelated script and a revision. Record expected policy applicability, findings, metadata and meaningful changes before the first live review.
 2. Approve both an editor-written rule and a rule proposed from policy, then run the first story from the actual panel.
+   Also test a stale approval with an authorized designated editor: open proposal A, save changed wording or applicability as B in another session, then submit A's approval. It must identify A and cannot approve B.
 3. Inspect claim/source evidence, save a human metadata choice, revise the story and review the new version.
 4. Reopen the earlier review after changing a rule and a public source fixture. Verify old evidence and the new attempt remain distinct.
 5. Exercise broken-link, bad-quote, contradictory-status and partial-result examples with fixed responses through the review entry point. Verify the ordinary Editor/designated editor boundary for this feature.

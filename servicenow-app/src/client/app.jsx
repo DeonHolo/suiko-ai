@@ -86,7 +86,20 @@ function ReviewChecks({ result, run }) {
       const revision = [run.request.input.candidate_revision, run.request.input.baseline_revision]
         .find(item => item?.revision_id === issue.revision_id);
       const passage = revision?.segments.find(item => item.segment_id === issue.segment_id);
-      return <article className="change" key={index}><p>{issue.message}</p>
+      const ruleIndex = /^\/assessment\/policy_assessments\/(\d+)(?:\/|$)/.exec(issue.path || '')?.[1];
+      const ruleId = issue.rule_id || (ruleIndex !== undefined ? result.assessment?.policy_assessments?.[Number(ruleIndex)]?.rule_id : null);
+      const ruleTitle = ruleId && (run.request.rules?.find(rule => rule.rule_id === ruleId)?.title || ruleId);
+      const path = issue.path || '';
+      const section = path.startsWith('/overview') ? 'Overview'
+        : path.startsWith('/findings') ? 'Finding'
+        : path.startsWith('/assessment/changes') ? 'Changes'
+        : path.startsWith('/assessment/metadata_suggestions/short_description') ? 'Metadata: description'
+        : path.startsWith('/assessment/metadata_suggestions/tags') ? 'Metadata: tags'
+        : path.startsWith('/assessment/metadata_suggestions/section') ? 'Metadata: section'
+        : path.startsWith('/assessment/metadata_suggestions') ? 'Metadata'
+        : ruleIndex !== undefined ? 'Rule assessment' : 'Review coverage';
+      return <article className="change" key={index}>
+        <h4>{ruleTitle ? `${section}: ${ruleTitle}` : section}</h4><p>{issue.message}</p>
         {typeof issue.rejected_suggestion === 'string' && <><h4>Gemini's suggestion — not used</h4><blockquote>{issue.rejected_suggestion}</blockquote></>}
         {typeof issue.quote === 'string' && <><h4>Gemini's quote</h4><blockquote>{issue.quote}</blockquote></>}
         {(passage || typeof issue.source === 'string') && <><h4>Your saved passage</h4><blockquote>{passage?.text || issue.source}</blockquote></>}

@@ -241,6 +241,19 @@ test('an overview with independent story evidence survives an unrelated rule fai
   assert.deepEqual(checked.overview_evidence, result.overview_evidence);
 });
 
+test('an unknown-rule finding cannot lend its rejected passage to the overview', async () => {
+  const { request, result } = sample();
+  const evidence = structuredClone(result.findings[0].evidence);
+  result.findings = [{ ...result.findings[0], rule_id: 'NOT-A-SUPPLIED-RULE', evidence }];
+  result.overview_evidence = evidence;
+  const checked = await review(request, result);
+  assert.equal(checked.checks.overview_available, false);
+  assert.equal(checked.checks.withheld_overview, result.overview);
+  assert.equal(checked.findings.length, 0);
+  assert.ok(checked.checks.issues.some(issue => issue.code === 'UNKNOWN_FINDING_RULE'));
+  assert.deepEqual(checked.assessment.changes, result.assessment.changes);
+});
+
 test('unmatched overview evidence is withheld without erasing usable rule findings', async () => {
   const { request, result } = sample();
   result.overview_evidence = [{ revision_id: request.candidate_revision.revision_id, segment_id: 'title', quote: 'An invented headline.' }];
