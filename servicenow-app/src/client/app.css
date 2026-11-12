@@ -124,3 +124,5 @@ pre { font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; white
 .policy-suggestions .change { margin-top: 0.7rem; }
 .source-url { overflow-wrap: anywhere; }
 .saved-source-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.claim-card blockquote { white-space: pre-wrap; overflow-wrap: anywhere; }
+.claim-card summary { overflow-wrap: anywhere; }

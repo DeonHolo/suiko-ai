@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { reviewService } from './services/ReviewService';
 import PolicySetup, { OriginalPolicy } from './PolicySetup';
 import Sources, { hasSourceGaps } from './Sources';
+import ClaimChecks from './ClaimChecks';
 import './app.css';
 
 const blank = { title: '', text: '', notes: '', content_format: '', content_kind: '', source_urls_text: '' };
@@ -136,6 +137,8 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
   </section><Sources sources={run.request?.sources} /></>;
   const result = run.result;
   const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
+  const claimChecks = result.claim_checks || [];
+  const claimConcerns = claimChecks.some(check => check.status === 'contradicted' || check.status === 'insufficient');
   const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
   const sourceGaps = hasSourceGaps(run);
   const missingSections = [];
@@ -147,9 +150,10 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
       <strong>{result.assessment.status === 'unable_to_assess' ? 'This review could not assess the requested checks.' : 'Some parts still need checking.'}</strong>
       {hasDiagnostics ? <p>Open “What could not be checked” for the gaps.</p> : null}
       {!!unresolved.length && <p>See “Needs attention” for what you can confirm.</p>}
+      {claimConcerns && <p>Open “Claim and source checks” to compare each claim with its source.</p>}
       {!!missingSections.length && <p>Incomplete sections include {missingSections.join(' and ')}.</p>}
       {sourceGaps && <p>See “Source material” for links that could only be read in part or couldn’t be opened.</p>}
-      {!hasDiagnostics && !unresolved.length && !missingSections.length && !sourceGaps && <p>{result.assessment.limitations.length
+      {!hasDiagnostics && !unresolved.length && !missingSections.length && !sourceGaps && !claimConcerns && <p>{result.assessment.limitations.length
         ? 'See “Rules and review details” for reported limits. You can retry this saved version.'
         : 'Gemini marked this review incomplete without naming a gap. You can retry this saved version.'}</p>}
     </section>}
@@ -161,9 +165,10 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
       {run.request.provider?.fallback_model && <p className="hint">Gemini 3.5 was busy. This review used Gemini 3.1 Flash-Lite.</p>}
       <p className="hint">{run.model} · {run.saved_at} UTC</p></section>
     <section className="card"><h3>Needs attention</h3>
-      {result.findings.length === 0 && unresolved.length === 0 && <p>{result.assessment.policy_assessments.length
+      {result.findings.length === 0 && unresolved.length === 0 && !claimConcerns && <p>{result.assessment.policy_assessments.length
         ? 'The completed rule checks raised no concerns. See the review details for their scope.'
         : 'No editorial rules were selected for this review.'}</p>}
+      {claimConcerns && <p>Review the potential conflicts and missing evidence under “Claim and source checks.”</p>}
       {result.findings.map((finding, index) => {
         const rule = run.request.rules.find(item => item.rule_id === finding.rule_id);
         const outcome = result.assessment.policy_assessments.find(item => item.rule_id === finding.rule_id);
@@ -173,7 +178,8 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
           <Evidence references={finding.evidence} run={run} />
         </article>;
       })}
-      {unresolved.filter(rule => !result.findings.some(finding => finding.rule_id === rule.rule_id)).map(rule =>
+      {unresolved.filter(rule => !result.findings.some(finding => finding.rule_id === rule.rule_id)
+          && !claimChecks.some(check => check.rule_id === rule.rule_id)).map(rule =>
         <article className="finding" key={rule.rule_id}>
           <h4>{run.request.rules.find(item => item.rule_id === rule.rule_id)?.title || rule.rule_id}</h4>
           <p className="rule-status">Needs confirmation</p><p>{rule.reason}</p>
@@ -181,6 +187,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
           <Evidence references={rule.evidence} run={run} />
         </article>)}
     </section>
+    <ClaimChecks run={run} />
     <ReviewChecks result={result} run={run} />
     <Sources sources={run.request.sources} />
     <section className="card"><h3>What changed</h3>
@@ -281,6 +288,7 @@ export default function App() {
   const [form, setForm] = useState(blank);
   const [saveKey, setSaveKey] = useState(() => crypto.randomUUID());
   const [runId, setRunId] = useState(null);
+  const [decisionCheck, setDecisionCheck] = useState(false);
   const [tab, setTab] = useState('review');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -329,7 +337,7 @@ export default function App() {
   }
   function review() {
     return act(async () => {
-      const result = await reviewService.review(current.id);
+      const result = await reviewService.review(current.id, decisionCheck);
       await load(storyId, false, result.id);
       setMessage(result.state === 'complete' ? 'Review saved. Read the findings and choose your metadata.' : 'The draft is saved. The review needs your attention.');
     });
@@ -440,6 +448,12 @@ export default function App() {
             <label>Review context <span className="hint">Optional · Briefs, interview excerpts or production notes</span>
               <textarea disabled={busy} maxLength={4000} value={form.notes} onChange={event => setForm({ ...form, notes: event.target.value })} /></label>
             <p className="hint">{[...form.title + form.text + form.notes + form.source_urls_text].length} of 12,000 characters, including context and links</p>
+            {data.capabilities.source_reading && form.source_urls_text.trim() && data.rules.some(rule => rule.active
+              && rule.approved?.definition.requires_sources && rule.approved.definition.formats.includes(form.content_format)
+              && rule.approved.definition.content_kinds.includes(form.content_kind)) && <div className="rule-options">
+              <label><input type="checkbox" disabled={busy} checked={decisionCheck} onChange={event => setDecisionCheck(event.target.checked)} />
+                Add a Decision 1 confidence check</label>
+            </div>}
             <div className="actions"><button disabled={busy || !dirty || !form.title.trim() || !form.text.trim() || !form.content_format || !form.content_kind} onClick={save}>Save version</button>
               <button className="primary" disabled={busy || dirty || !current || !current.content_format || !current.content_kind || !data.provider.configured} onClick={review}>Review this version</button></div>
             {dirty && current && <p className="hint">Save your changes before running the next review.</p>}

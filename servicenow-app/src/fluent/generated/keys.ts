@@ -99,6 +99,10 @@ declare global {
                         table: 'sys_security_acl'
                         id: '2a156e3011d24ff6a855adca50467973'
                     }
+                    'src_server_decision-check_ts': {
+                        table: 'sys_module'
+                        id: '7db7d989f95f4c719ab535578f5fb7c9'
+                    }
                     'src_server_editorial-rules_ts': {
                         table: 'sys_module'
                         id: '4fca46b2d69f4572a0b3963e3f102d5a'
@@ -110,6 +114,14 @@ declare global {
                     'src_server_generated_assessment-checks_js': {
                         table: 'sys_module'
                         id: 'd5e299dbf92e4db188a4a06ceae6f399'
+                    }
+                    'src_server_generated_claim-evidence_js': {
+                        table: 'sys_module'
+                        id: 'a43a6818970f4646afc1d38c502e514a'
+                    }
+                    'src_server_generated_decision-review_js': {
+                        table: 'sys_module'
+                        id: '52af82ec7249464f82e231e3d15e6f84'
                     }
                     'src_server_generated_editorial-rules_js': {
                         table: 'sys_module'

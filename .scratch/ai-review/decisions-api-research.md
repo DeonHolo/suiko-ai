@@ -1,6 +1,6 @@
 # Gemini Decision 1 and Suiko AI
 
-Checked 12 November 2026. Deon approved a trial during AI-21; not yet installed in the review flow.
+Checked 12 November 2026. Deon approved a trial during AI-21. The first comparison used the frozen source passages from the AI-20 ServiceNow review.
 
 ## Recommendation
 
@@ -26,6 +26,13 @@ The published free-tier limits are 200 requests/minute, 50,000 input tokens/minu
 
 This would support the assignment's “AI comparison and classification” and “flag potential checklist conflicts.” It would not replace retrieved evidence, mechanical quote checks or the editor's publishing decision. It does not settle the source-reading work in AI-20.
 
-## Status
+## Observed trial
 
-No Decision API requests have been sent. Access is visible in the account screenshot, but compatibility, response quality and observed quota usage still need a bounded trial. The current SDK search did not return Decisions-specific examples; use Google's direct REST reference for that trial rather than guessing an SDK method.
+Both APIs returned HTTP 200. Decision 1 matched 8 of the 9 labels written before the run. Flash-Lite also matched 8 of 9. Both called the absence of an announced exhibition time a contradiction. Decision 1's confidence for that answer was 57%. Its eight matching labels had confidence from 93% to 100% when rounded.
+
+| Batch | Elapsed | Input tokens | Output tokens |
+| --- | ---: | ---: | ---: |
+| Decision 1 | 1.07 s | 2,218 | 0 |
+| Gemini 3.5 Flash-Lite | 10.69 s | 816 | 313 |
+
+The trial supports keeping an optional second opinion for claims with retrieved passages. The panel shows its answer and model confidence beside Flash-Lite's explanation. It calls attention to disagreement and leaves both judgments available. The batch had nine cases, so this build uses no automatic confidence cutoff. Raw trial output and the pre-labelled expectations are in the ignored `ai-review/output/ai-21-2026-11-12/` folder.
