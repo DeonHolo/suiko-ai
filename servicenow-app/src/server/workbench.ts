@@ -276,7 +276,7 @@ export function runReview(request, response) {
         running.setValue('state', 'failed');
         running.setValue('error_json', JSON.stringify({ message: 'The earlier review was interrupted. You can retry.' }));
       }
-      running.setValue('active_revision', 'NULL');
+      running.setValue('active_revision', '');
       running.update();
     }
     const run = new GlideRecord(tables.review);

@@ -27,7 +27,7 @@ export function persistReviewAttempt(run, input, generate, validators) {
     }));
     run.setValue('state', 'failed');
   } finally {
-    run.setValue('active_revision', 'NULL');
+    run.setValue('active_revision', '');
     if (!run.update()) throw new ReviewValidationError('REVIEW_SAVE_FAILED', 'The review result could not be saved. Reload the story before retrying.');
   }
 }

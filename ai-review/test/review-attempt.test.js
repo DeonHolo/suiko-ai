@@ -38,7 +38,7 @@ test('the attempt saves a partial checked result and releases the revision lock'
   assert.equal(saved.assessment.status, 'partial');
   assert.equal(saved.assessment.policy_assessments[1].status, 'not_assessable');
   assert.equal(saved.checks.overview_available, true);
-  assert.equal(values.active_revision, 'NULL');
+  assert.equal(values.active_revision, '');
   assert.equal(writes(), 1);
 });
 
@@ -49,7 +49,7 @@ test('a checklist mismatch saves the unchecked reply and named failure', () => {
   assert.equal(values.state, 'failed');
   assert.equal(JSON.parse(values.error_json).code, 'CHECKLIST_MISMATCH');
   assert.deepEqual(JSON.parse(values.response_json), reply);
-  assert.equal(values.active_revision, 'NULL');
+  assert.equal(values.active_revision, '');
 });
 
 test('unreadable JSON remains a saved failed attempt, with an inspectable excerpt', () => {
@@ -58,7 +58,7 @@ test('unreadable JSON remains a saved failed attempt, with an inspectable excerp
   assert.equal(values.state, 'failed');
   assert.equal(JSON.parse(values.error_json).code, 'INVALID_PROVIDER_JSON');
   assert.equal(JSON.parse(values.response_json).unparsed_text, '{"overview":');
-  assert.equal(values.active_revision, 'NULL');
+  assert.equal(values.active_revision, '');
 });
 
 test('new attempts with no overview references withhold the overview while retaining checked findings', () => {
@@ -75,7 +75,7 @@ test('provider failures release the lock and do not expose arbitrary exception d
   const { input, values, row } = sample();
   persistReviewAttempt(row, input, () => { throw new Error('Sensitive transport internals'); }, validators);
   assert.equal(values.state, 'failed');
-  assert.equal(values.active_revision, 'NULL');
+  assert.equal(values.active_revision, '');
   assert.ok(!values.error_json.includes('Sensitive'));
 });
 
@@ -89,7 +89,7 @@ test('a checked result exceeding the storage limit stays failed with its origina
   assert.equal(values.state, 'failed');
   assert.equal(JSON.parse(values.error_json).code, 'SAVED_RESULT_LIMIT');
   assert.deepEqual(JSON.parse(values.response_json), reply);
-  assert.equal(values.active_revision, 'NULL');
+  assert.equal(values.active_revision, '');
 });
 
 test('a failed database update cannot be returned as a saved review', () => {
