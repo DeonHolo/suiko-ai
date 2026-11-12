@@ -5,7 +5,7 @@ export const supportedChecks = {
   text_review: 'Compare the supplied headline, story, captions and earlier version.',
   context_review: 'Use supplied briefs, interview excerpts and production notes as editor-provided context.',
   metadata_suggestions: 'Suggest allowed sections, tags and a public description for the editor to choose.',
-  source_reading: 'Source links are saved as references. Paste an excerpt when a rule needs the original source wording.',
+  source_reading: 'Read supplied public links and retain the text. Paste an excerpt when the original source cannot be opened.',
   permissions: 'Read supplied permission notes; the editor confirms the actual permission or licence.',
 };
 

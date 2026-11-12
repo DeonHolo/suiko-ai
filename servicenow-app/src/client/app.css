@@ -122,3 +122,5 @@ pre { font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; white
 .policy-original { margin: 0.7rem 0; }
 .policy-original blockquote { white-space: pre-wrap; overflow-wrap: anywhere; }
 .policy-suggestions .change { margin-top: 0.7rem; }
+.source-url { overflow-wrap: anywhere; }
+.saved-source-text { white-space: pre-wrap; overflow-wrap: anywhere; }

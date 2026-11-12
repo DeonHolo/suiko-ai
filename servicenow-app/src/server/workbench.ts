@@ -5,6 +5,8 @@ import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSa
 import { policyState, readPolicyVersion, savePolicyVersion } from './policy-records.ts';
 import { requireRulesEditor } from './rule-access.ts';
 import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } from './generated/policy-proposals.js';
+import { needsPublicSources } from './generated/source-reader.js';
+import { readSavedSources } from './read-sources.ts';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
@@ -68,9 +70,12 @@ function revisionView(row: GlideRecord) {
 }
 
 function runView(row: GlideRecord) {
+  const request = parse(row.getValue('request_json'));
+  const sources = parse(row.getValue('source_evidence_json'));
+  if (request && sources) request.sources = sources;
   return {
     id: id(row), revision_id: row.getValue('revision'), state: row.getValue('state'),
-    model: row.getValue('model'), request: parse(row.getValue('request_json')),
+    model: row.getValue('model'), request,
     result: parse(row.getValue('response_json')), error: parse(row.getValue('error_json')),
     metadata: parse(row.getValue('metadata_json')), modified: row.getValue('sys_mod_count'),
     saved_at: row.getValue('sys_created_on'),
@@ -146,7 +151,7 @@ export function getState(request, response) {
     const config = providerConfig();
     return {
       stories, revisions, runs, rules: rulesView(), starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
-      capabilities: { source_reading: false },
+      capabilities: { source_reading: true },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },
     };
@@ -237,7 +242,8 @@ function buildRequest(revision: GlideRecord, requestId: string) {
       version: rule.approved.version, version_id: rule.approved.version_id, approval: rule.approved.approval,
     })),
     revision_records: { [candidate.revision_id]: id(revision), ...(baseline ? { [earlier.revision_id]: id(baseline) } : {}) },
-    sources: revisionView(revision).source_urls.map(url => ({ url, status: 'not_read' })),
+    source_reading_requested: needsPublicSources(allRules, candidate),
+    sources: candidate.source_urls.map(url => ({ url, status: 'not_read' })),
   };
 }
 
@@ -282,6 +288,8 @@ export function runReview(request, response) {
     if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
     if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
     persistReviewAttempt(run, prepared.input, () => {
+      const sources = readSavedSources(prepared.input.candidate_revision.source_urls, prepared.source_reading_requested);
+      run.setValue('source_evidence_json', JSON.stringify(sources));
       const message = geminiMessage(key, model, reviewData.prompt, prepared.input, reviewData.providerSchema);
       let providerResponse = message.execute();
       let modelUsed = model;

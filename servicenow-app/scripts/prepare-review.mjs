@@ -31,7 +31,7 @@ await writeFile(new URL('validators.js', output), helper + validators);
 await rm(new URL('validators.cjs', output), { force: true });
 // Branches without classified inputs must not bundle an old generated module.
 await rm(new URL('story-input.js', output), { force: true });
-for (const name of ['assessment-checks.js', 'provider-json.js', 'workbench-review.js', 'review-attempt.js', 'story-input.js', 'editorial-rules.js', 'policy-proposals.js']) {
+for (const name of ['assessment-checks.js', 'provider-json.js', 'workbench-review.js', 'review-attempt.js', 'story-input.js', 'editorial-rules.js', 'policy-proposals.js', 'source-reader.js']) {
   await writeFile(new URL(name, output), await readFile(new URL('ai-review/src/' + name, workspace), 'utf8'));
 }
 const promptFile = await readFile(new URL('prompts/editorial-review-v0.4.md', workspace), 'utf8');

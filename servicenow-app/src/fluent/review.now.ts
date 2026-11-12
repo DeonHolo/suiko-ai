@@ -48,6 +48,7 @@ export const x_2236136_suiko_ai_review = Table({
     state: StringColumn({ label: 'State', maxLength: 20 }),
     model: StringColumn({ label: 'Model', maxLength: 100 }),
     request_json: StringColumn({ label: 'Saved review input', maxLength: 200000 }),
+    source_evidence_json: StringColumn({ label: 'Saved source material', maxLength: 100000 }),
     response_json: StringColumn({ label: 'Gemini result', maxLength: 200000 }),
     error_json: StringColumn({ label: 'Review issue', maxLength: 20000 }),
     metadata_json: StringColumn({ label: 'Editor metadata choice', maxLength: 5000 }),
