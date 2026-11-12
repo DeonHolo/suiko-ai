@@ -160,6 +160,21 @@ test('Decision 1 receives checked claims and retrieved passages and preserves an
   assert.equal(checked.claim_checks[0].status, 'contradicted');
 });
 
+test('support under one rule cannot clear another rule’s unresolved source requirement', async () => {
+  const { request, reply } = sample();
+  request.policy_pack.rules.push({ ...request.policy_pack.rules[0], rule_id: 'SECOND', title: 'Second source requirement' });
+  request.source_rule_ids.push('SECOND');
+  reply.claim_checks = [reply.claim_checks[1]];
+  reply.assessment.policy_assessments.push({
+    rule_id: 'SECOND', status: 'not_assessable', reason: 'The second requirement still needs confirmation.',
+    evidence: [ref('body-1', seats)], suggested_action: 'Confirm the second requirement.',
+  });
+  const checked = await review(request, reply);
+  assert.equal(checked.claim_checks[0].status, 'supported');
+  assert.equal(checked.assessment.policy_assessments[1].status, 'not_assessable');
+  assert.equal(checked.assessment.metadata_suggestions.short_description.suggested_text, null);
+});
+
 test('a redirected source keeps both URLs and Decision 1 reports which claims exceeded its limit', async () => {
   const { request, reply } = sample();
   const openedUrl = 'https://example.org/updated-brief';
