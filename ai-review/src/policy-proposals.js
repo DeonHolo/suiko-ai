@@ -34,21 +34,21 @@ export function policyPassages(text) {
 }
 
 const evidenceSchema = {
-  type: 'array', minItems: 1, maxItems: 4, items: {
+  type: 'array', items: {
     type: 'object', properties: { passage_id: { type: 'string' }, quote: { type: 'string' } }, required: ['passage_id', 'quote'],
   },
 };
-const choices = (values, max) => ({ type: 'array', maxItems: max, items: { type: 'string', enum: values } });
+const choices = values => ({ type: 'array', items: { type: 'string', enum: values } });
 const proposalFields = {
   title: { type: 'string' }, text: { type: 'string' }, priority: { type: 'string', enum: ['standard', 'high'] },
-  formats: choices(contentFormats, 3), content_kinds: choices(contentKinds, 3), conditions: { type: 'string' },
-  human_checks: { type: 'array', maxItems: 6, items: { type: 'string' } },
-  checks: choices(Object.keys(checkLabels), 5), evidence: evidenceSchema,
+  formats: choices(contentFormats), content_kinds: choices(contentKinds), conditions: { type: 'string' },
+  human_checks: { type: 'array', items: { type: 'string' } },
+  checks: choices(Object.keys(checkLabels)), evidence: evidenceSchema,
 };
 export const policyProposalSchema = {
   type: 'object', properties: {
-    proposals: { type: 'array', maxItems: 6, items: { type: 'object', properties: proposalFields, required: Object.keys(proposalFields) } },
-    questions: { type: 'array', maxItems: 5, items: { type: 'object', properties: { text: { type: 'string' }, evidence: evidenceSchema }, required: ['text', 'evidence'] } },
+    proposals: { type: 'array', items: { type: 'object', properties: proposalFields, required: Object.keys(proposalFields) } },
+    questions: { type: 'array', items: { type: 'object', properties: { text: { type: 'string' }, evidence: evidenceSchema }, required: ['text', 'evidence'] } },
   }, required: ['proposals', 'questions'],
 };
 
@@ -59,6 +59,7 @@ export const policyProposalPrompt = [
   'Set the format and content kind only where the policy applies. When a rule applies to all, include all three formats or kinds. Use conditions for any other applicability limit.',
   'Use only the checks listed in the input. If source reading is unavailable, describe what can be checked against an editor-provided excerpt and what still needs confirmation. List human checks for requirements such as confirming a permission record.',
   'Ask a concrete question when wording is vague, when clauses conflict, or when a requirement cannot be interpreted as a usable check. Cite the relevant clause or both conflicting clauses. Avoid inventing a resolution. Use empty arrays if there are no proposals or questions.',
+  'Return at most five questions and up to four exact quotes per suggestion or question. Use no more than six short human-confirmation notes for each suggestion.',
 ].join('\n');
 
 function checkedEvidence(evidence, passages) {
