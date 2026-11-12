@@ -2,6 +2,12 @@
 
 These are fictional examples for a made-up regional publisher. Write the expected results before submitting the stories to Gemini.
 
+## Publish the first brief
+
+1. Use a test branch in a public fork or repository you can push to. Set `ai-review/fixtures/public/listening-room-brief.txt` to say “16 January at 11 a.m.”, then commit and push it. The original 11 a.m. fixture is preserved in commit `58e5da9`; the later noon fixture is in `13efbd2`.
+2. Copy the raw file URL for that branch into the first article's Sources field. Keep the branch name in the URL so that the history step can read changed text from the same address.
+3. Check the saved source card after the first review. It should contain 11 a.m. before you assess the model's time finding. For the history step, change the same file to noon and push the update. If a new attempt still reads a cached 11 a.m. copy, retain that attempt and retry when the updated brief is available.
+
 ## Halyard Desk policy
 
 For News articles, the public headline should say that a launch is proposed until the story says it has been approved. Ask the editor to restore the uncertainty when the headline is firmer than the article.

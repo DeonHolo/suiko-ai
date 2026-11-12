@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** ServiceNow evaluation in progress. The final source-change and history check needs the in-app browser connection.
+**Status:** ServiceNow UI cases and source/history API checks passed. The final UI reopen needs the in-app browser connection.
 
 **Approved:** 12 November 2026.
 
@@ -26,8 +26,10 @@
 
 - [ ] The complete AI feature works from the PDI UI with inspectable saved evidence.
 - [x] A fresh example has been assessed without editing the expected result after seeing Gemini's answer.
-- [ ] Repeatable checks cover the known failure cases without requiring repeated live error calls.
-- [ ] The handoff states which assignment capabilities this proves and which teammate workflow work still remains.
+- [x] Repeatable checks cover the known failure cases without requiring repeated live error calls.
+- [x] The handoff states which assignment capabilities this proves and which teammate workflow work still remains.
+
+[Expected inputs](../../../docs/23-acceptance-cases.md) and [observed results, limits and handoff](../../../docs/23-acceptance-results.md).
 
 **Ask your AI**
 

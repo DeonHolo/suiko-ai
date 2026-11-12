@@ -10,11 +10,25 @@ The [expected cases](23-acceptance-cases.md) were committed before the live revi
 | Metadata choice | Local news, Community events, and a description of the proposed room. The editor saved a different description. | The suggested description omitted the disputed time and fee. The editor's wording was saved with the first review. |
 | Revised article | Three changes covering the headline, time and admission wording. Support for the corrected time and seats. | The new headline kept the proposal status. Gemini 3.5 was busy, so this review used the recorded Gemini 3.1 Flash-Lite fallback. |
 | Unrelated script | A workshop overview and a permission follow-up for the outside photograph. Article-only rules were marked outside scope. | The useful finding matched the photo and action. Gemini called it Potential conflict where the policy requested Needs confirmation. It also put a rule identifier in the overview and returned a concern reference that required a diagnostic. |
-| Two editor views | Proposal A stayed open while another view saved B. Approving A produced “This rule changed elsewhere. Reload it before saving or approving.” | The stale action left the prior approved version active. The editor reloaded and explicitly approved the current version. |
+| Two editor views | Proposal A stayed open while another view saved B. Approving A produced “This rule changed elsewhere. Reload it before saving or approving.” | B remained pending and version 1 stayed active. After reload, the screen showed pending version 3. The admin explicitly approved that version. The UI account was System Administrator and had rule-management access. Dedicated non-admin roles were checked in the installed suite below. |
+| Changed source and rule | A supplemental API review used the same saved second draft, the noon source and headline rule version 3. It found the new time conflict. | API readback confirmed that the earlier reviews still held their 11 a.m. source and rule version 1. The first review kept the editor's saved description. |
 
 ## Remaining verification
 
-The same public brief was changed from 11 a.m. to noon after the first two reviews. The final check will review the saved second draft with the replacement rule, inspect the new source snapshot and reopen the original reviews. The browser connection became unavailable before that action.
+The browser connection became unavailable before reopening the changed-source result and the original reviews on screen. The supplemental API check above passed. The final UI reopen is pending.
+
+## Repeatable ServiceNow checks
+
+Installed suite `9aafcf458328db106fffc629feaad371` passed. It used saved story/review records and injected source-reader and provider replies. Its earlier run `0b6c0b8d83e4db106fffc629feaad316` also passed.
+
+| Case | Verified result |
+| --- | --- |
+| Bad source quotation | The affected claim became unresolved. The supported claim, overview and saved diagnostic survived. |
+| Contradictory rule status | A clear rule summary paired with a retained headline concern was reconciled to a conflict. |
+| Partial reply | Usable sections remained available after an evidence problem, and the attempt reopened from history. |
+| Missing and redirected source | A 404 stayed unavailable. The opened URL and actual passages were saved with the redirect. |
+| Editor access | A dedicated non-admin everyday Editor could save and reopen a story. It received 403 responses for rule/policy setup actions. |
+| Designated editor access | A dedicated non-admin Rules Editor could save, approve and replace rules. The suite checked stale edits, stale approvals and preserved approval history. |
 
 ## Saved evidence
 
@@ -22,6 +36,7 @@ The same public brief was changed from 11 a.m. to noon after the first two revie
 - First review `1a68438583e4db106fffc629feaad3e3`, Gemini 3.5 Flash-Lite.
 - Revised review `1a88078583e4db106fffc629feaad3e1`, Gemini 3.1 Flash-Lite.
 - Script story `eaa8c78583e4db106fffc629feaad33e`, review `c3a84b8583e4db106fffc629feaad338`, Gemini 3.5 Flash-Lite.
+- Changed-source API review `c20d0b018328db106fffc629feaad359`, Gemini 3.1 Flash-Lite.
 - Local inputs, full saved responses and screenshots are under `ai-review/output/ai-23-2026-11-13/`.
 
 ## Team handoff
