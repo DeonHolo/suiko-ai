@@ -4,6 +4,7 @@ const labels = {
   supported: 'Support found', contradicted: 'Potential conflict',
   insufficient: 'Needs confirmation', not_applicable: 'Not applicable',
 };
+const percent = value => value >= 0.995 && value < 1 ? '99+%' : Math.round(value * 100) + '%';
 
 export default function ClaimChecks({ run }) {
   const checks = run.result.claim_checks || [];
@@ -32,7 +33,11 @@ export default function ClaimChecks({ run }) {
         {check.context.map((reference, index) => <details key={index} className="evidence">
           <summary>Editor-supplied review context</summary><blockquote>{reference.quote}</blockquote>
         </details>)}
-        {opinion && <p className="hint">Decision 1 · {labels[opinion.status]} · {Math.round(opinion.confidence * 100)}% model confidence</p>}
+        {opinion && <details className="evidence">
+          <summary>Decision 1 · {labels[opinion.status]} · {percent(opinion.confidence)} model confidence</summary>
+          <ul>{Object.entries(opinion.probabilities).sort((a, b) => b[1] - a[1]).map(([status, confidence]) =>
+            <li key={status}>{labels[status]} {percent(confidence)}</li>)}</ul>
+        </details>}
         {disagreement && <p>Gemini’s two checks differ. Compare the passages before deciding.</p>}
       </article>;
     })}

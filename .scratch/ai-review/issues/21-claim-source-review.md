@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** implemented and tested in ServiceNow. PR review follows AI-20.
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -27,11 +27,13 @@
 
 **Done when**
 
-- [ ] Bare URLs produce inspectable claim/source matches without editor-written mappings.
-- [ ] A story with supported and unsupported claims shows both accurately.
-- [ ] A contradiction shows both passages without claiming independent truth certification.
-- [ ] Rule summaries, retained findings, coverage and suggested public description agree.
-- [ ] Decision 1 has been tried and its practical value recorded; the panel makes confidence and editor actions easy to understand.
+- [x] Bare URLs produced inspectable claim/source matches without editor-written mappings.
+- [x] The live story separately showed supported seats and an unresolved price. The report records the remaining exhibition classification error.
+- [x] A contradiction showed the actual draft and source passages.
+- [x] Summaries reflect the retained findings. The final description omitted disputed and unsupported facts.
+- [x] Decision 1 was tested, and the panel showed confidence, differences between judgments and next actions.
+
+[ServiceNow evidence and observed model limits](../../../docs/21-claim-and-source-review.md).
 
 **Ask your AI**
 

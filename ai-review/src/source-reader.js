@@ -82,8 +82,10 @@ function decodeReaderReply(response, url, hash) {
   let retained = text.slice(0, readerLimits.text);
   if (/[\ud800-\udbff]$/.test(retained)) retained = retained.slice(0, -1);
   const passages = sourcePassages(retained);
-  const cached = typeof data.warning === 'string' && /cached snapshot/i.test(data.warning);
-  const partial = clipped || status === 206 || Boolean(data.warning && !cached);
+  const warning = typeof data.warning === 'string' ? data.warning.trim() : '';
+  const cached = /cached snapshot/i.test(warning);
+  const cacheNoticeOnly = /^This is a cached snapshot of the original page(?:, consider retry with caching opt-out)?\.?$/i.test(warning);
+  const partial = clipped || status === 206 || Boolean(warning && !cacheNoticeOnly);
   return {
     status: partial ? 'partial' : 'read', http_status: status, passages,
     title: typeof data.title === 'string' ? cleanText(data.title).slice(0, 160) : '',
