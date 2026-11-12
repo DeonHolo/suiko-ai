@@ -138,6 +138,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
   const result = run.result;
   const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
   const claimChecks = result.claim_checks || [];
+  const sourceRules = run.request.input.source_rule_ids || [];
   const claimConcerns = claimChecks.some(check => check.status === 'contradicted' || check.status === 'insufficient');
   const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
   const sourceGaps = hasSourceGaps(run);
@@ -166,7 +167,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
       <p className="hint">{run.model} · {run.saved_at} UTC</p></section>
     <section className="card"><h3>Needs attention</h3>
       {result.findings.length === 0 && unresolved.length === 0 && !claimConcerns && <p>{result.assessment.policy_assessments.length
-        ? 'The completed rule checks raised no concerns. See the review details for their scope.'
+        ? 'The observations shown in this review raised no concerns. See the review details for their scope.'
         : 'No editorial rules were selected for this review.'}</p>}
       {claimConcerns && <p>Review the potential conflicts and missing evidence under “Claim and source checks.”</p>}
       {result.findings.map((finding, index) => {
@@ -178,8 +179,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
           <Evidence references={finding.evidence} run={run} />
         </article>;
       })}
-      {unresolved.filter(rule => !result.findings.some(finding => finding.rule_id === rule.rule_id)
-          && !claimChecks.some(check => check.rule_id === rule.rule_id)).map(rule =>
+      {unresolved.filter(rule => !result.findings.some(finding => finding.rule_id === rule.rule_id)).map(rule =>
         <article className="finding" key={rule.rule_id}>
           <h4>{run.request.rules.find(item => item.rule_id === rule.rule_id)?.title || rule.rule_id}</h4>
           <p className="rule-status">Needs confirmation</p><p>{rule.reason}</p>
@@ -213,7 +213,8 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
       {run.request.rules.filter(rule => rule.active).map(rule => {
         const outcome = result.assessment.policy_assessments.find(item => item.rule_id === rule.rule_id);
         return <article className="change" key={rule.rule_id}><h4>{rule.title} · version {rule.version}</h4>
-          {outcome && <><p className="rule-status">{ruleStatuses[outcome.status]}</p><p>{outcome.reason}</p>
+          {outcome && <><p className="rule-status">{sourceRules.includes(rule.rule_id) && outcome.status === 'no_potential_conflict_observed'
+            ? 'Support found for listed claims' : ruleStatuses[outcome.status]}</p><p>{outcome.reason}</p>
             <Evidence references={outcome.evidence} run={run} /></>}
           <details><summary>Rule wording used</summary><p>{rule.text || run.request.input.policy_pack.rules.find(item => item.rule_id === rule.rule_id)?.text}</p></details>
           {rule.origin?.kind === 'policy' && (canManageRules

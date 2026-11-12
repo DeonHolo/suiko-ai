@@ -35,6 +35,6 @@ Both APIs returned HTTP 200. Decision 1 matched 8 of the 9 labels written before
 | Decision 1 | 1.07 s | 2,218 | 0 |
 | Gemini 3.5 Flash-Lite | 10.69 s | 816 | 313 |
 
-The trial supports keeping an optional second opinion for claims with retrieved passages. The panel shows its answer and model confidence beside Flash-Lite's explanation. It calls attention to disagreement and leaves both judgments available. The batch had nine cases, so this build uses no automatic confidence cutoff. Raw trial output and the pre-labelled expectations are in the ignored `ai-review/output/ai-21-2026-11-12/` folder.
+The trial supports keeping an optional second opinion for claims with retrieved passages. The panel shows its answer and model confidence beside Flash-Lite's explanation. It calls attention to disagreement and leaves both judgments available. The batch had nine cases, so this build uses no automatic confidence cutoff. The fictional inputs, expected labels, observed labels and confidence are in the [trial fixture](../../ai-review/fixtures/decision-1-trial.json).
 
 The installed rerun asked about the same exhibition claim using a revised Decision 1 question. It returned **Needs confirmation** at 97% while Flash-Lite retained **Potential conflict**. The app preserved both and showed the actual passage. [ServiceNow results](../../docs/21-claim-and-source-review.md)

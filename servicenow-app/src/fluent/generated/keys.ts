@@ -41,6 +41,10 @@ declare global {
                         table: 'sys_atf_step'
                         id: 'bbc9c869f7c44830b275738f335ec84d'
                     }
+                    'ai21-claim-step': {
+                        table: 'sys_atf_step'
+                        id: 'a8edb3b62f394be3b4775358f6047c8b'
+                    }
                     'ajv@8.20.0/dist/runtime/ucs2length.js': {
                         table: 'sys_module'
                         id: 'd77602b3ed7a43abbacc3eaf7ef7a277'
@@ -1959,6 +1963,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '8bcdac71cb02407e969dab31c71e0c99'
+                        key: {
+                            document_key: 'a8edb3b62f394be3b4775358f6047c8b'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '8c8d2364e53344ea8912a061ea263e8e'
                         key: {
@@ -2292,6 +2304,14 @@ declare global {
                                 }
                             }
                             sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'ab692bdeac254eb1b3e75123c63381e1'
+                        key: {
+                            document_key: 'a8edb3b62f394be3b4775358f6047c8b'
+                            variable: '989d9e235324220002c6435723dc3484'
                         }
                     },
                     {

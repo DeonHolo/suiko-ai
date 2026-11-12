@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested in ServiceNow. PR review follows AI-20.
+**Status:** implemented and tested in ServiceNow. [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16).
 
 **Approved:** 12 November 2026.
 

@@ -13,7 +13,9 @@ export function needsPublicSources(rules, candidate) {
 }
 
 export function sourceMaterial(sources) {
-  return sources.map(({ source_id, url, status, passages }) => ({ source_id, url, status, passages: passages || [] }));
+  return sources.map(({ source_id, url, final_url, status, passages }) => ({
+    source_id, url, ...(final_url && final_url !== url ? { final_url } : {}), status, passages: passages || [],
+  }));
 }
 
 export function publicReaderUrl(value) {

@@ -21,9 +21,9 @@ function read(url, timeout) {
   return { status: response.getStatusCode(), body: response.getBody() };
 }
 
-export function readSavedSources(urls, needed) {
+export function readSavedSources(urls, needed, readPage = read) {
   return collectSourceEvidence(urls, {
-    needed, read, milliseconds: () => Date.now(),
+    needed, read: readPage, milliseconds: () => Date.now(),
     timestamp: () => String(new GlideDateTime().getValue()),
     hash: text => String(new GlideDigest().getSHA256Hex(text)),
   }).map(source => source.retrieved_at ? { ...source, reader: 'Jina Reader' } : source);

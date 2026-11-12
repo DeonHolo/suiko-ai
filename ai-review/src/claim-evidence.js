@@ -77,9 +77,10 @@ export function claimRuleOutcome(item, checks, incomplete) {
   const applicable = checks.filter(check => check.status !== 'not_applicable');
   const contradictions = applicable.filter(check => check.status === 'contradicted');
   const unresolved = applicable.filter(check => check.status === 'insufficient');
+  const supported = applicable.filter(check => check.status === 'supported');
   const hasGap = incomplete || unresolved.length > 0;
   const summary = [
-    `${applicable.filter(check => check.status === 'supported').length} supported`,
+    `${supported.length} supported`,
     `${contradictions.length} potential conflicts`,
     `${unresolved.length} need confirmation`,
     ...(incomplete ? ['some observations could not be checked'] : []),
@@ -91,8 +92,8 @@ export function claimRuleOutcome(item, checks, incomplete) {
   const first = contradictions[0] || unresolved[0];
   return {
     rule_id: item.rule_id, status,
-    reason: applicable.length ? summary : 'No usable individual source checks were returned for this rule.',
-    evidence: applicable.slice(0, 6).map(check => check.claim),
+    reason: applicable.length ? `Returned claims: ${summary}. Review any claims missing from the list.` : 'No usable individual source checks were returned for this rule.',
+    evidence: [...contradictions, ...unresolved, ...supported].slice(0, 6).map(check => check.claim),
     suggested_action: first ? first.action.slice(0, 500)
       : status === 'not_assessable' ? 'Check the source material manually or retry this saved version.' : null,
   };

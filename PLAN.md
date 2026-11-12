@@ -60,8 +60,8 @@ The [approved specification](.scratch/ai-review/company-policy-review-spec.md) d
 | [AI-17](.scratch/ai-review/issues/17-story-inputs-and-context.md) | Format/kind, source URLs and context saved with each version | None | done — [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) merged |
 | [AI-18](.scratch/ai-review/issues/18-approved-editorial-rules.md) | Approved editable starter/manual rules and applicability | AI-17 | done, [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) merged |
 | [AI-19](.scratch/ai-review/issues/19-policy-to-proposed-checks.md) | Company policy and refinements turned into editable proposed checks | AI-18 | done, [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) merged |
-| [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | implemented and verified in ServiceNow |
-| [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Advisory claim/source matches, confidence and Decision 1 trial | AI-16, AI-20 | implemented and tested in ServiceNow |
+| [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | done, [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) merged |
+| [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Advisory claim/source matches, confidence and Decision 1 trial | AI-16, AI-20 | implemented and tested in ServiceNow, [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) |
 | [AI-22](.scratch/ai-review/issues/22-grounded-revision-comparison.md) | Revision summaries grounded in actual saved-text changes | AI-16 | ready-for-agent |
 | [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | ready-for-agent |
 
