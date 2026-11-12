@@ -52,6 +52,17 @@ test('two independent date changes keep their separate summaries and evidence', 
   assert.equal(partial.assessment.changes.length, 1);
   assert.equal(partial.assessment.coverage.revision_comparison, 'incomplete');
   assert.ok(partial.checks.issues.some(issue => issue.code === 'UNSUMMARIZED_EDIT'));
+  request.baseline_revision.segments = [{ segment_id: 'part-0', field: 'body', text: before.join(' ') }];
+  request.candidate_revision.segments = [{ segment_id: 'part-0', field: 'body', text: after.join(' ') }];
+  result.assessment.changes = [{
+    change_id: 'ambiguous-date', kind: 'modified', summary: 'The library opening changed.',
+    before: [{ revision_id: request.baseline_revision.revision_id, segment_id: 'part-0', quote: 'December 5' }],
+    after: [{ revision_id: request.candidate_revision.revision_id, segment_id: 'part-0', quote: 'December 12' }],
+  }];
+  const ambiguous = checkWorkbenchResult(request, result, validators);
+  assert.equal(ambiguous.assessment.changes.length, 1);
+  assert.equal(ambiguous.assessment.coverage.revision_comparison, 'incomplete');
+  assert.ok(ambiguous.checks.issues.some(issue => issue.code === 'UNSUMMARIZED_EDIT'));
 });
 
 test('the ordinary review entry point checks a claimed edit against unchanged saved text', async () => {

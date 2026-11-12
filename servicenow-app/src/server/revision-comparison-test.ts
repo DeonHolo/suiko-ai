@@ -91,6 +91,14 @@ export function runRevisionComparisonRegression() {
   expect(omitted.assessment.changes.length === 1 && omitted.assessment.coverage.revision_comparison === 'incomplete'
     && omitted.checks.issues.some(issue => issue.code === 'UNSUMMARIZED_EDIT'),
     'A date summary hid the unreported attendance and attribution edits.');
+  const ambiguous = compare('The library opens on December 5. Applications close on December 5.',
+    'The library opens on December 12. Applications close on December 12.', (old, current) => [
+      { change_id: 'short-date', kind: 'modified', summary: 'The opening date changed.',
+        before: [old('December 5')], after: [current('December 12')] },
+    ]);
+  expect(ambiguous.assessment.changes.length === 1 && ambiguous.assessment.coverage.revision_comparison === 'incomplete'
+    && ambiguous.checks.issues.some(issue => issue.code === 'UNSUMMARIZED_EDIT'),
+    'One ambiguous date quote credited two different edits.');
   const sharedWords = compare('The crew sings. The crew dances.', 'The crew dances.', old => [
     { change_id: 'sentence', kind: 'removed', summary: 'The singing sentence was removed.', before: [old('The crew sings.')], after: [] },
   ]);

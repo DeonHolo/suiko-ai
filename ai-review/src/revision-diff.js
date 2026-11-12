@@ -92,8 +92,10 @@ function containsOnlyEditedText(quote, revision, other) {
 }
 
 export function unrepresentedChanges(changes, baseline, candidate, diff) {
-  const before = changes.flatMap(change => change.before).map(reference => locate(baseline, reference));
-  const after = changes.flatMap(change => change.after).map(reference => locate(candidate, reference));
+  const before = changes.flatMap(change => change.before).map(reference => locate(baseline, reference))
+    .filter(reference => reference.positions.length === 1);
+  const after = changes.flatMap(change => change.after).map(reference => locate(candidate, reference))
+    .filter(reference => reference.positions.length === 1);
   return diff.changes.filter(edit =>
     (edit.before.length && !before.some(quote => quote.field === edit.field && touches(quote, edit, 'before')))
     || (edit.after.length && !after.some(quote => quote.field === edit.field && touches(quote, edit, 'after'))));
