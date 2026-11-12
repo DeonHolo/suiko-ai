@@ -23,4 +23,7 @@ export const reviewService = {
   rule: payload => call('/rules', payload),
   approveRule: rule => call('/rules/approve', { id: rule.id, version_id: rule.draft.id, expected_modified: rule.modified }),
   setRuleActive: (rule, active) => call('/rules/active', { id: rule.id, active, expected_modified: rule.modified }),
+  policies: version => call('/policies' + (version ? '?version=' + encodeURIComponent(version) : '')),
+  savePolicy: payload => call('/policies', payload),
+  suggestPolicy: (policy, passageId) => call('/policies/suggest', { policy_version_id: policy.id, passage_id: passageId }),
 };

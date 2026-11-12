@@ -1,6 +1,8 @@
 import { GlideRecord, GlideDateTime, gs } from '@servicenow/glide';
 import { normalizeRuleDefinition, approvedRuleSnapshot, starterTemplates, supportedChecks } from './generated/editorial-rules.js';
 import { WorkbenchError } from './workbench-error.ts';
+import { validatePolicyOrigin } from './policy-records.ts';
+import { requireRulesEditor } from './rule-access.ts';
 
 const ruleTable = 'x_2236136_suiko_ai_rule';
 const versionTable = 'x_2236136_suiko_ai_rule_version';
@@ -8,11 +10,6 @@ const uid = row => String(row.getUniqueValue());
 const json = value => value ? JSON.parse(String(value)) : null;
 export { starterTemplates, supportedChecks };
 
-function requireManager() {
-  if (!gs.hasRole('admin') && !gs.hasRole('x_2236136_suiko_ai.rules_editor')) {
-    throw new WorkbenchError('Rule settings are available to the designated editor.', 403);
-  }
-}
 function saved(table, id) {
   if (typeof id !== 'string' || !/^[a-f0-9]{32}$/.test(id)) throw new WorkbenchError('Choose a saved rule version.');
   const row = new GlideRecord(table);
@@ -69,12 +66,12 @@ export function listEditorialRules() {
 }
 
 export function saveRuleDraft(input) {
-  requireManager();
+  requireRulesEditor();
   if (!input || typeof input.rule_id !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(input.rule_id)) {
     throw new WorkbenchError('Give this rule a valid identity.');
   }
   const definition = normalizeRuleDefinition(input);
-  if (definition.origin.kind === 'policy') throw new WorkbenchError('Company-policy suggestions are not enabled yet. You can enter the rule yourself.');
+  if (definition.origin.kind === 'policy') validatePolicyOrigin(definition.origin);
   const encoded = JSON.stringify(definition);
   if (encoded.length > 15500) throw new WorkbenchError('This rule is too large to save. Shorten its optional conditions or confirmation notes.');
   let parent;
@@ -129,7 +126,7 @@ function countOtherActiveRules(parentId) {
 }
 
 export function approveSavedRule(input, countOtherActive = countOtherActiveRules) {
-  requireManager();
+  requireRulesEditor();
   const parent = saved(ruleTable, input?.id);
   checkVersion(parent, input);
   if (parent.getValue('draft_version_id') !== input.version_id) throw new WorkbenchError('This proposal was replaced. Reload it before approving.', 409);
@@ -150,7 +147,7 @@ export function approveSavedRule(input, countOtherActive = countOtherActiveRules
 }
 
 export function setSavedRuleActive(input, countOtherActive = countOtherActiveRules) {
-  requireManager();
+  requireRulesEditor();
   if (typeof input?.active !== 'boolean') throw new WorkbenchError('Choose whether to enable this approved rule.');
   const parent = saved(ruleTable, input.id);
   const approved = json(parent.getValue('approved_json'));

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { reviewService } from './services/ReviewService';
+import PolicySetup, { OriginalPolicy } from './PolicySetup';
 import './app.css';
 
 const blank = { title: '', text: '', notes: '', content_format: '', content_kind: '', source_urls_text: '' };
@@ -122,7 +123,7 @@ function ReviewChecks({ result, run }) {
   </details>;
 }
 
-function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
+function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules }) {
   if (!run) return <section className="card empty"><h2>Your review will appear here</h2><p>Save a version, then click Review this version.</p></section>;
   if (run.state === 'running') return <section className="card"><h2>Review in progress</h2><p>Gemini is reading the saved draft and rules.</p></section>;
   if (run.state !== 'complete') return <section className="card failure">
@@ -200,6 +201,9 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
           {outcome && <><p className="rule-status">{ruleStatuses[outcome.status]}</p><p>{outcome.reason}</p>
             <Evidence references={outcome.evidence} run={run} /></>}
           <details><summary>Rule wording used</summary><p>{rule.text || run.request.input.policy_pack.rules.find(item => item.rule_id === rule.rule_id)?.text}</p></details>
+          {rule.origin?.kind === 'policy' && (canManageRules
+            ? <OriginalPolicy key={rule.origin.policy_version_id} origin={rule.origin} />
+            : <p className="hint">Based on company policy</p>)}
         </article>;
       })}
       {result.assessment.limitations.map((item, index) => <p key={index}>{item}</p>)}
@@ -214,11 +218,12 @@ function newRuleDraft(template = null) {
     priority: template?.priority || 'standard', formats: template?.formats || ['article', 'script', 'caption'],
     content_kinds: template?.content_kinds || ['news', 'opinion', 'sponsored'],
     conditions: template?.conditions || '', human_checks: template?.human_checks || [],
+    requires_sources: template?.requires_sources || false,
     origin: template ? { kind: 'starter', template_id: template.template_id } : { kind: 'manual' },
   };
 }
 
-function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActive, onCancel }) {
+function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActive, onCancel, sourceReading }) {
   const [draft, setDraft] = useState({ ...rule, human_checks_text: (rule.human_checks || []).join('\n') });
   useEffect(() => setDraft({ ...rule, human_checks_text: (rule.human_checks || []).join('\n') }), [rule.modified]);
   const update = (key, value) => setDraft(current => ({ ...current, [key]: value }));
@@ -226,6 +231,7 @@ function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActiv
     ? draft[key].filter(item => item !== value) : [...draft[key], value]);
   const dirty = ['title', 'text', 'priority', 'conditions'].some(key => draft[key] !== rule[key])
     || ['formats', 'content_kinds'].some(key => JSON.stringify([...draft[key]].sort()) !== JSON.stringify([...rule[key]].sort()))
+    || Boolean(draft.requires_sources) !== Boolean(rule.requires_sources)
     || draft.human_checks_text !== (rule.human_checks || []).join('\n');
   const valid = draft.title.trim() && draft.text.trim() && draft.formats.length && draft.content_kinds.length;
   const status = rule.legacy_approval_missing ? 'Approval not recorded'
@@ -241,7 +247,8 @@ function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActiv
       onSave({ ...draft, expected_modified: rule.modified, human_checks: draft.human_checks_text.split('\n').filter(line => line.trim()) });
     }}>
       <p className="hint">{draft.origin?.kind === 'starter' ? 'Based on an editable starter rule' : draft.origin?.kind === 'policy' ? 'Based on company policy' : 'Written by an editor'}</p>
-      <label>Rule title<input disabled={busy} required maxLength={160} value={draft.title} onChange={event => update('title', event.target.value)} /></label>
+      {draft.origin?.kind === 'policy' && <OriginalPolicy key={draft.origin.policy_version_id} origin={draft.origin} initial={rule.policy} />}
+      <label>Rule title<input autoFocus={!rule.id} disabled={busy} required maxLength={160} value={draft.title} onChange={event => update('title', event.target.value)} /></label>
       <label>When and what to check<textarea disabled={busy} required maxLength={3000} value={draft.text} onChange={event => update('text', event.target.value)} /></label>
       <fieldset disabled={busy}><legend>Formats</legend><div className="rule-options">
         {['article', 'script', 'caption'].map(value => <label key={value}><input type="checkbox" checked={draft.formats.includes(value)} onChange={() => toggle('formats', value)} />{value[0].toUpperCase() + value.slice(1)}</label>)}
@@ -250,6 +257,9 @@ function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActiv
         {['news', 'opinion', 'sponsored'].map(value => <label key={value}><input type="checkbox" checked={draft.content_kinds.includes(value)} onChange={() => toggle('content_kinds', value)} />{value[0].toUpperCase() + value.slice(1)}</label>)}
       </div></fieldset>
       <label>Additional conditions <span className="hint">Optional</span><textarea disabled={busy} maxLength={1000} value={draft.conditions} onChange={event => update('conditions', event.target.value)} /></label>
+      <div className="rule-options"><label><input type="checkbox" disabled={busy} checked={!!draft.requires_sources}
+        onChange={event => update('requires_sources', event.target.checked)} />Needs source material</label></div>
+      {draft.requires_sources && !sourceReading && <p className="hint">Paste the relevant source excerpt into Review context for this check.</p>}
       <label>What the editor may need to confirm <span className="hint">Optional · Up to six notes, one per line</span><textarea disabled={busy} maxLength={1500} value={draft.human_checks_text} onChange={event => update('human_checks_text', event.target.value)} /></label>
       <label>Priority<select disabled={busy} value={draft.priority} onChange={event => update('priority', event.target.value)}>
         <option value="standard">Standard</option><option value="high">High</option>
@@ -334,7 +344,8 @@ export default function App() {
   }
   function saveRule(rule) {
     return act(async () => {
-      const result = await reviewService.rule(rule);
+      const { policy, ...proposal } = rule;
+      const result = await reviewService.rule(proposal);
       setData(current => ({ ...current, rules: result.rules }));
       setOpenRuleId(result.rules.find(item => item.rule_id === rule.rule_id)?.id || null);
       if (!rule.id) setNewRule(null);
@@ -351,6 +362,10 @@ export default function App() {
   function startRule(template = null) {
     setOpenRuleId(null);
     setNewRule(newRuleDraft(template));
+  }
+  function startPolicyRule(definition, policy) {
+    setOpenRuleId(null);
+    setNewRule({ ...newRuleDraft(), ...definition, policy });
   }
   function setRuleActive(rule, active) {
     return act(async () => {
@@ -384,10 +399,11 @@ export default function App() {
             <button disabled={busy || !!newRule} onClick={() => startRule(template)}>Use this starter: {template.title}</button>
           </article>)}
         </details>
-        {newRule && <RuleEditor key={newRule.rule_id} rule={newRule} busy={busy} onSave={saveRule} onCancel={() => setNewRule(null)} />}
+        <div hidden={!!newRule}><PolicySetup disabled={busy || !!newRule} providerReady={data.provider.configured} onUse={startPolicyRule} /></div>
+        {newRule && <RuleEditor key={newRule.rule_id} rule={newRule} busy={busy} sourceReading={data.capabilities.source_reading} onSave={saveRule} onCancel={() => setNewRule(null)} />}
         {data.rules.map(rule => <RuleEditor key={rule.id} rule={rule} busy={busy} open={openRuleId === rule.id}
           onOpenChange={(id, expanded) => setOpenRuleId(current => expanded ? id : current === id ? null : current)}
-          onSave={saveRule} onApprove={approveRule} onActive={setRuleActive} />)}
+          sourceReading={data.capabilities.source_reading} onSave={saveRule} onApprove={approveRule} onActive={setRuleActive} />)}
         <details className="card"><summary>What Suiko can help check</summary>
           {Object.values(data.supported_checks || {}).map((description, index) => <p key={index}>{description}</p>)}
         </details>
@@ -443,7 +459,7 @@ export default function App() {
               <option value="">Choose a saved review</option>{data.runs.map(item => <option key={item.id} value={item.id}>
                 Version {data.revisions.find(revision => revision.id === item.revision_id)?.version} · {reviewStatus(item)} · {item.saved_at} UTC
               </option>)}</select></label>}
-            <ReviewResult run={run} taxonomy={data.taxonomy} busy={busy} latest={run?.revision_id === current?.id} onMetadata={saveMetadata} />
+            <ReviewResult run={run} taxonomy={data.taxonomy} busy={busy} latest={run?.revision_id === current?.id} onMetadata={saveMetadata} canManageRules={data.can_manage_rules} />
           </section>
         </div>
       </div>

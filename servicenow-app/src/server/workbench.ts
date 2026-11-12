@@ -2,6 +2,9 @@ import { GlideRecord, GlideDateTime, gs } from '@servicenow/glide';
 import { RESTMessageV2 } from '@servicenow/glide/sn_ws';
 import { WorkbenchError } from './workbench-error.ts';
 import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSavedRuleActive, starterTemplates, supportedChecks } from './editorial-rules.ts';
+import { policyState, readPolicyVersion, savePolicyVersion } from './policy-records.ts';
+import { requireRulesEditor } from './rule-access.ts';
+import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } from './generated/policy-proposals.js';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
@@ -76,6 +79,51 @@ function runView(row: GlideRecord) {
 
 function providerConfig() {
   return find(tables.config, 'name', 'gemini');
+}
+
+const geminiEndpoint = model => 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent';
+
+function geminiMessage(key, model, prompt, input, schema) {
+  const message = new RESTMessageV2();
+  message.setEndpoint(geminiEndpoint(model));
+  message.setHttpMethod('POST');
+  message.setHttpTimeout(40000);
+  message.setRequestHeader('Content-Type', 'application/json');
+  message.setRequestHeader('x-goog-api-key', key);
+  message.setRequestBody(JSON.stringify({
+    systemInstruction: { parts: [{ text: prompt }] },
+    contents: [{ role: 'user', parts: [{ text: JSON.stringify(input) }] }],
+    generationConfig: {
+      responseMimeType: 'application/json', responseJsonSchema: schema,
+      maxOutputTokens: 8192, thinkingConfig: { thinkingLevel: 'MINIMAL' },
+    },
+  }));
+  return message;
+}
+
+function geminiReply(response, model, task, savedMessage) {
+  const status = response.getStatusCode();
+  if (status !== 200) {
+    throw new WorkbenchError(status === 503 ? 'Gemini is busy. ' + savedMessage
+      : 'Gemini could not ' + task + ' (HTTP ' + status + '). ' + savedMessage, 502);
+  }
+  const payload = JSON.parse(response.getBody());
+  const candidate = payload.candidates?.[0];
+  if (candidate?.finishReason !== 'STOP' || !Array.isArray(candidate.content?.parts)) {
+    throw new WorkbenchError('Gemini stopped before finishing. ' + savedMessage, 422);
+  }
+  const raw = candidate.content.parts.filter(part => !part.thought && typeof part.text === 'string')
+    .map(part => part.text).join('');
+  return { raw, model: payload.modelVersion || model };
+}
+
+export function executeGemini(message, model, task, savedMessage, onFallback = null) {
+  const response = message.execute();
+  if (response.getStatusCode() !== 503 || model !== 'gemini-3.5-flash-lite') return geminiReply(response, model, task, savedMessage);
+  const fallback = 'gemini-3.1-flash-lite';
+  onFallback?.(fallback);
+  message.setEndpoint(geminiEndpoint(fallback));
+  return { ...geminiReply(message.execute(), fallback, task, savedMessage), fallback_model: fallback };
 }
 
 export function getState(request, response) {
@@ -243,45 +291,17 @@ export function runReview(request, response) {
     if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
     if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
     persistReviewAttempt(run, prepared.input, () => {
-      const message = new RESTMessageV2();
-      message.setEndpoint('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent');
-      message.setHttpMethod('POST');
-      message.setHttpTimeout(40000);
-      message.setRequestHeader('Content-Type', 'application/json');
-      message.setRequestHeader('x-goog-api-key', key);
-      message.setRequestBody(JSON.stringify({
-        systemInstruction: { parts: [{ text: reviewData.prompt }] },
-        contents: [{ role: 'user', parts: [{ text: JSON.stringify(prepared.input) }] }],
-        generationConfig: {
-          responseMimeType: 'application/json', responseJsonSchema: reviewData.providerSchema,
-          maxOutputTokens: 8192, thinkingConfig: { thinkingLevel: 'MINIMAL' },
-        },
-      }));
-      let providerResponse = message.execute();
-      let modelUsed = model;
-      if (providerResponse.getStatusCode() === 503 && model === 'gemini-3.5-flash-lite') {
-        modelUsed = 'gemini-3.1-flash-lite';
+      const message = geminiMessage(key, model, reviewData.prompt, prepared.input, reviewData.providerSchema);
+      const reply = executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', fallback => {
         prepared['provider'] = {
           requested_model: model, prompt_version: reviewData.promptVersion,
-          fallback_model: modelUsed, fallback_reason: 'Gemini 3.5 returned HTTP 503.',
+          fallback_model: fallback, fallback_reason: 'Gemini 3.5 returned HTTP 503.',
         };
         run.setValue('request_json', JSON.stringify(prepared));
-        run.setValue('model', modelUsed);
-        message.setEndpoint('https://generativelanguage.googleapis.com/v1beta/models/' + modelUsed + ':generateContent');
-        providerResponse = message.execute();
-      }
-      const status = providerResponse.getStatusCode();
-      if (status !== 200) {
-        throw new WorkbenchError(status === 503 ? 'Gemini is busy. Your draft is saved and you can retry.'
-          : 'Gemini could not complete this review (HTTP ' + status + '). Your draft is saved.', 502);
-      }
-      const payload = JSON.parse(providerResponse.getBody());
-      const candidate = payload.candidates?.[0];
-      if (candidate?.finishReason !== 'STOP') throw new WorkbenchError('Gemini stopped before finishing this review. You can retry.', 422);
-      const raw = candidate.content.parts.filter(part => !part.thought && typeof part.text === 'string')
-        .map(part => part.text).join('');
-      run.setValue('model', payload.modelVersion || modelUsed);
-      return raw;
+        run.setValue('model', fallback);
+      });
+      run.setValue('model', reply.model);
+      return reply.raw;
     }, validators);
     return runView(run);
   });
@@ -327,6 +347,34 @@ export function approveRule(request, response) {
 
 export function setRuleActive(request, response) {
   respond(response, () => setSavedRuleActive(request.body.data));
+}
+
+export function getPolicies(request, response) {
+  respond(response, () => policyState(String(request.queryParams.version || '')));
+}
+
+export function savePolicy(request, response) {
+  respond(response, () => savePolicyVersion(request.body.data));
+}
+
+export function proposePolicyChecks(body, generate) {
+  requireRulesEditor();
+  const policy = readPolicyVersion(body?.policy_version_id);
+  const focus = body.passage_id || null;
+  if (focus && !policy.passages.some(passage => passage.id === focus)) throw new WorkbenchError('Choose a passage from this saved policy.');
+  const reply = generate({ passages: policy.passages, focus_passage_id: focus, available_checks: supportedChecks });
+  return { ...checkPolicySuggestions(reply.raw, policy, focus), policy_version_id: policy.id, model: reply.model, fallback_model: reply.fallback_model };
+}
+
+export function suggestPolicyChecks(request, response) {
+  respond(response, () => proposePolicyChecks(request.body.data, input => {
+    const config = providerConfig();
+    const key = config?.getElement('api_key').getDecryptedValue();
+    if (!key) throw new WorkbenchError('Gemini needs its server configuration. You can use the saved policy wording now.', 503);
+    const model = config.getValue('model');
+    const message = geminiMessage(key, model, policyProposalPrompt, input, policyProposalSchema);
+    return executeGemini(message, model, 'suggest checks', 'Your policy is saved. Try again or use the original wording.');
+  }));
 }
 
 export function configureProvider(request, response) {

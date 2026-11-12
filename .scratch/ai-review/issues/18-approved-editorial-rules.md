@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested in [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13).
+**Status:** done. [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) merged as `c9c8790`.
 
 **Approved:** 12 November 2026. Execution authorized under the active goal.
 
