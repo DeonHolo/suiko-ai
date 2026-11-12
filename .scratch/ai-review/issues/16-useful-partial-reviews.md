@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** in-progress
+**Status:** done — PR open for Deon's review/merge.
 
-**Approved:** 12 November 2026. Execution authorized under the active goal; first slice now in progress.
+**Approved:** 12 November 2026. Implemented and tested under the active goal.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -38,4 +38,4 @@
 
 The live model's sourcing accuracy varied: one 3.1 attempt found both unsupported claims; another 3.1 attempt and the direct 3.5 attempt inferred an unsupported station source. This ticket fixes result handling, not the later claim/source analysis. Track that quality gap in AI-21/AI-23. A mistyped opaque revision identity also motivated shorter model-facing source labels in the saved-input follow-up.
 
-PR creation is the remaining delivery step for this ticket.
+Code commit: `1469343`. [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) targets main. Deon retains review and merge authority.

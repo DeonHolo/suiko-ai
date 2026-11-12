@@ -10,7 +10,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
-| AI-16 | in-progress | pending | Reproduce radio-story failures first. |
+| AI-16 | done; PR open | `1469343` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 42 local tests; SDK/PDI builds; API smoke; three live UI attempts. |
 | AI-17 | ready-for-agent | pending | Saved format/kind/source/context inputs. |
 | AI-18 | ready-for-agent | pending | Approval, applicability and historical rule versions. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
@@ -25,7 +25,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - Tool selection: existing Gemini and validators; trial a text-returning reader such as Jina; verify a standard text-difference library in the SDK. LangExtract remains optional and is not an initial dependency.
 - Scope-specific setup, source and review tests belong to these tickets. Whole-app Inbox, human/legal decisions and wider history/access remain coordinated with the team.
 
-## AI-16 work in progress
+## AI-16 delivery
 
 - Branch: `codex/ai-16-partial-reviews`.
 - Planning baseline commit: `3f84eb0`.
@@ -37,4 +37,4 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - Pre-run expectations and screenshot/output are local under `ai-review/output/ai-16-2026-11-12/`. Three unchanged-radio reviews were clicked and inspected in the in-app browser. [Public evidence summary](../../docs/16-review-reliability-evidence.md). The final direct 3.5 attempt retained metadata while withholding an overview with a mistyped version reference. The earlier 3.1 attempt retained both expected sourcing concerns.
 - Remaining semantic gap for AI-21/AI-23: model outcomes varied, with unsupported assumptions that the station sourced the six-week duration and 420 registrations. Do not count a passed quote check as source-support accuracy.
 - AX follow-up for AI-17: use short model-facing version labels while retaining actual ServiceNow record identities in saved provenance, reducing long-ID transcription errors without weakening exact-passage checks.
-- AI-16 code/evidence are verified; prepare its commit and PR, then continue with AI-17. No user question is required.
+- AI-16 code/evidence are verified, committed as `1469343`, and published in PR #11 targeting main. No merge was performed. Continue with AI-17; no user question is required.

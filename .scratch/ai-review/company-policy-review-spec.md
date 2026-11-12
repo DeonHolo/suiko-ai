@@ -2,7 +2,7 @@
 
 **Status:** ready-for-agent — scope and eight-ticket breakdown approved.
 
-**Implementation status:** starting with AI-16 under the authorized execution goal. This document describes the agreed next build, not a claim that all features are deployed.
+**Implementation status:** in progress under the authorized execution goal; the implementation log records delivered slices and remaining work. This document describes the agreed next build, not a claim that all features are deployed.
 
 **Approved:** 12 November 2026. **Owner:** Deon.
 
