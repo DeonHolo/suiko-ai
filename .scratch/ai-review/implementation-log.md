@@ -13,8 +13,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
 | AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
-| AI-17 | review fixes verified; PR open | `6eeb194` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
-| AI-18 | in-progress | pending | Five editable starter definitions, exact wording/scope/approval snapshots; server/UI integration next. |
+| AI-17 | done | `f1ce321` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
+| AI-18 | in-progress | pending | Approved rule versions, typed applicability, editable setup and native permission/lifecycle tests built; installed verification next. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
 | AI-21 | ready-for-agent | pending | Claim/source matching, uncertainty and metadata. |
@@ -57,6 +57,7 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 
 ## AI-18 work in progress
 
-- Branch: `codex/ai-18-approved-rules`, based on the tested AI-17 branch while PR #12 is reviewed.
-- The shared rule-definition module offers the five editable starter templates, preserves manual instructions, validates typed applicability and captures exact approval snapshots. Five focused checks pass. This is not yet wired into the PDI.
-- Remaining: immutable saved rule versions, explicit save/approve/enable actions with stale-write checks, legacy approval labels, rule applicability in review input/results, editable UI and installed role/lifecycle tests.
+- AI-17 merged as `f1ce321` after checks passed on `dcefc30`; both valid CodeRabbit findings were fixed and verified before merging.
+- Branch: `codex/ai-18-approved-rules`. The rule-definition module offers five editable starters, unchanged manual instructions, typed applicability and exact approval snapshots.
+- Saved rule proposals, explicit approval, disable/re-enable, stale-write checks, legacy labels and the editor panel are implemented. Review input uses approved versions; a pending replacement stays separate. There are 73 passing local checks and a successful SDK build.
+- Remaining: install and prove the native permission/lifecycle tests, run the rule flow in the browser, record evidence, then PR/review/fix/merge.

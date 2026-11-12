@@ -47,7 +47,7 @@ export const x_2236136_suiko_ai_review = Table({
     active_revision: StringColumn({ label: 'Running revision', maxLength: 32 }),
     state: StringColumn({ label: 'State', maxLength: 20 }),
     model: StringColumn({ label: 'Model', maxLength: 100 }),
-    request_json: StringColumn({ label: 'Saved review input', maxLength: 100000 }),
+    request_json: StringColumn({ label: 'Saved review input', maxLength: 200000 }),
     response_json: StringColumn({ label: 'Gemini result', maxLength: 200000 }),
     error_json: StringColumn({ label: 'Review issue', maxLength: 20000 }),
     metadata_json: StringColumn({ label: 'Editor metadata choice', maxLength: 5000 }),
@@ -81,6 +81,37 @@ export const x_2236136_suiko_ai_config = Table({
   },
   allowWebServiceAccess: false,
   index: [{ element: 'name', unique: true }],
+});
+
+export const x_2236136_suiko_ai_rule_version = Table({
+  name: 'x_2236136_suiko_ai_rule_version', label: 'Suiko rule version', audit: true,
+  schema: {
+    parent_rule: ReferenceColumn({ label: 'Editorial rule', referenceTable: 'x_2236136_suiko_ai_rule', mandatory: true }),
+    version: IntegerColumn({ label: 'Version', mandatory: true }),
+    version_key: StringColumn({ label: 'Version identity', maxLength: 80 }),
+    definition_json: StringColumn({ label: 'Saved instruction and applicability', maxLength: 16000 }),
+    approval_json: StringColumn({ label: 'Approval record', maxLength: 1000 }),
+  },
+  allowWebServiceAccess: false,
+  index: [{ element: 'version_key', unique: true }],
+});
+
+Acl({ $id: Now.ID['rule-version-read'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
+  operation: 'read', roles: [editor], adminOverrides: true });
+Acl({ $id: Now.ID['rule-version-create'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
+  operation: 'create', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['rule-version-write'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
+  operation: 'write', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['rule-version-delete'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
+  operation: 'delete', roles: ['admin'], adminOverrides: true });
+
+Form({
+  table: 'x_2236136_suiko_ai_rule_version', view: default_view,
+  sections: [{ caption: 'Saved rule version', content: [{ layout: 'one-column', elements: [
+    { type: 'table_field', field: 'parent_rule' }, { type: 'table_field', field: 'version' },
+    { type: 'table_field', field: 'version_key' }, { type: 'table_field', field: 'definition_json' },
+    { type: 'table_field', field: 'approval_json' },
+  ] }] }],
 });
 
 Form({
@@ -284,6 +315,8 @@ RestApi({
     { $id: Now.ID['suiko-run-review'], method: 'POST', path: '/reviews', version: 1, script: runReview },
     { $id: Now.ID['suiko-save-metadata'], method: 'POST', path: '/metadata', version: 1, script: saveMetadata },
     { $id: Now.ID['suiko-save-rule'], method: 'POST', path: '/rules', version: 1, script: saveRule },
+    { $id: Now.ID['suiko-approve-rule'], method: 'POST', path: '/rules/approve', version: 1, script: approveRule },
+    { $id: Now.ID['suiko-rule-active'], method: 'POST', path: '/rules/active', version: 1, script: setRuleActive },
     { $id: Now.ID['suiko-provider-configuration'], method: 'POST', path: '/provider', version: 1, script: configureProvider },
   ],
 });

@@ -176,7 +176,8 @@
           "type": "boolean"
         },
         "rights_verification": {
-          "const": false
+          "const": false,
+          "type": "boolean"
         }
       }
     }
@@ -426,7 +427,8 @@
                   "article",
                   "script",
                   "caption"
-                ]
+                ],
+                "type": "string"
               }
             },
             "content_kinds": {
@@ -439,7 +441,8 @@
                   "news",
                   "opinion",
                   "sponsored"
-                ]
+                ],
+                "type": "string"
               }
             },
             "conditions": {
@@ -533,7 +536,8 @@
                 "type": "boolean"
               },
               "rights_verification": {
-                "const": false
+                "const": false,
+                "type": "boolean"
               }
             }
           }

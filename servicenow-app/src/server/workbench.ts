@@ -5,6 +5,7 @@ import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSa
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
+import { approvedRulesForReview } from './generated/editorial-rules.js';
 import { persistReviewAttempt } from './generated/review-attempt.js';
 import reviewData from './generated/review-data.js';
 
@@ -202,24 +203,28 @@ function buildRequest(revision: GlideRecord, requestId: string) {
   const baseline = previous.next() ? previous : null;
   const candidate = snapshot(revision);
   const earlier = snapshot(baseline);
+  if (!candidate.content_format || !candidate.content_kind) throw new WorkbenchError('Choose the format and content kind, then save a new version before using approved rules. Earlier reviews remain available.');
   const allRules = rulesView();
   const rules = allRules.filter(rule => rule.active);
   const input = {
-    schema_version: candidate.content_format && candidate.content_kind ? '0.3.0' : '0.2.0',
+    schema_version: '0.4.0', capabilities: { source_reading: false, rights_verification: false },
     request_id: requestId, content_id: revision.getValue('story'), language: 'en',
     baseline_revision: earlier, candidate_revision: candidate,
     policy_pack: {
       pack_id: 'suiko-editorial-rules',
-      version: allRules.map(rule => String(rule.version)).join('.') || '0',
-      approval_reference: 'Editor-managed development rules',
-      rules: rules.map(rule => ({ rule_id: rule.rule_id, title: rule.title, text: rule.text, priority: rule.priority })),
+      version: rules.map(rule => String(rule.approved.version)).join('.') || '0',
+      approval_reference: 'Saved editor approvals; exact versions recorded with this attempt',
+      rules: approvedRulesForReview(allRules),
     },
     taxonomy: reviewData.taxonomy,
     current_metadata: { section_id: null, tag_ids: [], short_description: '' },
   };
   if (!validators.validateRequest(input)) throw new WorkbenchError('The saved draft or active rules could not be prepared for review.', 400, validators.validateRequest.errors);
   return {
-    input, rules: allRules,
+    input, rules: rules.map(rule => ({
+      id: rule.id, rule_id: rule.rule_id, title: rule.approved.definition.title, origin: rule.approved.definition.origin, active: true,
+      version: rule.approved.version, version_id: rule.approved.version_id, approval: rule.approved.approval,
+    })),
     revision_records: { [candidate.revision_id]: id(revision), ...(baseline ? { [earlier.revision_id]: id(baseline) } : {}) },
     sources: revisionView(revision).source_urls.map(url => ({ url, status: 'not_read' })),
   };
@@ -240,6 +245,7 @@ export function runReview(request, response) {
     const model = config.getValue('model');
     const prepared = buildRequest(revision, body.request_key);
     prepared['provider'] = { requested_model: model, prompt_version: reviewData.promptVersion };
+    if (JSON.stringify(prepared).length > 190000) throw new WorkbenchError('The saved review input is too large. Shorten the active instructions or context before trying again.');
     const running = find(tables.review, 'active_revision', id(revision));
     if (running) {
       const started = Number(new GlideDateTime(running.getValue('sys_created_on')).getNumericValue());

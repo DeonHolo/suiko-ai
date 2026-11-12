@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested; PR #12 review corrections verified.
+**Status:** done — PR #12 merged as `f1ce321`; review corrections verified.
 
 **Approved:** 12 November 2026. Execution authorized under the active goal.
 

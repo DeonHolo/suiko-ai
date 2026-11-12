@@ -5,7 +5,7 @@ export const supportedChecks = {
   text_review: 'Compare the supplied headline, story, captions and earlier version.',
   context_review: 'Use supplied briefs, interview excerpts and production notes as editor-provided context.',
   metadata_suggestions: 'Suggest allowed sections, tags and a public description for the editor to choose.',
-  source_reading: 'Public links are not read in this delivery slice. Ask for an excerpt or confirmation when their contents are needed.',
+  source_reading: 'Source links are saved as references. Paste an excerpt when a rule needs the original source wording.',
   permissions: 'Read supplied permission notes; the editor confirms the actual permission or licence.',
 };
 
@@ -101,13 +101,28 @@ export function ruleApplicability(rule, revision) {
   return { applies: true, reason: rule.conditions || 'The saved format and content kind match this rule.' };
 }
 
-export function approvedRuleSnapshot(ruleId, definition, versionId, version, by, at) {
+export function approvedRuleSnapshot(ruleId, definition, versionId, version, by, at, byName = '') {
   if (typeof ruleId !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(ruleId)
       || typeof versionId !== 'string' || !/^[a-f0-9]{32}$/.test(versionId)
       || !Number.isInteger(version) || version < 1 || typeof by !== 'string' || !/^[a-f0-9]{32}$/.test(by)
-      || typeof at !== 'string' || !at.trim()) invalid('The rule approval needs its exact saved version and editor.');
+      || typeof at !== 'string' || !at.trim() || at.length > 100) invalid('The rule approval needs its exact saved version and editor.');
   return {
     rule_id: ruleId, definition: normalizeRuleDefinition(definition), version_id: versionId, version,
-    approval: { by, at },
+    approval: { by, at, ...(typeof byName === 'string' && byName.trim() ? { by_name: byName.slice(0, 160) } : {}) },
   };
+}
+
+export function approvedRulesForReview(states) {
+  return states.filter(rule => rule.active).map(rule => {
+    const snapshot = rule.approved;
+    if (!snapshot || snapshot.rule_id !== rule.rule_id) invalid('An active rule needs its matching saved approval.');
+    const definition = normalizeRuleDefinition(snapshot.definition);
+    return {
+      rule_id: snapshot.rule_id, title: definition.title, text: definition.text, priority: definition.priority,
+      applicability: {
+        formats: definition.formats, content_kinds: definition.content_kinds,
+        conditions: definition.conditions, human_checks: definition.human_checks,
+      },
+    };
+  });
 }

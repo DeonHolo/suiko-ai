@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeRuleDefinition, ruleApplicability, approvedRuleSnapshot, starterTemplates } from '../src/editorial-rules.js';
+import { normalizeRuleDefinition, ruleApplicability, approvedRuleSnapshot, approvedRulesForReview, starterTemplates } from '../src/editorial-rules.js';
 
 const manual = () => ({
   title: 'Preserve uncertainty', text: '  Keep “may” when the reporting is uncertain.\nDo not turn it into “will”.  ',
@@ -56,4 +56,15 @@ test('an approval freezes the exact saved definition, version and editor', () =>
   assert.equal(snapshot.version, 2);
   assert.equal(snapshot.approval.by, 'b'.repeat(32));
   assert.throws(() => approvedRuleSnapshot('HEADLINE', manual(), 'a'.repeat(32), 2, '', 'now'), { code: 'INVALID_RULE' });
+});
+
+test('a pending replacement does not change the wording used in reviews', () => {
+  const approved = approvedRuleSnapshot('HEADLINE', manual(), 'a'.repeat(32), 1, 'b'.repeat(32), '2026-11-12 12:40:00');
+  const state = { rule_id: 'HEADLINE', active: true, title: 'A new unapproved title', text: 'New unapproved wording.', approved };
+  const rules = approvedRulesForReview([state, { rule_id: 'OFF', active: false, approved: null }]);
+  assert.equal(rules.length, 1);
+  assert.equal(rules[0].text, manual().text);
+  assert.deepEqual(rules[0].applicability.formats, ['article']);
+  assert.deepEqual(approvedRulesForReview([{ ...state, active: false }]), []);
+  assert.throws(() => approvedRulesForReview([{ ...state, approved: null }]), { code: 'INVALID_RULE' });
 });

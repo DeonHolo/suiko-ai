@@ -74,7 +74,9 @@ export function saveRuleDraft(input) {
     throw new WorkbenchError('Give this rule a valid identity.');
   }
   const definition = normalizeRuleDefinition(input);
-  if (definition.origin.kind === 'policy') throw new WorkbenchError('Policy proposals are available in the next setup slice. You can save an editor-written rule now.');
+  if (definition.origin.kind === 'policy') throw new WorkbenchError('Company-policy suggestions are not enabled yet. You can enter the rule yourself.');
+  const encoded = JSON.stringify(definition);
+  if (encoded.length > 15500) throw new WorkbenchError('This rule is too large to save. Shorten its optional conditions or confirmation notes.');
   let parent;
   let guard = input;
   if (input.id) {
@@ -101,13 +103,18 @@ export function saveRuleDraft(input) {
     parent = saved(ruleTable, String(created));
     guard = { expected_modified: Number(parent.getValue('sys_mod_count')) };
   }
-  const number = Number(parent.getValue('version')) + 1;
+  const latest = new GlideRecord(versionTable);
+  latest.addQuery('parent_rule', uid(parent));
+  latest.orderByDesc('version');
+  latest.setLimit(1);
+  latest.query();
+  const number = Math.max(Number(parent.getValue('version')), latest.next() ? Number(latest.getValue('version')) : 0) + 1;
   const version = new GlideRecord(versionTable);
   version.initialize();
   version.setValue('parent_rule', uid(parent));
   version.setValue('version', number);
   version.setValue('version_key', uid(parent) + ':' + number);
-  version.setValue('definition_json', JSON.stringify(definition));
+  version.setValue('definition_json', encoded);
   const versionId = version.insert();
   if (!versionId) throw new WorkbenchError('A proposal was saved elsewhere. Reload the rule.', 409);
   changeParent(parent, guard, {
@@ -127,7 +134,8 @@ export function approveSavedRule(input) {
   const active = listEditorialRules().filter(rule => rule.active && rule.id !== uid(parent));
   if (active.length >= 12) throw new WorkbenchError('Up to twelve rules can be active. Turn off another rule before approving this one.');
   const approval = approvedRuleSnapshot(parent.getValue('rule_id'), json(version.getValue('definition_json')),
-    uid(version), Number(version.getValue('version')), String(gs.getUserID()), new GlideDateTime().getValue());
+    uid(version), Number(version.getValue('version')), String(gs.getUserID()), new GlideDateTime().getValue(), String(gs.getUserDisplayName()));
+  if (JSON.stringify(approval).length > 16000) throw new WorkbenchError('This approved rule is too large to save. Shorten its optional notes and save a new proposal.');
   changeParent(parent, input, { approved_json: JSON.stringify(approval), active: true });
   // The parent's approved snapshot is authoritative and is saved atomically above.
   version.setValue('approval_json', JSON.stringify(approval.approval));
