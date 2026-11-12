@@ -16,6 +16,8 @@ The next build must explain what was checked, which company rule applies, which 
 
 ## Solution
 
+**Product direction confirmed by Deon, 12 November:** Suiko supports an editor's judgment. A useful AI assessment with visible confidence, relevant passages and an actionable next step is a valid result. Completion does not require proving real-world truth or eliminating all model uncertainty. Editors and legal reviewers retain publishing authority. Keep uncertain judgments visible and easy to inspect; reserve technical failure for work the software could not complete. Test usefulness, internal consistency and the review experience without starting an endless fact-certification loop.
+
 Suiko AI is an internal editorial workspace for a small media team. One everyday Editor saves a story version and presses **Review this version**. A designated editor capability manages company rules. Legal joins only when an editor assigns a version for legal review.
 
 ### Set up the publication's rules
@@ -155,6 +157,8 @@ Extend the request/response contract with a new supported version for the additi
 Keep Gemini and the existing shared application checks. Trial Jina Reader as the first text-returning reader candidate; retain Firecrawl as an alternative if the proof exposes an access or extraction problem. Consider jsdiff for mechanical revision differences after checking SDK compatibility. Use only the reader that passes the agreed proof initially.
 
 Keep the existing local tests. Promptfoo is optional tooling if the evaluation matrix becomes cumbersome. LangExtract is optional research, not a dependency, mandatory benchmark or separate service in this build. Consider it only after a measured policy-extraction gap. PDF.js, Readability and Label Studio remain reference options for later needs.
+
+**Decision 1 trial approved, 12 November:** During AI-21, try Google's free-tier Decisions API on claim/source support. Keep Flash-Lite for explanatory writing. Show confidence as an advisory signal and evaluate whether the added call makes reviews more useful. Save the trial's results and limits; keep the existing flow if the trial adds no practical value. See [research and proposed trial](decisions-api-research.md).
 
 ## Testing Decisions
 

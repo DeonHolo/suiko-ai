@@ -20,6 +20,8 @@
 4. Show Potential conflict, Needs confirmation, No issue found and Not applicable consistently. Include both conflict and unresolved coverage when a rule has both.
 5. Preserve checked results when a page or finding fails. Offer a concrete next action and keep public metadata free of flagged/unconfirmed claims and internal-only material.
 6. Test a mixed-claim article, a contradictory source, an irrelevant source and a permission note before a fresh live run. Save expectations first and retain actual results.
+7. Run the approved Gemini Decision 1 trial using the existing protected Gemini key. Send frozen claim/source material and explicit support/contradiction/insufficient-information choices. Compare its advisory judgments with Flash-Lite alone on a small, pre-labelled set. Record confidence, useful findings, misses, latency and input usage. Retain the integration if it improves the editor's experience; otherwise record why it was left out. See [trial notes](../decisions-api-research.md).
+8. Present the judgment, relevant passages, confidence where available and a concrete editor action. Uncertainty is review information, not a failed job or a reason to demand absolute truth. Keep the final publishing decision with the editor/legal reviewer.
 
 **Done when**
 
@@ -27,7 +29,10 @@
 - [ ] A story with supported and unsupported claims shows both accurately.
 - [ ] A contradiction shows both passages without claiming independent truth certification.
 - [ ] Rule summaries, retained findings, coverage and suggested public description agree.
+- [ ] Decision 1 has been tried and its practical value recorded; the panel makes confidence and editor actions easy to understand.
 
 **Ask your AI**
 
 > Work on AI-21. Use the approved company rules and frozen source snapshots to assess relevant claims individually. Return exact story/source references, clear uncertainty and actionable rule-linked findings. Reuse partial-result handling and verify quoted passages before showing checked results. Write expectations for mixed supported, unsupported, unrelated and contradictory cases before calling Gemini.
+
+Try Gemini Decision 1 as the approved optional confidence-producing checker. Keep Flash-Lite for explanation. The goal is useful, digestible information for a human editor; no absolute-truth certification gate is required.
