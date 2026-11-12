@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested; PR pending.
+**Status:** implemented and tested; PR #12 review corrections verified.
 
 **Approved:** 12 November 2026. Execution authorized under the active goal.
 
@@ -33,4 +33,4 @@
 
 ## Evidence
 
-Original implementation commit `6eeb194`. Twelve new input/snapshot checks pass alongside the preserved AI-16 suite, for 62 total. Article/script creation, an article revision, switching/reopening, legacy history and unread-link labels were exercised in the in-app browser and checked against stored API data. A live direct 3.5 review used the saved second version. [Evidence and limits](../../../docs/17-versioned-input-evidence.md).
+Original implementation commit `6eeb194`. Fourteen input/snapshot checks pass alongside the preserved AI-16 suite, for 64 total. Article/script creation, an article revision, switching/reopening, legacy history and unread-link labels were exercised in the in-app browser and checked against stored API data. A direct 3.5 review used the saved second version. Both CodeRabbit input findings were fixed and verified against the installed save API without changing existing versions or making Gemini calls. [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) · [Evidence and limits](../../../docs/17-versioned-input-evidence.md).

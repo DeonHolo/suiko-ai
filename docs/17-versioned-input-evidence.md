@@ -20,9 +20,17 @@ The existing radio story retained its unclassified legacy inputs and earlier his
 
 ## Repeatable checks
 
-The combined branch has **62 passing local checks**: AI-16's 50 plus twelve input/snapshot checks in [story-input.test.js](../ai-review/test/story-input.test.js). They cover explicit choices, missing/invalid types, URL normalization, deduplication, the five-source allowance, rejected private/credential-bearing addresses, text limits, frozen classified versions, legacy snapshots and 0.2/0.3 contract compatibility.
+The combined branch has **64 passing local checks**: AI-16's 50 plus fourteen input/snapshot checks in [story-input.test.js](../ai-review/test/story-input.test.js). They cover explicit choices, missing/invalid types, URL normalization, deduplication, the five-source allowance, rejected private/credential-bearing addresses, text/storage limits, frozen classified versions, legacy snapshots and 0.2/0.3 contract compatibility.
 
 An invalid `pdf` format was also rejected through the actual save API before creating its test story. SDK builds, installation on the existing app identity and page/API smoke checks passed. The later installed AI-16 server regression passed on the combined build as well.
+
+## CodeRabbit follow-up
+
+Both inline findings were valid. Source-link fragments now receive the same known-credential-parameter check as queries. The serialized source list is bounded to the column's 8,000-character capacity before saving, including JSON escaping.
+
+Both new regression tests failed before the fix and passed afterward. The installed save API then rejected a synthetic access parameter in a fragment and an escaped five-link set exceeding the saved capacity. Stored article versions and review attempts were unchanged. No review action or Gemini call was made for those cases. The in-app form also displayed the private-link message without saving a story, and the original article was reopened afterward.
+
+Ordinary section anchors remain accepted, including the original rehearsal source link. The local evidence is `link-validation.json` beside the earlier snapshots and screenshots.
 
 ## Development details for the next ticket
 

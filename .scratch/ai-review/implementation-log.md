@@ -13,7 +13,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
 | AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
-| AI-17 | PR open; CodeRabbit reviewing | `6eeb194` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 62 combined local checks; SDK/PDI build and smoke; article/script save-reopen, revision snapshots and live review. |
+| AI-17 | review fixes verified; PR open | `6eeb194` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
 | AI-18 | in-progress | pending | Five editable starter definitions, exact wording/scope/approval snapshots; server/UI integration next. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
@@ -53,6 +53,7 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - Short model-facing draft-N labels map to actual ServiceNow record identities in saved provenance.
 - 62 combined local checks passed, along with SDK/frozen-key build, installation and page/API smoke. Article/script creation, article version 2, switching stories and legacy history were verified through the in-app browser and saved API readback. A live direct 3.5 article review retained its overview and correctly identified the context edit.
 - Source links remain visibly Not read. Actual retrieval belongs to AI-20. Private inputs, assertions and screenshots are under `ai-review/output/ai-17-2026-11-12/`.
+- Both inline CodeRabbit findings were valid: fragment access parameters and serialized URL-list overflow. New tests failed before the fixes and passed afterward. The installed API rejected both examples with existing versions/reviews unchanged; the form showed the access-link message. No Gemini calls were made for these checks. The local suite now has 64 passing checks.
 
 ## AI-18 work in progress
 
