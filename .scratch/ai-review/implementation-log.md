@@ -12,7 +12,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
-| AI-16 | tested; review corrections ready | `1469343` plus corrections · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
+| AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
 | AI-17 | implemented and tested; PR pending | `6eeb194` | 62 combined local checks; SDK/PDI build and smoke; article/script save-reopen, revision snapshots and live review. |
 | AI-18 | ready-for-agent | pending | Approval, applicability and historical rule versions. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
@@ -45,6 +45,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - Deon confirmed useful advisory judgments, visible confidence and an easy editor experience as the goal. AI-21 includes the approved Decision 1 trial. No absolute-truth completion gate is required.
 
 ## AI-17 delivery
+
+AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf0`. The follow-up review's evidence wording was corrected; its fixture-cleanup suggestion was declined after verifying ATF rollback and no leftover fixture stories. Local main was pulled successfully before integrating it into this branch.
 
 - Branch: `codex/ai-17-story-inputs`; original code commit `6eeb194`. AI-16 corrections were merged into this branch while preserving its installed schema and records.
 - Explicit format/kind, separate bounded source URLs and optional Review context are saved per revision. Classified 0.3 requests preserve legacy 0.2 baselines/reviews.

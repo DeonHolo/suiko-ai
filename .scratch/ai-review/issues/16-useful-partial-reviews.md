@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested — CodeRabbit corrections ready for the authorized review/merge loop.
+**Status:** done — PR #11 merged on 12 November 2026 at 20:35 Singapore time.
 
 **Approved:** 12 November 2026. Implemented and tested under the active goal.
 
@@ -39,3 +39,5 @@
 The live model's sourcing accuracy varied: one 3.1 attempt found both unsupported claims; another 3.1 attempt and the direct 3.5 attempt inferred an unsupported station source. This ticket fixes result handling, not the later claim/source analysis. Track that quality gap in AI-21/AI-23. A mistyped opaque revision identity also motivated shorter model-facing source labels in the saved-input follow-up.
 
 Initial code commit: `1469343`. [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) targets main. Deon now authorizes the agent to assess CodeRabbit's review, fix applicable findings, verify checks and merge. This replaces the earlier wait-for-owner instruction.
+
+Merged as `ab679b7` after the final GitHub validation and CodeRabbit checks succeeded. Valid follow-up documentation corrections were applied; the fixture-cleanup suggestion was declined with documented ATF rollback behavior and a zero-row instance check.

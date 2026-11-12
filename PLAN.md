@@ -4,7 +4,7 @@ Team Backyardigans · 12 November 2026 · First-build workflow confirmed with De
 
 Claim work in [Team tasks](TEAM-TASKS.md). It has the next steps for each teammate and the status of the five assignment requirements.
 
-**AI review redesign, 12 November:** Deon confirmed the [company-policy review specification](.scratch/ai-review/company-policy-review-spec.md) and [eight-ticket breakdown](.scratch/ai-review/company-policy-review-tickets-proposed.md). The individual local tickets below are published and belong to Deon. He authorized implementation with a separate commit/PR to main per ticket and retains review/merge authority. [Execution log](.scratch/ai-review/implementation-log.md) · [Decisions](.scratch/ai-review/policy-redesign-interview.md) · [Reusable tools](docs/15-reusable-tools-research.md).
+**AI review redesign, 12 November:** Deon confirmed the [company-policy review specification](.scratch/ai-review/company-policy-review-spec.md) and [eight-ticket breakdown](.scratch/ai-review/company-policy-review-tickets-proposed.md). These local tickets belong to Deon. He authorized a separate commit/PR per ticket, followed by agent review of CodeRabbit's findings, justified fixes, successful checks and agent merge to main. [Execution log](.scratch/ai-review/implementation-log.md) · [Decisions](.scratch/ai-review/policy-redesign-interview.md) · [Reusable tools](docs/15-reusable-tools-research.md).
 
 Suiko AI is a private ServiceNow workspace for a small media team. One **Editor** can enter drafts, review them, ask for fixes, and sign off. A designated editor can manage shared rules. A legal reviewer joins when assigned a specific draft to clear. [Team build guide](Suiko%20AI%20Build%20Guide.md) · [Product brief](docs/12-suiko-ai-product-brief.md) · [Decision register](docs/06-sources-and-open-decisions.md#decision-register)
 
@@ -56,12 +56,12 @@ The [approved specification](.scratch/ai-review/company-policy-review-spec.md) d
 
 | ID | What it delivers | Blocked by | Status |
 | --- | --- | --- | --- |
-| [AI-16](.scratch/ai-review/issues/16-useful-partial-reviews.md) | Useful partial results, consistent statuses and clear failures | None | done · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) open |
-| [AI-17](.scratch/ai-review/issues/17-story-inputs-and-context.md) | Format/kind, source URLs and context saved with each version | None | in-progress |
+| [AI-16](.scratch/ai-review/issues/16-useful-partial-reviews.md) | Useful partial results, consistent statuses and clear failures | None | done · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) merged |
+| [AI-17](.scratch/ai-review/issues/17-story-inputs-and-context.md) | Format/kind, source URLs and context saved with each version | None | implemented and tested; PR next |
 | [AI-18](.scratch/ai-review/issues/18-approved-editorial-rules.md) | Approved editable starter/manual rules and applicability | AI-17 | ready-for-agent |
 | [AI-19](.scratch/ai-review/issues/19-policy-to-proposed-checks.md) | Company policy and refinements turned into editable proposed checks | AI-18 | ready-for-agent |
 | [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | ready-for-agent |
-| [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Relevant claims matched to source passages under approved rules | AI-16, AI-20 | ready-for-agent |
+| [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Advisory claim/source matches, confidence and Decision 1 trial | AI-16, AI-20 | ready-for-agent |
 | [AI-22](.scratch/ai-review/issues/22-grounded-revision-comparison.md) | Revision summaries grounded in actual saved-text changes | AI-16 | ready-for-agent |
 | [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | ready-for-agent |
 
