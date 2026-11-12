@@ -141,7 +141,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
         ? item.evidence.filter((reference, index) => references([reference], currentId, `${path}/evidence/${index}`)
           && !checks.some(check => check.status === 'supported' && check.claim.segment_id === reference.segment_id
             && check.claim.quote.includes(reference.quote))) : [];
-      sourceGaps.push(...gapEvidence);
+      sourceGaps.push(...gapEvidence.map(reference => ({ rule_id: item.rule_id, reference })));
       return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap, gapEvidence);
     }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
@@ -255,9 +255,9 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       : policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))
         .flatMap(rule => rule.evidence).concat(findings.flatMap(finding => finding.evidence));
     const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference => {
-      const supported = claimChecks.some(check => check.status === 'supported'
-        && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote));
-      const sourceGap = !supported && sourceGaps.some(gap => overlapsPassage(request.candidate_revision, gap, reference));
+      const sourceGap = sourceGaps.some(({ rule_id, reference: gap }) => overlapsPassage(request.candidate_revision, gap, reference)
+        && !claimChecks.some(check => check.rule_id === rule_id && check.status === 'supported'
+          && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote)));
       return sourceGap || suspectSegments.has(reference.segment_id)
         || concernEvidence.some(concern => concern.segment_id === reference.segment_id
           && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)

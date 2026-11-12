@@ -171,10 +171,12 @@ export function runPolicySetupRegression() {
 export function runClaimEvidenceRegression() {
   expect(gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated rules-editor test user.');
   const sourceId = 'ATF-source-' + gs.generateGUID();
+  const secondSourceId = 'ATF-second-source-' + gs.generateGUID();
   const headlineId = 'ATF-headline-' + gs.generateGUID();
   const scope = { formats: ['article'], content_kinds: ['news'], origin: { kind: 'manual' }, priority: 'standard' };
   for (const definition of [
     { ...scope, rule_id: sourceId, title: 'ATF supplied brief', text: 'Check the times and seats against the brief.', requires_sources: true },
+    { ...scope, rule_id: secondSourceId, title: 'ATF second source requirement', text: 'Confirm the room capacity with a signed venue notice.', requires_sources: true },
     { ...scope, rule_id: headlineId, title: 'ATF headline', text: 'Do not say a proposed opening is confirmed.' },
   ]) {
     const draft = current(action(saveRule, definition), definition.rule_id);
@@ -208,7 +210,7 @@ export function runClaimEvidenceRegression() {
   });
   const seats = seating.map(claim => check(claim, 'supported', claim));
   const conflict = check(time, 'contradicted', actualTime);
-  function run(checks, includeSourceFinding, reportedStatus, decision = false, description = price) {
+  function run(checks, includeSourceFinding, reportedStatus, { decision = false, description = price, secondSourceGap = false } = {}) {
     const result = action((request, response) => reviewSavedVersion(request, response, () => ({
       model: 'injected-claim-fixture',
       generate(input) {
@@ -220,21 +222,29 @@ export function runClaimEvidenceRegression() {
           rule_id: sourceId, summary: 'The brief gives a different time.', action: 'Check the screening time.',
           evidence: [ref('body-1', time)],
         }] : [finding];
+        const statuses = {
+          [sourceId]: reportedStatus, [headlineId]: 'no_potential_conflict_observed',
+          [secondSourceId]: secondSourceGap ? 'not_assessable' : 'not_applicable',
+        };
+        const evidence = {
+          [headlineId]: [ref('title', title)],
+          [sourceId]: reportedStatus === 'not_assessable' ? [ref('body-1', [...seating, time, price].join(' '))] : [],
+          [secondSourceId]: secondSourceGap ? [ref('body-1', seating[0])] : [],
+        };
         return { model: 'injected-claim-fixture', raw: JSON.stringify({
           overview: 'The draft covers a screening.', overview_evidence: [ref('body-1', seating[0])], findings, claim_checks: checks,
           assessment: {
             status: 'reviewed', coverage: { revision_comparison: 'not_requested', metadata_suggestions: 'complete' }, changes: [], limitations: [],
             policy_assessments: input.policy_pack.rules.map(rule => ({
               rule_id: rule.rule_id,
-              status: rule.rule_id === sourceId ? reportedStatus : rule.rule_id === headlineId ? 'no_potential_conflict_observed' : 'not_applicable',
-              reason: 'Fixture rule assessment.', evidence: rule.rule_id === headlineId ? [ref('title', title)]
-                : rule.rule_id === sourceId && reportedStatus === 'not_assessable' ? [ref('body-1', [...seating, time, price].join(' '))] : [],
+              status: statuses[rule.rule_id] || 'not_applicable',
+              reason: 'Fixture rule assessment.', evidence: evidence[rule.rule_id] || [],
               suggested_action: null,
             })),
             metadata_suggestions: {
               section: { suggested_id: null, reason: 'No section selected.', evidence: [] },
               tags: { suggested_ids: [], reason: 'No tags selected.', evidence: [] },
-              short_description: reportedStatus === 'not_assessable'
+              short_description: reportedStatus === 'not_assessable' || secondSourceGap
                 ? { suggested_text: description, reason: 'From the draft.', evidence: [ref('body-1', description)] }
                 : { suggested_text: title, reason: 'From the draft title.', evidence: [ref('title', title)] },
             },
@@ -253,7 +263,7 @@ export function runClaimEvidenceRegression() {
     expect(result.status === 200 && result.body.state === 'complete', 'Review did not retain usable results: ' + JSON.stringify(result.body.error));
     return result.body;
   }
-  const mixed = run([...seats, conflict], false, 'potential_conflict', true);
+  const mixed = run([...seats, conflict], false, 'potential_conflict', { decision: true });
   const sourceRule = review => review.result.assessment.policy_assessments.find(rule => rule.rule_id === sourceId);
   expect(sourceRule(mixed).status === 'potential_conflict' && sourceRule(mixed).evidence[0].quote === time, 'The conflict was displaced by the supported claims.');
   expect(mixed.result.decision_check.status === 'partial' && mixed.result.decision_check.skipped_claim_ids[0] === 'claim-13', 'The confidence coverage limit was not saved.');
@@ -264,9 +274,14 @@ export function runClaimEvidenceRegression() {
   const gap = run([seats[0]], false, 'not_assessable');
   expect(sourceRule(gap).evidence[0].quote.includes(price) && gap.result.claim_checks[0].status === 'supported'
     && gap.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'The unconfirmed price was lost or accepted into the public description.');
-  const supportedDescription = run([seats[0]], false, 'not_assessable', false, seating[0]);
+  const supportedDescription = run([seats[0]], false, 'not_assessable', { description: seating[0] });
   expect(supportedDescription.result.assessment.metadata_suggestions.short_description.suggested_text === seating[0],
     'A broad gap quote withheld the separately supported seats sentence.');
+  const crossRule = run([seats[0]], false, 'no_potential_conflict_observed', { description: seating[0], secondSourceGap: true });
+  expect(crossRule.result.assessment.policy_assessments.find(rule => rule.rule_id === secondSourceId).status === 'not_assessable'
+    && crossRule.result.claim_checks[0].status === 'supported'
+    && crossRule.result.assessment.metadata_suggestions.short_description.suggested_text === null,
+    'Support under one rule cleared an unresolved requirement under another rule.');
   const badQuote = run([seats[0], { ...conflict, sources: [{ ...conflict.sources[0], quote: 'The screening starts at 8 p.m.' }] }], false, 'no_potential_conflict_observed');
   expect(sourceRule(badQuote).status === 'not_assessable' && badQuote.result.claim_checks[0].status === 'supported'
     && badQuote.result.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'), 'A bad quote erased valid support or cleared the rule.');
