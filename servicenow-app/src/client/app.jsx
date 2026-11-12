@@ -123,7 +123,7 @@ function ReviewChecks({ result, run }) {
   </details>;
 }
 
-function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
+function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules }) {
   if (!run) return <section className="card empty"><h2>Your review will appear here</h2><p>Save a version, then click Review this version.</p></section>;
   if (run.state === 'running') return <section className="card"><h2>Review in progress</h2><p>Gemini is reading the saved draft and rules.</p></section>;
   if (run.state !== 'complete') return <section className="card failure">
@@ -201,6 +201,9 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
           {outcome && <><p className="rule-status">{ruleStatuses[outcome.status]}</p><p>{outcome.reason}</p>
             <Evidence references={outcome.evidence} run={run} /></>}
           <details><summary>Rule wording used</summary><p>{rule.text || run.request.input.policy_pack.rules.find(item => item.rule_id === rule.rule_id)?.text}</p></details>
+          {rule.origin?.kind === 'policy' && (canManageRules
+            ? <OriginalPolicy key={rule.origin.policy_version_id} origin={rule.origin} />
+            : <p className="hint">Based on company policy</p>)}
         </article>;
       })}
       {result.assessment.limitations.map((item, index) => <p key={index}>{item}</p>)}
@@ -455,7 +458,7 @@ export default function App() {
               <option value="">Choose a saved review</option>{data.runs.map(item => <option key={item.id} value={item.id}>
                 Version {data.revisions.find(revision => revision.id === item.revision_id)?.version} · {reviewStatus(item)} · {item.saved_at} UTC
               </option>)}</select></label>}
-            <ReviewResult run={run} taxonomy={data.taxonomy} busy={busy} latest={run?.revision_id === current?.id} onMetadata={saveMetadata} />
+            <ReviewResult run={run} taxonomy={data.taxonomy} busy={busy} latest={run?.revision_id === current?.id} onMetadata={saveMetadata} canManageRules={data.can_manage_rules} />
           </section>
         </div>
       </div>

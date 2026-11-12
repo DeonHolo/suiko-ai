@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** implemented and tested in ServiceNow. Review and merge remain.
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -23,10 +23,12 @@
 
 **Done when**
 
-- [ ] The editor can move from pasted policy to an approved rule used by a story review.
-- [ ] Original wording and passage references remain inspectable after refinement.
-- [ ] Failed proposals and discarded checks do not become active rules.
-- [ ] The first path works through direct Gemini plus application checks without adding LangExtract or a Python service.
+- [x] The editor can move from pasted policy to an approved rule used by a story review.
+- [x] Original wording and passage references remain inspectable after refinement.
+- [x] Failed proposals and discarded checks do not become active rules.
+- [x] Direct Gemini plus the existing application checks produced usable proposals.
+
+The [setup and evidence](../../../docs/19-company-policy-setup.md) record the successful suggestions, one missed clause, the original and revised policy copies, and the saved story review.
 
 **Ask your AI**
 

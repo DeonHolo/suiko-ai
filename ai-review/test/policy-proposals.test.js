@@ -36,6 +36,7 @@ test('a checked suggestion retains the exception, scope and original policy refe
   assert.equal(result.proposals[0].definition.active, undefined);
   assert.equal(result.proposals[0].definition.approval, undefined);
   assert.deepEqual(result.questions, [question]);
+  assert.deepEqual(result.unaddressed_passage_ids, ['policy-2']);
 });
 
 test('a wrong quote, an unsupported check or an unrelated focused proposal does not hide valid suggestions', () => {
@@ -47,6 +48,7 @@ test('a wrong quote, an unsupported check or an unrelated focused proposal does 
   assert.equal(result.proposals.length, 1);
   assert.equal(result.proposals[0].definition.title, headline.title);
   assert.deepEqual(result.questions, []);
+  assert.deepEqual(result.unaddressed_passage_ids, []);
 });
 
 test('source needs and human confirmation remain visible on an editable proposal', () => {

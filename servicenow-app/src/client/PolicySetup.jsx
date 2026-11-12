@@ -90,7 +90,8 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
   function suggest(passageId = null) {
     return act(async () => {
       const next = await reviewService.suggestPolicy(policy, passageId);
-      setResult({ ...next, proposals: next.proposals.map((proposal, index) => ({ ...proposal, index })) });
+      setResult({ ...next, unaddressed_passage_ids: next.unaddressed_passage_ids || [],
+        proposals: next.proposals.map((proposal, index) => ({ ...proposal, index })) });
       if (!next.proposals.length && !next.questions.length) setMessage('There are no usable suggestions for this copy. You can use the original wording.');
     });
   }
@@ -120,7 +121,8 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
     </select></label>}
     <form onSubmit={event => { event.preventDefault(); save(); }}>
       <label>Policy title<input required maxLength={160} disabled={unavailable} value={draft.title} onChange={event => update('title', event.target.value)} /></label>
-      <label>Policy text<textarea required maxLength={12000} disabled={unavailable} value={draft.text} onChange={event => update('text', event.target.value)} /></label>
+      <label>Policy text<textarea aria-describedby="policy-text-hint" required maxLength={12000} disabled={unavailable} value={draft.text} onChange={event => update('text', event.target.value)} /></label>
+      <p id="policy-text-hint" className="hint">Use blank lines between passages. Up to 12,000 characters.</p>
       <div className="actions">
         <button disabled={unavailable || !dirty || !draft.title.trim() || !draft.text.trim()}>Save policy copy</button>
         {dirty && <button type="button" disabled={unavailable} onClick={() => {
@@ -146,7 +148,7 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
       </details>
       {result && <div className="policy-suggestions">
         {!!result.proposals.length && <h3>Suggested checks</h3>}
-        {result.skipped > 0 && <p className="notice">{result.skipped} suggestions or questions could not be matched to the saved policy. You can use the original wording or ask again.</p>}
+        {result.skipped > 0 && <p className="notice">Suiko left out {result.skipped} suggestions or questions it could not use. You can use the original wording or ask again.</p>}
         {result.proposals.map(proposal => <article key={proposal.index} className="change">
           <h4>{proposal.definition.title}</h4><p>{proposal.definition.text}</p>
           <p className="hint">{proposal.definition.formats.join(', ')} · {proposal.definition.content_kinds.join(', ')}</p>
@@ -163,6 +165,17 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
         {result.questions.map((question, index) => <article className="change" key={index}>
           <p>{question.text}</p><ProposalEvidence evidence={question.evidence} policy={policy} />
         </article>)}
+        {!!result.unaddressed_passage_ids.length && <details className="policy-original">
+          <summary>Passages without a suggestion or question ({result.unaddressed_passage_ids.length})</summary>
+          {policy.passages.filter(passage => result.unaddressed_passage_ids.includes(passage.id)).map(passage =>
+            <section className="change" key={passage.id}>
+              <blockquote>{passage.text}</blockquote>
+              <div className="actions">
+                <button disabled={unavailable || [...passage.text].length > 3000} onClick={() => useWording(passage)}>Use this wording</button>
+                <button disabled={unavailable || !providerReady} onClick={() => suggest(passage.id)}>Suggest a check for this passage</button>
+              </div>
+            </section>)}
+        </details>}
       </div>}
     </>}
   </details>;

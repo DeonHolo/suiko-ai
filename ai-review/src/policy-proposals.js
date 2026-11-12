@@ -83,14 +83,14 @@ export function checkPolicySuggestions(raw, policy, focus = null) {
   } catch {
     invalid('Suiko could not read the suggestions. The policy is saved. Try again or use the original wording.');
   }
-  if (!Array.isArray(reply?.proposals) || reply.proposals.length > 6 || !Array.isArray(reply.questions) || reply.questions.length > 5) {
+  if (!Array.isArray(reply?.proposals) || !Array.isArray(reply.questions)) {
     invalid('The suggestion list was incomplete. Try again or use the original wording.');
   }
 
   const proposals = [];
   const questions = [];
-  let skipped = 0;
-  for (const item of reply.proposals) {
+  let skipped = Math.max(0, reply.proposals.length - 6) + Math.max(0, reply.questions.length - 5);
+  for (const item of reply.proposals.slice(0, 6)) {
     const evidence = checkedEvidence(item?.evidence, policy.passages);
     if (!evidence || (focus && !evidence.some(reference => reference.passage_id === focus))
         || !Array.isArray(item.checks) || !item.checks.length || item.checks.length > 5
@@ -108,7 +108,7 @@ export function checkPolicySuggestions(raw, policy, focus = null) {
       skipped++;
     }
   }
-  for (const item of reply.questions) {
+  for (const item of reply.questions.slice(0, 5)) {
     const evidence = checkedEvidence(item?.evidence, policy.passages);
     if (!evidence || (focus && !evidence.some(reference => reference.passage_id === focus))
         || typeof item.text !== 'string' || !item.text.trim() || item.text.length > 500) {
@@ -117,5 +117,8 @@ export function checkPolicySuggestions(raw, policy, focus = null) {
     }
     questions.push({ text: item.text, evidence });
   }
-  return { proposals, questions, skipped };
+  const cited = new Set([...proposals, ...questions].flatMap(item => item.evidence.map(reference => reference.passage_id)));
+  const unaddressed_passage_ids = policy.passages.filter(passage => (!focus || passage.id === focus) && !cited.has(passage.id))
+    .map(passage => passage.id);
+  return { proposals, questions, skipped, unaddressed_passage_ids };
 }

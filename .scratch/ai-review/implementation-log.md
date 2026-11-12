@@ -14,8 +14,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | --- | --- | --- | --- |
 | AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
 | AI-17 | done | `f1ce321` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
-| AI-18 | implemented and tested | [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
-| AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
+| AI-18 | done | `c9c8790` · [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
+| AI-19 | implemented and tested | pending | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
 | AI-21 | ready-for-agent | pending | Claim/source matching, uncertainty and metadata. |
 | AI-22 | ready-for-agent | pending | Literal edits and accurate change summaries. |
@@ -66,3 +66,11 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - CodeRabbit found that a fresh token could overwrite approval metadata and that the native test depended on available rule slots. The fix rejects a second approval of the same version and checks 11 and 12 other active rules using a controlled count. The installed suite passed as `217015c183689b106fffc629feaad395`.
 - A live footage example initially asked for the correct permission record with the wrong status. The clarified prompt and Gemini 3.1 fallback showed **Needs confirmation** on the same saved script. Both runs are recorded. The history test suggestion is covered by actual browser reopen and saved-request readback after the replacement approval.
 - The follow-up review caught a status notice that could point to an empty concerns card. The notice now names incomplete sections and directs the editor to the recorded reason.
+- GitHub validation and CodeRabbit completed on `eef3d7a`. The three review threads were resolved. PR #13 merged on 12 November at 22:41 Singapore.
+
+## AI-19 delivery
+
+- Branch `codex/ai-19-policy-proposals`. Saved policy copies remain inspectable after edits. The designated editor can use a passage as written or ask Gemini for proposals with quotes and questions. A proposal needs explicit approval before use.
+- Native ServiceNow tests passed with separate non-admin accounts. Browser testing saved and reopened the Juniper Cut handbook, discarded a suggestion, approved an edited proposal, saved a revised handbook and reviewed a fictional article against the approved version.
+- The original Gemini schema returned 400. The leaner schema passed a direct 3.5 test and the full ServiceNow example. Gemini preserved the vote and footage exceptions and asked about the sponsor conflict. One vague clause was absent from the reply, so the proposal screen now surfaces uncited passages for the editor.
+- [Setup and observed results](../../docs/19-company-policy-setup.md). No additional extraction service was needed for these cases.
