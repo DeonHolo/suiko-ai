@@ -147,6 +147,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
   if (result.assessment.coverage.metadata_suggestions === 'incomplete') missingSections.push('metadata suggestions');
   return <>
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
+    {run.rules_current === false && <p className="notice">The editorial rules have changed since this review. Run a new review to use the current rules. The rule versions used here are saved below.</p>}
     {(result.assessment.status !== 'reviewed' || sourceGaps) && <section className="notice" role="status">
       <strong>{result.assessment.status === 'unable_to_assess' ? 'This review could not assess the requested checks.' : 'Some parts still need checking.'}</strong>
       {hasDiagnostics ? <p>Open “What could not be checked” for the gaps.</p> : null}

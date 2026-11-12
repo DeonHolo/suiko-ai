@@ -12,7 +12,7 @@ import { literalChanges } from './generated/revision-diff.js';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
-import { approvedRulesForReview } from './generated/editorial-rules.js';
+import { approvedRulesForReview, reviewRulesCurrent } from './generated/editorial-rules.js';
 import { persistReviewAttempt } from './generated/review-attempt.js';
 import reviewData from './generated/review-data.js';
 
@@ -71,7 +71,7 @@ function revisionView(row: GlideRecord) {
   };
 }
 
-function runView(row: GlideRecord) {
+function runView(row: GlideRecord, rules = rulesView()) {
   const request = parse(row.getValue('request_json'));
   const sources = parse(row.getValue('source_evidence_json'));
   if (request && sources) {
@@ -83,6 +83,7 @@ function runView(row: GlideRecord) {
   return {
     id: id(row), revision_id: row.getValue('revision'), state: row.getValue('state'),
     model: row.getValue('model'), request,
+    rules_current: reviewRulesCurrent(request?.rules, rules),
     result: parse(row.getValue('response_json')), error: parse(row.getValue('error_json')),
     metadata: parse(row.getValue('metadata_json')), modified: row.getValue('sys_mod_count'),
     saved_at: row.getValue('sys_created_on'),
@@ -140,6 +141,7 @@ export function executeGemini(message, model, task, savedMessage, onFallback = n
 
 export function getState(request, response) {
   respond(response, () => {
+    const rules = rulesView();
     const stories = [];
     const row = new GlideRecord(tables.story);
     row.orderByDesc('sys_updated_on');
@@ -162,11 +164,11 @@ export function getState(request, response) {
       review.orderByDesc('sys_created_on');
       review.setLimit(50);
       review.query();
-      while (review.next()) runs.push(runView(review));
+      while (review.next()) runs.push(runView(review, rules));
     }
     const config = providerConfig();
     return {
-      stories, revisions, runs, rules: rulesView(), starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
+      stories, revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
       capabilities: { source_reading: true },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },

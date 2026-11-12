@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeRuleDefinition, ruleApplicability, approvedRuleSnapshot, approvedRulesForReview, starterTemplates } from '../src/editorial-rules.js';
+import { normalizeRuleDefinition, ruleApplicability, approvedRuleSnapshot, approvedRulesForReview, starterTemplates, reviewRulesCurrent } from '../src/editorial-rules.js';
 
 const manual = () => ({
   title: 'Preserve uncertainty', text: '  Keep “may” when the reporting is uncertain.\nDo not turn it into “will”.  ',
@@ -67,4 +67,15 @@ test('a pending replacement does not change the wording used in reviews', () => 
   assert.deepEqual(rules[0].applicability.formats, ['article']);
   assert.deepEqual(approvedRulesForReview([{ ...state, active: false }]), []);
   assert.throws(() => approvedRulesForReview([{ ...state, approved: null }]), { code: 'INVALID_RULE' });
+});
+
+test('review currentness follows approved versions and enabled rules while retaining legacy uncertainty', () => {
+  const recorded = [{ rule_id: 'HEADLINE', version_id: 'version-1' }];
+  const current = [{ rule_id: 'HEADLINE', active: true, approved: { version_id: 'version-1' }, draft: { id: 'pending-version-2' } }];
+  assert.equal(reviewRulesCurrent(recorded, current), true);
+  assert.equal(reviewRulesCurrent(recorded, [{ ...current[0], approved: { version_id: 'version-2' } }]), false);
+  assert.equal(reviewRulesCurrent(recorded, [{ ...current[0], active: false }]), false);
+  assert.equal(reviewRulesCurrent(recorded, [...current, { rule_id: 'OFF', active: false }]), true);
+  assert.equal(reviewRulesCurrent([{ rule_id: 'LEGACY' }], current), null);
+  assert.equal(reviewRulesCurrent([], []), true);
 });
