@@ -1,7 +1,8 @@
 import { GlideRecord, GlideDateTime, gs } from '@servicenow/glide';
 import { RESTMessageV2 } from '@servicenow/glide/sn_ws';
-import { validateRequest, validateReview } from './generated/validators.js';
-import { checkAssessment } from './generated/assessment-checks.js';
+import * as validators from './generated/validators.js';
+import { ReviewValidationError } from './generated/assessment-checks.js';
+import { persistReviewAttempt } from './generated/review-attempt.js';
 import reviewData from './generated/review-data.js';
 
 const tables = {
@@ -15,11 +16,13 @@ const parse = (text: string) => text ? JSON.parse(text) : null;
 const id = (record: GlideRecord) => String(record.getUniqueValue());
 const now = () => new GlideDateTime().getValue();
 
-class WorkbenchError extends Error {
+class WorkbenchError extends ReviewValidationError {
+  message: string;
   status: number;
   details: unknown;
   constructor(message: string, status = 400, details: unknown = null) {
-    super(message);
+    super('WORKBENCH_ERROR', message, details);
+    this.message = message;
     this.status = status;
     this.details = details;
   }
@@ -244,38 +247,8 @@ function buildRequest(revision: GlideRecord, requestId: string) {
     taxonomy: reviewData.taxonomy,
     current_metadata: { section_id: null, tag_ids: [], short_description: '' },
   };
-  if (!validateRequest(input)) throw new WorkbenchError('The saved draft or active rules could not be prepared for review.', 400, validateRequest.errors);
+  if (!validators.validateRequest(input)) throw new WorkbenchError('The saved draft or active rules could not be prepared for review.', 400, validators.validateRequest.errors);
   return { input, rules: allRules };
-}
-
-function validateWorkbenchResult(input, result) {
-  if (!validateReview(result)) {
-    throw new WorkbenchError('Gemini returned an incomplete review format. You can retry this saved version.', 422, validateReview.errors);
-  }
-  checkAssessment(input, result.assessment);
-  const rules = new Set(input.policy_pack.rules.map(rule => rule.rule_id));
-  const current = input.candidate_revision;
-  for (const finding of result.findings) {
-    if (!rules.has(finding.rule_id)) throw new WorkbenchError('A finding refers to a rule that was not supplied.', 422);
-    for (const reference of finding.evidence) {
-      const source = current.segments.find(segment => segment.segment_id === reference.segment_id);
-      if (reference.revision_id !== current.revision_id || !source?.text.includes(reference.quote)) {
-        throw new WorkbenchError('Gemini quoted words that could not be matched to this saved draft.', 422,
-          { quote: reference.quote, source: source?.text || '', rule_id: finding.rule_id });
-      }
-    }
-  }
-  for (const rule of result.assessment.policy_assessments) {
-    if (rule.status === 'potential_conflict' && !result.findings.some(finding => finding.rule_id === rule.rule_id)) {
-      throw new WorkbenchError('Gemini identified a rule concern without supplying its finding.', 422);
-    }
-  }
-  for (const suggestion of Object.values(result.assessment.metadata_suggestions) as any[]) {
-    for (const reference of suggestion.evidence) {
-      const source = current.segments.find(segment => segment.segment_id === reference.segment_id);
-      if (source?.field.endsWith('_notes')) throw new WorkbenchError('Suggested public metadata used internal notes as its source.', 422);
-    }
-  }
 }
 
 export function runReview(request, response) {
@@ -303,7 +276,7 @@ export function runReview(request, response) {
         running.setValue('state', 'failed');
         running.setValue('error_json', JSON.stringify({ message: 'The earlier review was interrupted. You can retry.' }));
       }
-      running.setValue('active_revision', 'NULL');
+      running.setValue('active_revision', '');
       running.update();
     }
     const run = new GlideRecord(tables.review);
@@ -314,8 +287,10 @@ export function runReview(request, response) {
     run.setValue('state', 'running');
     run.setValue('model', model);
     run.setValue('request_json', JSON.stringify(prepared));
-    if (!run.insert()) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
-    try {
+    const runId = run.insert();
+    if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
+    if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
+    persistReviewAttempt(run, prepared.input, () => {
       const message = new RESTMessageV2();
       message.setEndpoint('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent');
       message.setHttpMethod('POST');
@@ -353,33 +328,9 @@ export function runReview(request, response) {
       if (candidate?.finishReason !== 'STOP') throw new WorkbenchError('Gemini stopped before finishing this review. You can retry.', 422);
       const raw = candidate.content.parts.filter(part => !part.thought && typeof part.text === 'string')
         .map(part => part.text).join('');
-      const result = JSON.parse(raw);
-      run.setValue('response_json', JSON.stringify(result));
-      validateWorkbenchResult(prepared.input, result);
-      run.setValue('state', 'complete');
       run.setValue('model', payload.modelVersion || modelUsed);
-    } catch (error) {
-      const issue = {
-        message: error instanceof WorkbenchError ? error.message : 'The AI review could not be verified. Your draft is saved and you can retry or review it manually.',
-        details: error instanceof WorkbenchError ? error.details : error.issues || null,
-      };
-      if (error.code === 'INVALID_EVIDENCE') {
-        const original = parse(run.getValue('response_json'));
-        const reference = error.issues?.[0]?.path.split('/').filter(Boolean)
-          .reduce((value, field) => value?.[field], original?.assessment);
-        const source = [prepared.input.baseline_revision, prepared.input.candidate_revision]
-          .find(item => item?.revision_id === reference?.revision_id)?.segments
-          .find(segment => segment.segment_id === reference?.segment_id);
-        issue.message = 'Gemini quoted words that do not exactly match the saved passage. Compare the quote and source below, then retry or review manually.';
-        issue.details = { quote: reference?.quote || '', source: source?.text || '' };
-      }
-      if (error.code === 'INVALID_METADATA') issue.message = error.message;
-      run.setValue('error_json', JSON.stringify(issue));
-      run.setValue('state', 'failed');
-    } finally {
-      run.setValue('active_revision', 'NULL');
-      run.update();
-    }
+      return raw;
+    }, validators);
     return runView(run);
   });
 }

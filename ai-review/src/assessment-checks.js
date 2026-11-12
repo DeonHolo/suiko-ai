@@ -10,6 +10,28 @@ export class ReviewValidationError extends Error {
 
 const firstDraftLimitation = 'No baseline revision was supplied; revision comparison was not performed.';
 
+export function validateReviewInput(request, validator) {
+  if (!validator(request)) {
+    throw new ReviewValidationError('INVALID_REQUEST', 'The request does not match the review contract.',
+      (validator.errors || []).map(error => ({ path: error.instancePath || '/', message: error.message })));
+  }
+  const unique = values => new Set(values).size === values.length;
+  const revisions = [request.baseline_revision, request.candidate_revision].filter(Boolean);
+  if (!unique(revisions.map(revision => revision.revision_id))
+      || !unique(request.policy_pack.rules.map(rule => rule.rule_id))
+      || !unique(request.taxonomy.sections.map(section => section.id))
+      || !unique(request.taxonomy.tags.map(tag => tag.id))) {
+    throw new ReviewValidationError('INVALID_REQUEST', 'Revision, rule, and taxonomy identities must be unambiguous.');
+  }
+  for (const revision of revisions) {
+    if (!unique(revision.segments.map(segment => segment.segment_id))
+        || revision.segments.reduce((total, segment) => total + [...segment.text].length, 0) > 12000
+        || !revision.segments.some(segment => segment.text.trim())) {
+      throw new ReviewValidationError('INVALID_REQUEST', 'Each revision needs unique segments and readable text within the 12,000-character limit.');
+    }
+  }
+}
+
 function verifyEvidence(request, assessment) {
   const candidateId = request.candidate_revision.revision_id;
   const metadata = assessment.metadata_suggestions;
@@ -114,11 +136,16 @@ function resolveCoverage(request, assessment) {
 }
 
 
-export function checkAssessment(request, assessment) {
+export function checkAssessmentEvidence(request, assessment) {
   verifyChecklist(request, assessment);
   verifyChanges(request, assessment);
   verifyMetadata(request, assessment);
   verifyEvidence(request, assessment);
+  return assessment;
+}
+
+export function checkAssessment(request, assessment) {
+  checkAssessmentEvidence(request, assessment);
   resolveCoverage(request, assessment);
   if (!request.baseline_revision) {
     addLimitation(assessment, firstDraftLimitation);

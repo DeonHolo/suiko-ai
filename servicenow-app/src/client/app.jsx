@@ -54,6 +54,7 @@ function Metadata({ run, taxonomy, disabled, onSave }) {
     </label>
     <label>Description<textarea disabled={disabled} className="description" maxLength={240} value={choice.description}
       onChange={event => update('description', event.target.value)} /></label>
+    {!suggestions.short_description.suggested_text && <p className="hint">{suggestions.short_description.reason} You can write your own description.</p>}
     <button disabled={disabled} onClick={() => onSave({
       ...choice, tags: choice.tags.split(',').map(tag => tag.trim()).filter(Boolean),
     })}>Save my choices</button>
@@ -66,33 +67,98 @@ function Metadata({ run, taxonomy, disabled, onSave }) {
   </section>;
 }
 
+const ruleStatuses = {
+  potential_conflict: 'Potential conflict',
+  no_potential_conflict_observed: 'No issue found',
+  not_assessable: 'Needs confirmation',
+  not_applicable: 'Not applicable',
+};
+
+function ReviewChecks({ result, run }) {
+  const issues = result.checks?.issues || [];
+  const notes = result.checks?.notes || [];
+  if (!issues.length && !notes.length) return null;
+  return <details className="card review-checks"><summary>What could not be checked</summary>
+    {notes.map((note, index) => <p key={'note-' + index}>{note}</p>)}
+    {result.checks?.withheld_overview && <details><summary>Gemini's unverified overview — not used</summary>
+      <p>{result.checks.withheld_overview}</p></details>}
+    {issues.map((issue, index) => {
+      const revision = [run.request.input.candidate_revision, run.request.input.baseline_revision]
+        .find(item => item?.revision_id === issue.revision_id);
+      const passage = revision?.segments.find(item => item.segment_id === issue.segment_id);
+      const ruleIndex = /^\/assessment\/policy_assessments\/(\d+)(?:\/|$)/.exec(issue.path || '')?.[1];
+      const ruleId = issue.rule_id || (ruleIndex !== undefined ? result.assessment?.policy_assessments?.[Number(ruleIndex)]?.rule_id : null);
+      const ruleTitle = ruleId && (run.request.rules?.find(rule => rule.rule_id === ruleId)?.title || ruleId);
+      const path = issue.path || '';
+      const section = path.startsWith('/overview') ? 'Overview'
+        : path.startsWith('/findings') ? 'Finding'
+        : path.startsWith('/assessment/changes') ? 'Changes'
+        : path.startsWith('/assessment/metadata_suggestions/short_description') ? 'Metadata: description'
+        : path.startsWith('/assessment/metadata_suggestions/tags') ? 'Metadata: tags'
+        : path.startsWith('/assessment/metadata_suggestions/section') ? 'Metadata: section'
+        : path.startsWith('/assessment/metadata_suggestions') ? 'Metadata'
+        : ruleIndex !== undefined ? 'Rule assessment' : 'Review coverage';
+      return <article className="change" key={index}>
+        <h4>{ruleTitle ? `${section}: ${ruleTitle}` : section}</h4><p>{issue.message}</p>
+        {typeof issue.rejected_suggestion === 'string' && <><h4>Gemini's suggestion — not used</h4><blockquote>{issue.rejected_suggestion}</blockquote></>}
+        {typeof issue.quote === 'string' && <><h4>Gemini's quote</h4><blockquote>{issue.quote}</blockquote></>}
+        {(passage || typeof issue.source === 'string') && <><h4>Your saved passage</h4><blockquote>{passage?.text || issue.source}</blockquote></>}
+      </article>;
+    })}
+  </details>;
+}
+
 function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
   if (!run) return <section className="card empty"><h2>Your review will appear here</h2><p>Save a version, then click Review this version.</p></section>;
   if (run.state === 'running') return <section className="card"><h2>Review in progress</h2><p>Gemini is reading the saved draft and rules.</p></section>;
   if (run.state !== 'complete') return <section className="card failure">
     <h2>This review needs a retry</h2><p>{run.error?.message || 'The review could not finish. Your draft is saved.'}</p>
+    <p className="hint">{run.model} · {run.saved_at} UTC</p>
     {run.error?.details && <details><summary>What could not be verified</summary><pre>{JSON.stringify(run.error.details, null, 2)}</pre></details>}
+    <details><summary>Saved input and rules</summary><pre>{JSON.stringify(run.request, null, 2)}</pre></details>
     {run.result && <details><summary>Unverified Gemini reply</summary><pre>{JSON.stringify(run.result, null, 2)}</pre></details>}
   </section>;
   const result = run.result;
+  const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
   return <>
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
-    <section className="card overview"><h2>AI overview</h2><p>{result.overview}</p>
+    {result.assessment.status !== 'reviewed' && <section className="notice" role="status">
+      <strong>{result.assessment.status === 'partial' ? 'Some parts still need checking.' : 'This review could not assess the requested checks.'}</strong>
+      <p>Usable results are shown below. Open “What could not be checked” for the gaps, or retry this saved version.</p>
+    </section>}
+    <section className="card overview"><h2>AI overview</h2>
+      <p>{result.checks?.overview_available === false
+        ? 'The overview was withheld because part of Gemini\'s reply could not be checked. The independently checked sections remain below.'
+        : result.overview}</p>
+      <Evidence references={result.overview_evidence} run={run} />
       {run.request.provider?.fallback_model && <p className="hint">Gemini 3.5 was busy. This review used Gemini 3.1 Flash-Lite.</p>}
       <p className="hint">{run.model} · {run.saved_at} UTC</p></section>
     <section className="card"><h3>Needs attention</h3>
-      {result.findings.length === 0 && <p>No concerns were found under the rules used for this review.</p>}
+      {result.findings.length === 0 && unresolved.length === 0 && <p>{result.assessment.policy_assessments.length
+        ? 'The completed rule checks raised no concerns. See the review details for their scope.'
+        : 'No editorial rules were selected for this review.'}</p>}
       {result.findings.map((finding, index) => {
         const rule = run.request.rules.find(item => item.rule_id === finding.rule_id);
+        const outcome = result.assessment.policy_assessments.find(item => item.rule_id === finding.rule_id);
         return <article className="finding" key={index}><h4>{finding.summary}</h4><p>{finding.action}</p>
+          <p className="rule-status">{ruleStatuses[outcome?.status] || 'Needs confirmation'}</p>
           <p className="hint">{rule?.title || finding.rule_id} · Rule version {rule?.version}</p>
           <Evidence references={finding.evidence} run={run} />
         </article>;
       })}
+      {unresolved.filter(rule => !result.findings.some(finding => finding.rule_id === rule.rule_id)).map(rule =>
+        <article className="finding" key={rule.rule_id}>
+          <h4>{run.request.rules.find(item => item.rule_id === rule.rule_id)?.title || rule.rule_id}</h4>
+          <p className="rule-status">Needs confirmation</p><p>{rule.reason}</p>
+          {rule.suggested_action && <p>{rule.suggested_action}</p>}
+          <Evidence references={rule.evidence} run={run} />
+        </article>)}
     </section>
+    <ReviewChecks result={result} run={run} />
     <section className="card"><h3>What changed</h3>
       {!run.request.input.baseline_revision && <p>This is the first submitted version of this story.</p>}
-      {run.request.input.baseline_revision && !result.assessment.changes.length && <p>No meaningful changes were reported.</p>}
+      {run.request.input.baseline_revision && !result.assessment.changes.length && <p>{result.assessment.coverage.revision_comparison === 'incomplete'
+        ? 'The revision comparison could not be fully checked. Retry to check it again.' : 'No meaningful changes were reported.'}</p>}
       {result.assessment.changes.map(change => <article className="change" key={change.change_id}>
         <h4>{change.summary}</h4><p className="hint">{change.kind}</p>
         <Evidence references={[...change.before, ...change.after]} run={run} />
@@ -100,7 +166,14 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
     </section>
     <Metadata key={run.id + ':' + run.modified} run={run} taxonomy={taxonomy} disabled={busy || !latest} onSave={onMetadata} />
     <details className="card"><summary>Rules and review details</summary>
-      {run.request.rules.filter(rule => rule.active).map(rule => <article key={rule.rule_id}><h4>{rule.title} · version {rule.version}</h4><p>{rule.text}</p></article>)}
+      {run.request.rules.filter(rule => rule.active).map(rule => {
+        const outcome = result.assessment.policy_assessments.find(item => item.rule_id === rule.rule_id);
+        return <article className="change" key={rule.rule_id}><h4>{rule.title} · version {rule.version}</h4>
+          {outcome && <><p className="rule-status">{ruleStatuses[outcome.status]}</p><p>{outcome.reason}</p>
+            <Evidence references={outcome.evidence} run={run} /></>}
+          <details><summary>Rule wording used</summary><p>{rule.text}</p></details>
+        </article>;
+      })}
       {result.assessment.limitations.map((item, index) => <p key={index}>{item}</p>)}
       <details><summary>Saved input and result</summary><pre>{JSON.stringify({ request: run.request, result }, null, 2)}</pre></details>
     </details>

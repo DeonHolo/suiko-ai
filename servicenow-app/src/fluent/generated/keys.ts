@@ -5,6 +5,18 @@ declare global {
         namespace Internal {
             interface Keys extends KeysRegistry {
                 explicit: {
+                    'ai-review-server-regression-suite': {
+                        table: 'sys_atf_test_suite'
+                        id: '47a536e4837d4aee8793a15628adeffd'
+                    }
+                    'ai16-review-persistence-step': {
+                        table: 'sys_atf_step'
+                        id: '496fe3120915413797d169dd7d12e29f'
+                    }
+                    'ai16-review-persistence-test': {
+                        table: 'sys_atf_test'
+                        id: 'bc1ff42900414effb460ce548213baf3'
+                    }
                     'ajv@8.20.0/dist/runtime/ucs2length.js': {
                         table: 'sys_module'
                         id: 'd77602b3ed7a43abbacc3eaf7ef7a277'
@@ -19,6 +31,14 @@ declare global {
                         table: 'sys_module'
                         id: '2b56dd9171ea4623ae91d4506313e30c'
                     }
+                    'jsonc-parser@3.3.1/index.js': {
+                        table: 'sys_module'
+                        id: '5b7a401956b74c05a95a6bbdb11774e9'
+                    }
+                    'jsonc-parser@3.3.1/package.json': {
+                        table: 'sys_module'
+                        id: '5913dee7fb954d4ba81b46fd7465c97a'
+                    }
                     package_json: {
                         table: 'sys_module'
                         id: '4b029030497f4938b7668d5af419e7c2'
@@ -27,13 +47,34 @@ declare global {
                         table: 'sys_module'
                         id: 'd5e299dbf92e4db188a4a06ceae6f399'
                     }
+                    'src_server_generated_provider-json_js': {
+                        table: 'sys_module'
+                        id: '36f6f2df55eb49a8841a8035a8f8200d'
+                    }
+                    'src_server_generated_review-attempt_js': {
+                        table: 'sys_module'
+                        id: '901dc8681de54238b2bc753d5571a356'
+                    }
                     'src_server_generated_review-data_js': {
                         table: 'sys_module'
                         id: '808a3fec8dd947a68b7ef6e8bc17c63a'
                     }
+                    'src_server_generated_story-input_js': {
+                        table: 'sys_module'
+                        id: '09af6cc1c83d4003b349882828ddaa1b'
+                        deleted: true
+                    }
                     src_server_generated_validators_js: {
                         table: 'sys_module'
                         id: 'fdfa80ae7e8447e483ba279e7ff307ed'
+                    }
+                    'src_server_generated_workbench-review_js': {
+                        table: 'sys_module'
+                        id: 'af425b11a8684d52a856ad9307581b27'
+                    }
+                    'src_server_review-persistence-test_ts': {
+                        table: 'sys_module'
+                        id: '299f3408d2f74d019f84797e40284c6a'
                     }
                     src_server_workbench_ts: {
                         table: 'sys_module'
@@ -860,6 +901,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '599a47951eff44fbae87a5f87b720433'
+                        key: {
+                            document_key: '496fe3120915413797d169dd7d12e29f'
+                            variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: '5b3f612433364d428446b820e7b96d20'
                         key: {
@@ -1529,6 +1578,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: 'af17c2059da04c41a806c2e2d6de1589'
+                        key: {
+                            document_key: '496fe3120915413797d169dd7d12e29f'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: 'b05c4bd8fb9e46c2a91b1bed7f09a2f6'
                         key: {
@@ -1827,6 +1884,14 @@ declare global {
                             name: 'x_2236136_suiko_ai_story'
                             element: 'title'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_atf_test_suite_test'
+                        id: 'd61ecb5966d74609b7ab82e341f16695'
+                        key: {
+                            test_suite: '47a536e4837d4aee8793a15628adeffd'
+                            test: 'bc1ff42900414effb460ce548213baf3'
                         }
                     },
                     {
