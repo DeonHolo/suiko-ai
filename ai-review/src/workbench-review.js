@@ -128,6 +128,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     }
   });
 
+  const sourceGaps = [];
   const policies = original.policy_assessments.map((item, index) => {
     const path = `/assessment/policy_assessments/${index}`;
     if (scopes[item.rule_id]?.applies === false) {
@@ -137,7 +138,12 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     if (sourceRuleIds.includes(item.rule_id)) {
       const checks = claimChecks.filter(check => check.rule_id === item.rule_id);
       const reportedGap = item.status === 'not_assessable' || (item.status === 'potential_conflict' && !checks.some(check => check.status === 'contradicted'));
-      return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap);
+      const gapEvidence = reportedGap && shaped('validateWorkbenchPolicy', item, path, 'This source-rule assessment')
+        ? item.evidence.filter((reference, index) => references([reference], currentId, `${path}/evidence/${index}`)
+          && !checks.some(check => check.status === 'supported' && check.claim.segment_id === reference.segment_id
+            && check.claim.quote.includes(reference.quote))) : [];
+      sourceGaps.push(...gapEvidence);
+      return claimRuleOutcome(item, checks, incompleteClaims.has(item.rule_id) || uncertainRules.has(item.rule_id) || reportedGap, gapEvidence);
     }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
     const shapedRule = shaped('validateWorkbenchPolicy', item, path, 'This rule assessment');
@@ -259,10 +265,15 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
           && !sourceRuleIds.includes(rule.rule_id) && !findings.some(finding => finding.rule_id === rule.rule_id)).flatMap(rule => rule.evidence))
       : policies.filter(rule => ['potential_conflict', 'not_assessable'].includes(rule.status))
         .flatMap(rule => rule.evidence).concat(findings.flatMap(finding => finding.evidence));
-    const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference =>
-      suspectSegments.has(reference.segment_id) || concernEvidence.some(concern => concern.segment_id === reference.segment_id
-        && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)
-          : concern.quote.includes(reference.quote) || reference.quote.includes(concern.quote))));
+    const overlapsConcern = field === 'short_description' && populated && suggestion.evidence.some(reference => {
+      const supported = claimChecks.some(check => check.status === 'supported'
+        && check.claim.segment_id === reference.segment_id && check.claim.quote.includes(reference.quote));
+      const sourceGap = !supported && sourceGaps.some(gap => overlapsPassage(request.candidate_revision, gap, reference));
+      return sourceGap || suspectSegments.has(reference.segment_id)
+        || concernEvidence.some(concern => concern.segment_id === reference.segment_id
+          && (request.schema_version === '0.5.0' ? overlapsPassage(request.candidate_revision, concern, reference)
+            : concern.quote.includes(reference.quote) || reference.quote.includes(concern.quote)));
+    });
     if (overlapsConcern) {
       report('DESCRIPTION_NEEDS_CONFIRMATION', path, 'The suggested public description relies on a passage that needs editorial confirmation. It was withheld.', {
         rejected_suggestion: suggestion.suggested_text,
