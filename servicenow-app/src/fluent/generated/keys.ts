@@ -19,6 +19,14 @@ declare global {
                         table: 'sys_module'
                         id: '2b56dd9171ea4623ae91d4506313e30c'
                     }
+                    'jsonc-parser@3.3.1/index.js': {
+                        table: 'sys_module'
+                        id: '5b7a401956b74c05a95a6bbdb11774e9'
+                    }
+                    'jsonc-parser@3.3.1/package.json': {
+                        table: 'sys_module'
+                        id: '5913dee7fb954d4ba81b46fd7465c97a'
+                    }
                     package_json: {
                         table: 'sys_module'
                         id: '4b029030497f4938b7668d5af419e7c2'
@@ -27,6 +35,10 @@ declare global {
                         table: 'sys_module'
                         id: 'd5e299dbf92e4db188a4a06ceae6f399'
                     }
+                    'src_server_generated_provider-json_js': {
+                        table: 'sys_module'
+                        id: '36f6f2df55eb49a8841a8035a8f8200d'
+                    }
                     'src_server_generated_review-data_js': {
                         table: 'sys_module'
                         id: '808a3fec8dd947a68b7ef6e8bc17c63a'
@@ -34,6 +46,10 @@ declare global {
                     src_server_generated_validators_js: {
                         table: 'sys_module'
                         id: 'fdfa80ae7e8447e483ba279e7ff307ed'
+                    }
+                    'src_server_generated_workbench-review_js': {
+                        table: 'sys_module'
+                        id: 'af425b11a8684d52a856ad9307581b27'
                     }
                     src_server_workbench_ts: {
                         table: 'sys_module'

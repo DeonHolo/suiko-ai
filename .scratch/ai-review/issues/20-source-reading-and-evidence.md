@@ -31,4 +31,3 @@
 **Ask your AI**
 
 > Work on AI-20. Prove source retrieval through ServiceNow before adopting a reader. Use controlled public fixtures and an injectable reader for repeatable cases. Save the exact material available to a review and show it with clear retrieval outcomes in the existing AI panel. Respect the five-link limit and preserve earlier snapshots. Do not add independent web search or require manual claim mapping.
-

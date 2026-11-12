@@ -31,4 +31,3 @@
 **Ask your AI**
 
 > Work on AI-22. Ground the comparison in actual saved-text differences, then use Gemini to explain the editorial meaning. Evaluate a standard difference library for the existing SDK rather than writing another matcher unnecessarily. Keep repeated-fact grouping, removed attribution and partly shortened captions covered by expected examples. Preserve first-draft review and independent policy/metadata results.
-

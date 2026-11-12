@@ -1,0 +1,309 @@
+{
+  "purpose": "Minimized fictional AI-11 provider replies for validator regression only. This does not establish that the model found every editorial issue.",
+  "input": {
+    "title": "Bracken Sound Radio announces The Spare Key",
+    "text": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4 at 7 p.m., according to the station's November programming bulletin.\n\nThe cast includes eight local voice actors.\n\nThe production team spent six weeks recording the drama.\n\nThe station received 420 advance registrations for the premiere.",
+    "notes": "The November 9 cast roster for The Spare Key lists eight local voice actors. The roster reference for the editor is https://brackensound.example/production/the-spare-key/cast."
+  },
+  "runs": [
+    {
+      "name": "radio-story-first",
+      "result": {
+        "overview": "The draft announces the premiere of a new radio drama titled The Spare Key, produced by Bracken Sound Radio. The text details the broadcast time, cast size, production duration, and advance registration figures. The production notes provide a link to the cast roster.",
+        "assessment": {
+          "coverage": {
+            "revision_comparison": "not_requested",
+            "metadata_suggestions": "complete"
+          },
+          "status": "reviewed",
+          "changes": [],
+          "metadata_suggestions": {
+            "section": {
+              "suggested_id": "arts-culture",
+              "reason": "The article discusses a radio drama production, which falls under arts and culture.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key"
+                }
+              ]
+            },
+            "tags": {
+              "suggested_ids": [
+                "product-releases",
+                "community-events"
+              ],
+              "reason": "The content involves the release of a new radio program and a community event.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4"
+                }
+              ]
+            },
+            "short_description": {
+              "suggested_text": "Bracken Sound Radio premieres its new drama, The Spare Key, on December 4. The production features eight local voice actors and follows six weeks of recording.",
+              "reason": "This summarizes the key details provided in the article.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4"
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-2",
+                  "quote": "The cast includes eight local voice actors."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-3",
+                  "quote": "The production team spent six weeks recording the drama."
+                }
+              ]
+            }
+          },
+          "policy_assessments": [
+            {
+              "rule_id": "OUTSIDE-ASSETS",
+              "status": "no_potential_conflict_observed",
+              "reason": "The draft does not propose using outside photos, videos, or audio assets.",
+              "evidence": [],
+              "suggested_action": null
+            },
+            {
+              "rule_id": "SOURCING",
+              "status": "no_potential_conflict_observed",
+              "reason": "Important factual claims are supported by the text and provided notes. 1. Premiere date/time (Source: station's November programming bulletin). 2. Cast count (Source: production notes roster link). 3. Production duration (Source missing - identified as non-checkable creative claim). 4. Registration count (Source missing).",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4 at 7 p.m., according to the station's November programming bulletin."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-2",
+                  "quote": "The cast includes eight local voice actors."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "production_notes-1",
+                  "quote": "The November 9 cast roster for The Spare Key lists eight local voice actors. The roster reference for the editor is https://brackensound.example/production/the-spare-key/cast."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-4",
+                  "quote": "The station received 420 advance registrations for the premiere."
+                }
+              ],
+              "suggested_action": "Verify source for the 420 advance registrations claim."
+            }
+          ],
+          "limitations": [
+            "No baseline revision provided for comparison."
+          ]
+        },
+        "findings": [
+          {
+            "rule_id": "SOURCING",
+            "summary": "The claim regarding 420 advance registrations lacks a traceable source in the provided text or notes.",
+            "action": "Ask the editor to verify or provide a source for the 420 advance registrations.",
+            "evidence": [
+              {
+                "revision_id": "radio-v1",
+                "segment_id": "body-4",
+                "quote": "The station received 420 advance registrations for the premiere."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "radio-story-retry",
+      "result": {
+        "overview": "This review evaluates a first draft about Bracken Sound Radio premiering a new drama titled The Spare Key. Since the baseline revision is null, revision comparison is not requested, and no changes are reported. All supplied rules are evaluated against the candidate text and production notes.",
+        "assessment": {
+          "coverage": {
+            "revision_comparison": "not_requested",
+            "metadata_suggestions": "complete"
+          },
+          "status": "reviewed",
+          "changes": [],
+          "metadata_suggestions": {
+            "section": {
+              "suggested_id": "arts-culture",
+              "reason": "The article discusses the premiere of a radio drama, which fits arts and culture reporting.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4 at 7 p.m., according to the station's November programming bulletin."
+                }
+              ]
+            },
+            "tags": {
+              "suggested_ids": [
+                "community-events"
+              ],
+              "reason": "The article announces an upcoming broadcast event for the local community.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4 at 7 p.m., according to the station's November programming bulletin."
+                }
+              ]
+            },
+            "short_description": {
+              "suggested_text": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4.",
+              "reason": "Summarizes the core subject of the draft without using flagged claims.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4 at 7 p.m., according to the station's November programming bulletin."
+                }
+              ]
+            }
+          },
+          "policy_assessments": [
+            {
+              "rule_id": "OUTSIDE-ASSETS",
+              "status": "no_potential_conflict_observed",
+              "reason": "The draft and production notes do not propose using any photo, video, or outside audio asset from outside the team.",
+              "evidence": [],
+              "suggested_action": null
+            },
+            {
+              "rule_id": "SOURCING",
+              "status": "no_potential_conflict_observed",
+              "reason": "All important claims are traceable. Claim 1: Broadcast premiere date and time - sourced to the station's November programming bulletin (body-1). Claim 2: Cast of eight local voice actors - sourced to the November 9 cast roster and its link (production_notes-1). Claim 3: Production team spent six weeks recording - source missing. Claim 4: Station received 420 advance registrations - source missing.",
+              "evidence": [
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-1",
+                  "quote": "Bracken Sound Radio will premiere its new drama, The Spare Key, on December 4 at 7 p.m., according to the station's November programming bulletin."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-2",
+                  "quote": "The cast includes eight local voice actors."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-3",
+                  "quote": "The production team spent six weeks recording the drama."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "body-4",
+                  "quote": "The station received 420 advance registrations for the premiere."
+                },
+                {
+                  "revision_id": "radio-v1",
+                  "segment_id": "production_notes-1",
+                  "quote": "The November 9 cast roster for The Spare Key lists eight local voice actors. The roster reference for the editor is https://brackensound.example/production/the-spare-key/cast."
+                }
+              ],
+              "suggested_action": "Add sources for the recording duration and advance registration count."
+            }
+          ],
+          "limitations": []
+        },
+        "findings": [
+          {
+            "rule_id": "SOURCING",
+            "summary": "Important claims lack traceable sources in the text or production notes.",
+            "action": "Ask the editor to add or verify sources for the recording duration and registration count.",
+            "evidence": [
+              {
+                "revision_id": "radio-v1",
+                "segment_id": "body-3",
+                "quote": "The production team spent six weeks recording the drama."
+              },
+              {
+                "revision_id": "radio-v1",
+                "segment_id": "body-4",
+                "quote": "The station received 420 advance registrations for the premiere."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "taxonomy": {
+    "sections": [
+      {
+        "id": "technology",
+        "label": "Technology"
+      },
+      {
+        "id": "local-news",
+        "label": "Local news"
+      },
+      {
+        "id": "arts-culture",
+        "label": "Arts and culture"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ],
+    "tags": [
+      {
+        "id": "ai",
+        "label": "AI"
+      },
+      {
+        "id": "product-releases",
+        "label": "Product releases"
+      },
+      {
+        "id": "research",
+        "label": "Research"
+      },
+      {
+        "id": "community-events",
+        "label": "Community events"
+      },
+      {
+        "id": "film",
+        "label": "Film"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      },
+      {
+        "id": "environment",
+        "label": "Environment"
+      },
+      {
+        "id": "volunteering",
+        "label": "Volunteering"
+      },
+      {
+        "id": "local-government",
+        "label": "Local government"
+      },
+      {
+        "id": "education",
+        "label": "Education"
+      },
+      {
+        "id": "libraries",
+        "label": "Libraries"
+      },
+      {
+        "id": "video",
+        "label": "Video"
+      }
+    ]
+  }
+}

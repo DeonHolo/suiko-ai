@@ -24,3 +24,17 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - The eight local ticket files were published after Deon approved their size and dependencies.
 - Tool selection: existing Gemini and validators; trial a text-returning reader such as Jina; verify a standard text-difference library in the SDK. LangExtract remains optional and is not an initial dependency.
 - Scope-specific setup, source and review tests belong to these tickets. Whole-app Inbox, human/legal decisions and wider history/access remain coordinated with the team.
+
+## AI-16 work in progress
+
+- Branch: `codex/ai-16-partial-reviews`.
+- Planning baseline commit: `3f84eb0`.
+- Shared checked-result handling now retains independent sections, reconciles rule statuses with findings, distinguishes missing evidence from mismatched quotes, and preserves rejected-quote diagnostics.
+- The PDI stores the checked result rather than leaving the raw provider reply as the successful saved output. Failed attempts now also display their recorded model and frozen input.
+- Local checks: 42 passed, including both minimized fictional radio replies from AI-11, independent overview evidence, and rejected wording inspection. Those replays test validation behaviour; they do not establish that Gemini found every issue.
+- SDK 4.14.0 build and frozen-key build passed. The jsonc-parser dependency produced SDK wrapper warnings about guarded browser globals; the installed API smoke check passed. A live review is being used to verify the parsing/result path as well.
+- Installation completed on the existing app identity; page/API reachable, two existing rules and provider configuration preserved.
+- Pre-run expectations and screenshot/output are local under `ai-review/output/ai-16-2026-11-12/`. Three unchanged-radio reviews were clicked and inspected in the in-app browser. [Public evidence summary](../../docs/16-review-reliability-evidence.md). The final direct 3.5 attempt retained metadata while withholding an overview with a mistyped version reference. The earlier 3.1 attempt retained both expected sourcing concerns.
+- Remaining semantic gap for AI-21/AI-23: model outcomes varied, with unsupported assumptions that the station sourced the six-week duration and 420 registrations. Do not count a passed quote check as source-support accuracy.
+- AX follow-up for AI-17: use short model-facing version labels while retaining actual ServiceNow record identities in saved provenance, reducing long-ID transcription errors without weakening exact-passage checks.
+- AI-16 code/evidence are verified; prepare its commit and PR, then continue with AI-17. No user question is required.

@@ -81,6 +81,8 @@ textarea { min-height: 110px; resize: vertical; line-height: 1.65; }
 .finding { padding: 16px 0 16px 14px; border-left: 3px solid #bf8a42; margin: 18px 0; }
 .finding p { font-size: 14px; }
 .finding .hint { font-size: 12px; }
+.rule-status { display: inline-block; font-size: 12px; font-weight: 600; color: #66501e; background: #f4eddc; padding: 3px 8px; border-radius: 4px; }
+.review-checks { border-color: #d4b18d; }
 .change { border-top: 1px solid #e1e3d7; padding-top: 15px; margin-top: 15px; }
 summary { font-size: 13px; line-height: 1.6; color: #315d48; padding: 5px 0; font-weight: 500; }
 details[open] > summary { margin-bottom: 10px; }

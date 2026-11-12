@@ -31,4 +31,3 @@
 **Ask your AI**
 
 > Work on AI-21. Use the approved company rules and frozen source snapshots to assess relevant claims individually. Return exact story/source references, clear uncertainty and actionable rule-linked findings. Reuse partial-result handling and verify quoted passages before showing checked results. Write expectations for mixed supported, unsupported, unrelated and contradictory cases before calling Gemini.
-

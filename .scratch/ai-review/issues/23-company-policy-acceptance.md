@@ -31,4 +31,3 @@
 **Ask your AI**
 
 > Work on AI-23 after its blockers are complete. Evaluate the whole agreed AI feature through the ServiceNow UI, using a fresh article, unrelated script and revision with expectations written first. Inspect actual saved inputs, policy versions and retrieved material. Report useful results, misses, false concerns and technical gaps honestly, and recommend the next change from evidence. Keep human/legal workflow ownership with the existing team tickets.
-

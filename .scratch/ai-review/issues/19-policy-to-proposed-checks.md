@@ -31,4 +31,3 @@
 **Ask your AI**
 
 > Work on AI-19. Build the pasted-policy-to-proposed-rule journey on top of the existing Gemini integration and approved rule flow. Preserve policy meaning, conditions and exceptions; show exact supporting passages and make all generated checks await editor approval. Start with the smallest implementation and existing tests. Consider another extractor only after recording a concrete quality gap.
-

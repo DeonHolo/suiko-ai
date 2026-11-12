@@ -31,4 +31,3 @@
 **Ask your AI**
 
 > Work on AI-18. Reuse the existing rule editor and snapshots. Make starter templates, manual wording, explicit approval, applicability and version replacement work through the existing ServiceNow screens and review action. Preserve historical records and prove the designated-editor permission boundary. Keep company rules separate from human story sign-off.
-

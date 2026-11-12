@@ -30,4 +30,3 @@
 **Ask your AI**
 
 > Work on AI-17. Extend the existing saved-revision journey end to end with format, kind, Sources and Review context. Preserve legacy stories and notes, enforce limits on the server, and prove that reopening a revision restores its exact inputs. Source retrieval and policy proposal generation belong to later tickets; keep their current status visible and honest.
-
