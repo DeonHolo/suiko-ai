@@ -25,7 +25,7 @@ Two minimized historical replies from the fictional radio test are committed as 
 | No clear sourcing status alongside missing-source findings | `a clear sourcing assessment cannot coexist with its retained missing-source finding` and `the recorded fictional radio replies now retain findings and explain their old failures` in [workbench-review.test.js](../ai-review/test/workbench-review.test.js) | Manual radio attempt at 11:07:32 UTC retained both missing-source observations. |
 | Outside-media check can be Not applicable without an invented quote | `an inapplicable outside-media check does not need an invented passage` in the same file | Manual radio attempt at 11:07:32 UTC returned Not applicable. |
 | Bad finding preserves independent sections and labels the gap | `an invented finding quote leaves other sections usable and shows the actual mismatch`; `an unknown-rule finding cannot lend its rejected passage to the overview` | Manual 11:13:52 UTC radio attempt retained metadata. The installed issue labels were inspected in the in-app browser. The automated server test also saved a partial checked result. |
-| Malformed reply stays failed with draft/retry available | `unreadable JSON remains a saved failed attempt, with an inspectable excerpt` in [review-attempt.test.js](../ai-review/test/review-attempt.test.js) | Automated test **Suiko AI-16: checked review persistence and retry** passed, including malformed JSON, intact draft, retry and reopened history. |
+| Malformed reply stays failed with draft/retry available | `unreadable JSON remains a saved failed attempt, with an inspectable excerpt` in [review-attempt.test.js](../ai-review/test/review-attempt.test.js) | Automated test **Suiko AI-16: checked review persistence and retry** passed, including malformed JSON, intact draft, a new persisted attempt for the same revision and reopened history. This test does not drive the workbench retry control. |
 
 These are application-reliability checks. Editorial judgments remain advisory information for the editor; uncertainty does not require truth certification.
 
@@ -33,7 +33,7 @@ These are application-reliability checks. Editorial judgments remain advisory in
 
 [review-tests.now.ts](../servicenow-app/src/fluent/review-tests.now.ts) installs the server-only test. Its [test module](../servicenow-app/src/server/review-persistence-test.ts) uses actual GlideRecords, installed generated validators and the same `persistReviewAttempt` function called by `runReview`. It injects fictional replies and makes no Gemini calls.
 
-The passing test covers a partial result saved as complete with checked JSON; a checklist mismatch saved as failed with the unchecked reply and named diagnostic; unreadable JSON saved as failed with an inspectable excerpt; released revision locks; retry of that same revision; four attempts reopened through `getState`; and an unchanged saved draft.
+The passing test covers a partial result saved as complete with checked JSON; a checklist mismatch saved as failed with the unchecked reply and named diagnostic; unreadable JSON saved as failed with the `INVALID_PROVIDER_JSON` diagnostic; released revision locks; a new persisted attempt for that same revision; four attempts reopened through `getState`; and an unchanged saved draft. The local persistence test separately asserts the saved raw excerpt.
 
 - [Passing suite](https://dev309702.service-now.com/sys_atf_test_suite_result.do?sys_id=9554f44d83649b106fffc629feaad357).
 - [Passing test](https://dev309702.service-now.com/sys_atf_test_result.do?sys_id=5d54f44d83649b106fffc629feaad35d).
@@ -42,6 +42,8 @@ The passing test covers a partial result saved as complete with checked JSON; a 
 Earlier attempts exposed a running-marker save problem. The handler now reopens the inserted attempt before updating it and clears the marker explicitly. Test logic runs in the same SDK module context as production. A missing module extension in test wiring was also corrected. The final rerun passed; previous runner settings were restored after every test run.
 
 This automation covers persistence and generated validation, not a simulated HTTP round trip to Gemini. The three real provider requests below were manual browser checks.
+
+ATF handles fixture cleanup through its automatic rollback. A post-run query found zero stories named `AI-16 automated persistence fixture`, including after the earlier failed runs. No explicit delete loop was added. See [ServiceNow's data-preservation documentation](https://www.servicenow.com/docs/r/application-development/automated-test-framework-atf/atf-intro.html).
 
 ### Manual provider checks
 
@@ -62,6 +64,8 @@ Independent overview retention and rejected wording inspection pass in the local
 ## What this does not prove
 
 All four inline CodeRabbit findings were applicable and corrected: unknown-rule evidence now affects overview independence; the prompt names the exact status value; issue cards identify their rule/section; and completion claims map to named evidence above. New attempts require overview references while historical response compatibility remains available. AI-23 now includes stale rule approval. Static child-key warnings were not applied because the mapped outer article already has a React key.
+
+The follow-up review's two evidence-wording corrections were applied: this server test proves a persisted retry attempt, not a clicked retry control, and its malformed-JSON assertion covers the named diagnostic. The fixture-leak claim was not applied because ATF already rolls back those rows and the instance query confirmed their absence.
 
 Quotation matching establishes that words were present in the supplied material. It does not prove that a source supports a claim or that Gemini found every concern. The differing live results demonstrate why the later claim-by-claim source review and fresh-case evaluation are still needed.
 
