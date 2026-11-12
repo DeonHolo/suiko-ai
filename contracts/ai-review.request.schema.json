@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Editorial AI review request 0.2 / 0.3",
+  "title": "Editorial AI review request 0.2 / 0.3 / 0.4",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -19,7 +19,8 @@
       "type": "string",
       "enum": [
         "0.2.0",
-        "0.3.0"
+        "0.3.0",
+        "0.4.0"
       ]
     },
     "request_id": {
@@ -94,38 +95,14 @@
           "minItems": 0,
           "maxItems": 12,
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "rule_id",
-              "title",
-              "text",
-              "priority"
-            ],
-            "properties": {
-              "rule_id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 80,
-                "pattern": "\\S"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/policy_rule"
               },
-              "title": {
-                "type": "string",
-                "minLength": 1,
-                "pattern": "\\S"
-              },
-              "text": {
-                "type": "string",
-                "minLength": 1,
-                "pattern": "\\S"
-              },
-              "priority": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 80,
-                "pattern": "\\S"
+              {
+                "$ref": "#/$defs/scoped_policy_rule"
               }
-            }
+            ]
           }
         }
       }
@@ -184,6 +161,23 @@
         },
         "short_description": {
           "type": "string"
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_reading",
+        "rights_verification"
+      ],
+      "properties": {
+        "source_reading": {
+          "type": "boolean"
+        },
+        "rights_verification": {
+          "const": false,
+          "type": "boolean"
         }
       }
     }
@@ -345,6 +339,128 @@
           }
         }
       }
+    },
+    "policy_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "title",
+        "text",
+        "priority"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "\\S"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "priority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "scoped_policy_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "title",
+        "text",
+        "priority",
+        "applicability"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "\\S"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "priority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "\\S"
+        },
+        "applicability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "formats",
+            "content_kinds",
+            "conditions",
+            "human_checks"
+          ],
+          "properties": {
+            "formats": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "article",
+                  "script",
+                  "caption"
+                ],
+                "type": "string"
+              }
+            },
+            "content_kinds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "news",
+                  "opinion",
+                  "sponsored"
+                ],
+                "type": "string"
+              }
+            },
+            "conditions": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "human_checks": {
+              "type": "array",
+              "maxItems": 6,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 240
+              }
+            }
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -352,7 +468,10 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "0.3.0"
+            "enum": [
+              "0.3.0",
+              "0.4.0"
+            ]
           }
         }
       },
@@ -377,6 +496,73 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "0.4.0"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "capabilities"
+        ],
+        "properties": {
+          "policy_pack": {
+            "properties": {
+              "rules": {
+                "items": {
+                  "$ref": "#/$defs/scoped_policy_rule"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "capabilities": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_reading",
+              "rights_verification"
+            ],
+            "properties": {
+              "source_reading": {
+                "type": "boolean"
+              },
+              "rights_verification": {
+                "const": false,
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "capabilities"
+          ],
+          "properties": {
+            "capabilities": {}
+          }
+        },
+        "properties": {
+          "policy_pack": {
+            "properties": {
+              "rules": {
+                "items": {
+                  "$ref": "#/$defs/policy_rule"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
           }
         }
       }

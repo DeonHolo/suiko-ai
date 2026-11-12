@@ -21,4 +21,6 @@ export const reviewService = {
     review_id: review.id, expected_modified: review.modified, metadata,
   }),
   rule: payload => call('/rules', payload),
+  approveRule: rule => call('/rules/approve', { id: rule.id, version_id: rule.draft.id, expected_modified: rule.modified }),
+  setRuleActive: (rule, active) => call('/rules/active', { id: rule.id, active, expected_modified: rule.modified }),
 };

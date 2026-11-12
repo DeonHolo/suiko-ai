@@ -79,6 +79,15 @@ const ruleStatuses = {
   not_applicable: 'Not applicable',
 };
 
+function reviewStatus(run) {
+  if (run.state === 'running') return 'In progress';
+  if (run.state !== 'complete') return 'Retry needed';
+  const status = run.result?.assessment?.status;
+  if (status === 'partial') return 'Some checks pending';
+  if (status === 'unable_to_assess') return 'Needs confirmation';
+  return 'Reviewed';
+}
+
 function ReviewChecks({ result, run }) {
   const issues = result.checks?.issues || [];
   const notes = result.checks?.notes || [];
@@ -125,11 +134,20 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
   </section>;
   const result = run.result;
   const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
+  const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
+  const missingSections = [];
+  if (result.assessment.coverage.revision_comparison === 'incomplete') missingSections.push('revision comparison');
+  if (result.assessment.coverage.metadata_suggestions === 'incomplete') missingSections.push('metadata suggestions');
   return <>
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
     {result.assessment.status !== 'reviewed' && <section className="notice" role="status">
       <strong>{result.assessment.status === 'partial' ? 'Some parts still need checking.' : 'This review could not assess the requested checks.'}</strong>
-      <p>Usable results are shown below. Open “What could not be checked” for the gaps, or retry this saved version.</p>
+      {hasDiagnostics ? <p>Open “What could not be checked” for the gaps.</p> : null}
+      {!!unresolved.length && <p>See “Needs attention” for what you can confirm.</p>}
+      {!!missingSections.length && <p>Incomplete sections include {missingSections.join(' and ')}.</p>}
+      {!hasDiagnostics && !unresolved.length && !missingSections.length && <p>{result.assessment.limitations.length
+        ? 'See “Rules and review details” for reported limits. You can retry this saved version.'
+        : 'Gemini marked this review incomplete without naming a gap. You can retry this saved version.'}</p>}
     </section>}
     <section className="card overview"><h2>AI overview</h2>
       <p>{result.checks?.overview_available === false
@@ -181,7 +199,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
         return <article className="change" key={rule.rule_id}><h4>{rule.title} · version {rule.version}</h4>
           {outcome && <><p className="rule-status">{ruleStatuses[outcome.status]}</p><p>{outcome.reason}</p>
             <Evidence references={outcome.evidence} run={run} /></>}
-          <details><summary>Rule wording used</summary><p>{rule.text}</p></details>
+          <details><summary>Rule wording used</summary><p>{rule.text || run.request.input.policy_pack.rules.find(item => item.rule_id === rule.rule_id)?.text}</p></details>
         </article>;
       })}
       {result.assessment.limitations.map((item, index) => <p key={index}>{item}</p>)}
@@ -190,19 +208,62 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
   </>;
 }
 
-function RuleEditor({ rule, busy, onSave }) {
-  const [draft, setDraft] = useState(rule);
+function newRuleDraft(template = null) {
+  return {
+    rule_id: 'RULE-' + crypto.randomUUID(), title: template?.title || '', text: template?.text || '',
+    priority: template?.priority || 'standard', formats: template?.formats || ['article', 'script', 'caption'],
+    content_kinds: template?.content_kinds || ['news', 'opinion', 'sponsored'],
+    conditions: template?.conditions || '', human_checks: template?.human_checks || [],
+    origin: template ? { kind: 'starter', template_id: template.template_id } : { kind: 'manual' },
+  };
+}
+
+function RuleEditor({ rule, busy, open, onOpenChange, onSave, onApprove, onActive, onCancel }) {
+  const [draft, setDraft] = useState({ ...rule, human_checks_text: (rule.human_checks || []).join('\n') });
+  useEffect(() => setDraft({ ...rule, human_checks_text: (rule.human_checks || []).join('\n') }), [rule.modified]);
   const update = (key, value) => setDraft(current => ({ ...current, [key]: value }));
-  return <form className="card rule" onSubmit={event => { event.preventDefault(); onSave(draft); }}>
-    <label>Rule title<input disabled={busy} required maxLength={160} value={draft.title} onChange={event => update('title', event.target.value)} /></label>
-    <label>When and what to check<textarea disabled={busy} required maxLength={3000} value={draft.text} onChange={event => update('text', event.target.value)} /></label>
-    <div className="actions">
-      <label className="inline"><input disabled={busy} type="checkbox" checked={draft.active} onChange={event => update('active', event.target.checked)} />Active</label>
-      <label className="inline">Priority<select disabled={busy} value={draft.priority} onChange={event => update('priority', event.target.value)}>
-        <option value="standard">Standard</option><option value="high">High</option></select></label>
-      <button disabled={busy}>Save rule</button><span className="hint">Version {draft.version || 1}</span>
-    </div>
-  </form>;
+  const toggle = (key, value) => update(key, draft[key].includes(value)
+    ? draft[key].filter(item => item !== value) : [...draft[key], value]);
+  const dirty = ['title', 'text', 'priority', 'conditions'].some(key => draft[key] !== rule[key])
+    || ['formats', 'content_kinds'].some(key => JSON.stringify([...draft[key]].sort()) !== JSON.stringify([...rule[key]].sort()))
+    || draft.human_checks_text !== (rule.human_checks || []).join('\n');
+  const valid = draft.title.trim() && draft.text.trim() && draft.formats.length && draft.content_kinds.length;
+  const status = rule.legacy_approval_missing ? 'Approval not recorded'
+    : rule.pending ? 'Proposal awaiting approval' : rule.active ? 'Active' : rule.approved ? 'Off' : 'New proposal';
+  return <details className="card rule-editor" open={!rule.id || open} onToggle={event => rule.id && onOpenChange?.(rule.id, event.currentTarget.open)}>
+    <summary><strong>{rule.title || 'Your new rule'}</strong> · {status}{rule.pending && rule.active ? ` · Version ${rule.approved.version} stays active` : ''}</summary>
+    {rule.legacy_approval_missing && <p className="notice">These prototype instructions have no recorded approval. Save a proposal and approve it if you want to use it.</p>}
+    {rule.approved && <details className="approved-wording"><summary>Approved version {rule.approved.version}{rule.active ? ' — used in reviews' : ' — currently off'}</summary>
+      <p>{rule.approved.definition.text}</p><p className="hint">Approved by {rule.approved.approval.by_name || 'the designated editor'} · {rule.approved.approval.at} UTC</p>
+    </details>}
+    <form className="rule" onSubmit={event => {
+      event.preventDefault();
+      onSave({ ...draft, expected_modified: rule.modified, human_checks: draft.human_checks_text.split('\n').filter(line => line.trim()) });
+    }}>
+      <p className="hint">{draft.origin?.kind === 'starter' ? 'Based on an editable starter rule' : draft.origin?.kind === 'policy' ? 'Based on company policy' : 'Written by an editor'}</p>
+      <label>Rule title<input disabled={busy} required maxLength={160} value={draft.title} onChange={event => update('title', event.target.value)} /></label>
+      <label>When and what to check<textarea disabled={busy} required maxLength={3000} value={draft.text} onChange={event => update('text', event.target.value)} /></label>
+      <fieldset disabled={busy}><legend>Formats</legend><div className="rule-options">
+        {['article', 'script', 'caption'].map(value => <label key={value}><input type="checkbox" checked={draft.formats.includes(value)} onChange={() => toggle('formats', value)} />{value[0].toUpperCase() + value.slice(1)}</label>)}
+      </div></fieldset>
+      <fieldset disabled={busy}><legend>Content kinds</legend><div className="rule-options">
+        {['news', 'opinion', 'sponsored'].map(value => <label key={value}><input type="checkbox" checked={draft.content_kinds.includes(value)} onChange={() => toggle('content_kinds', value)} />{value[0].toUpperCase() + value.slice(1)}</label>)}
+      </div></fieldset>
+      <label>Additional conditions <span className="hint">Optional</span><textarea disabled={busy} maxLength={1000} value={draft.conditions} onChange={event => update('conditions', event.target.value)} /></label>
+      <label>What the editor may need to confirm <span className="hint">Optional · Up to six notes, one per line</span><textarea disabled={busy} maxLength={1500} value={draft.human_checks_text} onChange={event => update('human_checks_text', event.target.value)} /></label>
+      <label>Priority<select disabled={busy} value={draft.priority} onChange={event => update('priority', event.target.value)}>
+        <option value="standard">Standard</option><option value="high">High</option>
+      </select></label>
+      <div className="actions">
+        <button disabled={busy || !valid || (!!rule.draft && !dirty)}>Save proposal</button>
+        {rule.pending && <button className="primary" type="button" disabled={busy || dirty} onClick={() => onApprove(rule)}>Approve rule version {rule.draft.version}</button>}
+        {rule.approved && <button type="button" disabled={busy || dirty} onClick={() => onActive(rule, !rule.active)}>{rule.active ? 'Turn rule off' : 'Use approved rule'}</button>}
+        {onCancel && <button type="button" disabled={busy} onClick={onCancel}>Cancel new rule</button>}
+      </div>
+      {dirty && rule.id && <p className="hint">Save your edited proposal before approving or changing the rule's status.</p>}
+      {rule.pending && rule.approved && <p className="hint">The proposed wording is not used yet. Earlier reviews keep their own rule versions.</p>}
+    </form>
+  </details>;
 }
 
 export default function App() {
@@ -216,6 +277,7 @@ export default function App() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [newRule, setNewRule] = useState(null);
+  const [openRuleId, setOpenRuleId] = useState(null);
   const current = data?.revisions[0];
   const run = data?.runs.find(item => item.id === runId);
   const currentForm = asForm(current);
@@ -272,8 +334,29 @@ export default function App() {
   }
   function saveRule(rule) {
     return act(async () => {
-      await reviewService.rule(rule); await load(storyId, false, runId);
-      setNewRule(null); setMessage('Rule saved. Run a new review to use the updated rules.');
+      const result = await reviewService.rule(rule);
+      setData(current => ({ ...current, rules: result.rules }));
+      setOpenRuleId(result.rules.find(item => item.rule_id === rule.rule_id)?.id || null);
+      if (!rule.id) setNewRule(null);
+      setMessage('Proposal saved. It will be used after you approve it.');
+    });
+  }
+  function approveRule(rule) {
+    return act(async () => {
+      const result = await reviewService.approveRule(rule);
+      setData(current => ({ ...current, rules: result.rules }));
+      setMessage('Rule version ' + rule.draft.version + ' approved. New reviews will use it.');
+    });
+  }
+  function startRule(template = null) {
+    setOpenRuleId(null);
+    setNewRule(newRuleDraft(template));
+  }
+  function setRuleActive(rule, active) {
+    return act(async () => {
+      const result = await reviewService.setRuleActive(rule, active);
+      setData(current => ({ ...current, rules: result.rules }));
+      setMessage(active ? 'The approved rule is enabled for new reviews.' : 'The rule is off for new reviews. Earlier reviews keep their results.');
     });
   }
 
@@ -290,13 +373,26 @@ export default function App() {
         {error && <p className="error" role="alert">{error}</p>}
         {busy && <p className="notice" role="status">Working… Your saved version stays available.</p>}
       </div>
-      {tab === 'rules' ? <div>
-        {data.rules.map(rule => <RuleEditor key={rule.id + ':' + rule.version} rule={rule} busy={busy} onSave={saveRule} />)}
-        {newRule && <RuleEditor rule={newRule} busy={busy} onSave={saveRule} />}
-        {!newRule && <button disabled={busy} onClick={() => setNewRule({
-          rule_id: 'RULE-' + crypto.randomUUID(), title: '', text: '', priority: 'standard', active: true, version: 0,
-        })}>Add rule</button>}
-      </div> : <>
+      {data.can_manage_rules && <div hidden={tab !== 'rules'}>
+        <p className="hint">Only approved rules are used. A saved proposal stays separate until you approve it.</p>
+        <div className="actions"><button disabled={busy || !!newRule} onClick={() => startRule()}>Write my own rule</button>
+          <button disabled={busy} onClick={() => act(() => load(storyId, false, runId))}>Reload rules</button></div>
+        <details className="card"><summary>Optional starter rules</summary>
+          <p>Choose a starting point, then edit it to fit your publication.</p>
+          {data.starter_templates?.map(template => <article className="change" key={template.template_id}>
+            <h3>{template.title}</h3><p>{template.text}</p>
+            <button disabled={busy || !!newRule} onClick={() => startRule(template)}>Use this starter: {template.title}</button>
+          </article>)}
+        </details>
+        {newRule && <RuleEditor key={newRule.rule_id} rule={newRule} busy={busy} onSave={saveRule} onCancel={() => setNewRule(null)} />}
+        {data.rules.map(rule => <RuleEditor key={rule.id} rule={rule} busy={busy} open={openRuleId === rule.id}
+          onOpenChange={(id, expanded) => setOpenRuleId(current => expanded ? id : current === id ? null : current)}
+          onSave={saveRule} onApprove={approveRule} onActive={setRuleActive} />)}
+        <details className="card"><summary>What Suiko can help check</summary>
+          {Object.values(data.supported_checks || {}).map((description, index) => <p key={index}>{description}</p>)}
+        </details>
+      </div>}
+      <div hidden={tab !== 'review'}>
         <section className="story-bar" aria-label="Story selection">
           <label>Saved stories<select value={storyId || ''} disabled={busy} onChange={event => act(() => load(event.target.value || null))}>
             <option value="">New story</option>{data.stories.map(story => <option key={story.id} value={story.id}>{story.title}</option>)}
@@ -332,6 +428,7 @@ export default function App() {
             <div className="actions"><button disabled={busy || !dirty || !form.title.trim() || !form.text.trim() || !form.content_format || !form.content_kind} onClick={save}>Save version</button>
               <button className="primary" disabled={busy || dirty || !current || !current.content_format || !current.content_kind || !data.provider.configured} onClick={review}>Review this version</button></div>
             {dirty && current && <p className="hint">Save your changes before running the next review.</p>}
+            {!data.rules.some(rule => rule.active) && <p className="notice">No approved rules are active. You can still get an overview, changes and metadata.</p>}
             {!data.provider.configured && <p className="notice">Gemini needs its server configuration. You can still save versions.</p>}
             <p className="hint">Model · {data.provider.model}</p>
             {!!data.revisions.length && <details><summary>Saved versions</summary>{data.revisions.map(revision => <details className="version" key={revision.id}>
@@ -344,12 +441,12 @@ export default function App() {
           <section className="review-panel" aria-label="AI review">
             {!!data.runs.length && <label>Review history<select value={runId || ''} disabled={busy} onChange={event => setRunId(event.target.value || null)}>
               <option value="">Choose a saved review</option>{data.runs.map(item => <option key={item.id} value={item.id}>
-                Version {data.revisions.find(revision => revision.id === item.revision_id)?.version} · {item.state} · {item.saved_at} UTC
+                Version {data.revisions.find(revision => revision.id === item.revision_id)?.version} · {reviewStatus(item)} · {item.saved_at} UTC
               </option>)}</select></label>}
             <ReviewResult run={run} taxonomy={data.taxonomy} busy={busy} latest={run?.revision_id === current?.id} onMetadata={saveMetadata} />
           </section>
         </div>
-      </>}
+      </div>
     </main>
   </div>;
 }

@@ -98,6 +98,13 @@ pre { font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; white
 .version { border-bottom: 1px solid #e1e4d9; padding: 10px 0; }
 .rule { max-width: 840px; }
 .rule textarea { min-height: 140px; }
+.rule-editor form { margin-top: 18px; }
+.rule-editor > summary { line-height: 1.6; }
+.rule fieldset { border: 1px solid #d5ddd2; border-radius: 6px; margin: 16px 0; padding: 12px; }
+.rule-options { display: flex; flex-wrap: wrap; gap: 16px; }
+.rule-options label { display: flex; gap: 7px; align-items: center; margin: 0; }
+.rule-options input { width: auto; }
+.approved-wording { margin-top: 14px; }
 .inline { flex-direction: row; align-items: center; margin: 0 10px 0 0; white-space: nowrap; }
 .inline input, .inline select { width: auto; }
 @media (max-width: 850px) {

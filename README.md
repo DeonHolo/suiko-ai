@@ -8,7 +8,7 @@ Suiko AI is a ServiceNow app for a small newsroom or media team. An editor saves
 
 1. [Open the Suiko AI workbench](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do) on the team's ServiceNow developer instance (PDI). Sign in with your ServiceNow account.
 2. Under **Saved stories**, choose **River cleanup video package**. Use **Review history** to open the completed reviews for Version 1 and Version 2. Version 2 moved the event from Saturday at 8 a.m. to Sunday at 9 a.m. and flagged the outside drone clip for a permission check.
-3. To try your own draft, choose **New story**, paste the text and any notes, then click **Save version → Review this version**. You can edit and save the metadata suggestions. The designated editor can update **Editorial rules**.
+3. To try your own draft, choose **New story**, select its format and kind, paste the text and any notes, then click **Save version → Review this version**. You can edit and save the metadata suggestions. The designated editor can [set up and approve editorial rules](docs/18-approved-rule-setup.md).
 
 The workbench already serves as the **Story** screen. The next build adds a **Review Inbox** to find stories by status, human decisions on the Story screen, and a **Legal Review** form for assigned clearances. Use the existing Suiko AI app in **ServiceNow Studio** to work on native lists and forms. [Screen plan](TEAM-TASKS.md#which-screens-do-we-need)
 

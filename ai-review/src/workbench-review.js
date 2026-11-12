@@ -1,5 +1,6 @@
 import { checkAssessmentEvidence, ReviewValidationError, validateReviewInput } from './assessment-checks.js';
 import { parseProviderJson } from './provider-json.js';
+import { ruleApplicability } from './editorial-rules.js';
 
 const firstDraftNote = 'No baseline revision was supplied; revision comparison was not performed.';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -78,6 +79,8 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   }
 
   const currentId = request.candidate_revision.revision_id;
+  const scopes = Object.fromEntries(request.policy_pack.rules.filter(rule => rule.applicability)
+    .map(rule => [rule.rule_id, ruleApplicability(rule.applicability, request.candidate_revision)]));
   const findings = [];
   const rawFindings = list(raw.findings, 24, '/findings');
   if (!Array.isArray(raw.findings) || raw.findings.length > 24) expected.forEach(id => uncertainRules.add(id));
@@ -90,6 +93,10 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
       for (const reference of Array.isArray(finding?.evidence) ? finding.evidence : []) {
         if (reference?.revision_id === currentId) suspectSegments.add(reference.segment_id);
       }
+      return;
+    }
+    if (scopes[finding.rule_id]?.applies === false) {
+      report('FINDING_OUTSIDE_SCOPE', path, 'This finding was excluded because the saved rule does not apply to this format and content kind.', { rule_id: finding.rule_id });
       return;
     }
     if (shaped('validateWorkbenchFinding', finding, path, 'This finding')
@@ -105,6 +112,10 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
 
   const policies = original.policy_assessments.map((item, index) => {
     const path = `/assessment/policy_assessments/${index}`;
+    if (scopes[item.rule_id]?.applies === false) {
+      if (item.status !== 'not_applicable') report('RULE_SCOPE_MISMATCH', path, 'The saved format and content kind place this rule outside the review scope.', { rule_id: item.rule_id });
+      return { rule_id: item.rule_id, status: 'not_applicable', reason: scopes[item.rule_id].reason, evidence: [], suggested_action: null };
+    }
     const related = findings.filter(finding => finding.rule_id === item.rule_id);
     const shapedRule = shaped('validateWorkbenchPolicy', item, path, 'This rule assessment');
     let rule = shapedRule ? clone(item) : {
