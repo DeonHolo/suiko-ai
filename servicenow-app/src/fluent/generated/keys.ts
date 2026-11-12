@@ -71,6 +71,10 @@ declare global {
                         table: 'sys_module'
                         id: 'af425b11a8684d52a856ad9307581b27'
                     }
+                    'src_server_review-persistence-test_ts': {
+                        table: 'sys_module'
+                        id: '299f3408d2f74d019f84797e40284c6a'
+                    }
                     src_server_workbench_ts: {
                         table: 'sys_module'
                         id: '2054332e75aa416a84e82fccf31dbbc7'

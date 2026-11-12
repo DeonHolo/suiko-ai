@@ -287,7 +287,9 @@ export function runReview(request, response) {
     run.setValue('state', 'running');
     run.setValue('model', model);
     run.setValue('request_json', JSON.stringify(prepared));
-    if (!run.insert()) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
+    const runId = run.insert();
+    if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
+    if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
     persistReviewAttempt(run, prepared.input, () => {
       const message = new RESTMessageV2();
       message.setEndpoint('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent');
