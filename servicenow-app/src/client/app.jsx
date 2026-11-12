@@ -135,13 +135,20 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
   </section>;
   const result = run.result;
   const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
+  const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
+  const missingSections = [];
+  if (result.assessment.coverage.revision_comparison === 'incomplete') missingSections.push('revision comparison');
+  if (result.assessment.coverage.metadata_suggestions === 'incomplete') missingSections.push('metadata suggestions');
   return <>
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
     {result.assessment.status !== 'reviewed' && <section className="notice" role="status">
       <strong>{result.assessment.status === 'partial' ? 'Some parts still need checking.' : 'This review could not assess the requested checks.'}</strong>
-      <p>{result.checks?.issues?.length || result.checks?.notes?.length
-        ? 'Open “What could not be checked” for the gaps, or retry this saved version.'
-        : 'See “Needs attention” for what you can confirm.'}</p>
+      {hasDiagnostics ? <p>Open “What could not be checked” for the gaps.</p> : null}
+      {!!unresolved.length && <p>See “Needs attention” for what you can confirm.</p>}
+      {!!missingSections.length && <p>Incomplete sections include {missingSections.join(' and ')}.</p>}
+      {!hasDiagnostics && !unresolved.length && !missingSections.length && <p>{result.assessment.limitations.length
+        ? 'See “Rules and review details” for reported limits. You can retry this saved version.'
+        : 'Gemini marked this review incomplete without naming a gap. You can retry this saved version.'}</p>}
     </section>}
     <section className="card overview"><h2>AI overview</h2>
       <p>{result.checks?.overview_available === false

@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested on `codex/ai-18-approved-rules`; PR review next.
+**Status:** implemented and tested in [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13).
 
 **Approved:** 12 November 2026. Execution authorized under the active goal.
 
@@ -26,7 +26,7 @@
 - [x] An approved manual headline rule works on a relevant story; typed scope exclusions are tested locally and shown for the Sponsored-only starter on the News story.
 - [x] An unapproved template or edit cannot silently become active.
 - [x] Earlier reviews still show their original rule wording after an approved replacement.
-- [x] Checks requiring a capability not implemented yet explain the need for confirmation; source-reading capability remains explicitly false and permission confirmation is described in setup.
+- [x] The live footage review with no permission record showed **Needs confirmation**, cited the footage and context, and asked for the missing licence or permission record.
 
 **Evidence:** [Setup guide and test report](../../../docs/18-approved-rule-setup.md). 73 local checks; successful SDK install/smoke; native non-admin permission/lifecycle checks; two live browser reviews; original rule wording preserved after replacement. The description check's overly broad exclusion is recorded for AI-21.
 

@@ -14,7 +14,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | --- | --- | --- | --- |
 | AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
 | AI-17 | done | `f1ce321` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
-| AI-18 | implemented and tested; PR next | `68fc132` | 73 local checks; installed role/lifecycle suite; two live browser reviews; original approved wording preserved after replacement. |
+| AI-18 | implemented and tested | [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
 | AI-21 | ready-for-agent | pending | Claim/source matching, uncertainty and metadata. |
@@ -63,4 +63,6 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - Installed verification passed: suite result `bd7881c183289b106fffc629feaad36e`, including dedicated non-admin designated-editor and everyday-editor accounts. Stale edits and approvals were rejected; retained interrupted proposals did not block a fresh version. Runner settings were restored.
 - Two live browser reviews caught the fictional headline/body mismatch and excluded the Sponsored-only rule. A review made while replacement wording awaited approval still used version 1. After version 2 approval, both earlier reviews retained version 1. Browser disable/re-enable also passed. [Evidence](../../docs/18-approved-rule-setup.md).
 - The description safeguard over-withheld accurate body text because it was co-cited with the bad headline. This is recorded for AI-21 rather than treating the useful review as a failed truth check.
-- Remaining: PR, assess CodeRabbit findings, fix valid issues, pass checks and merge.
+- CodeRabbit found that a fresh token could overwrite approval metadata and that the native test depended on available rule slots. The fix rejects a second approval of the same version and checks 11 and 12 other active rules using a controlled count. The installed suite passed as `217015c183689b106fffc629feaad395`.
+- A live footage example initially asked for the correct permission record with the wrong status. The clarified prompt and Gemini 3.1 fallback showed **Needs confirmation** on the same saved script. Both runs are recorded. The history test suggestion is covered by actual browser reopen and saved-request readback after the replacement approval.
+- The follow-up review caught a status notice that could point to an empty concerns card. The notice now names incomplete sections and directs the editor to the recorded reason.
