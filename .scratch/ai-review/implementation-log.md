@@ -2,7 +2,9 @@
 
 **Execution authorized:** 12 November 2026. **Owner:** Deon.
 
-Active goal: implement AI-16 through AI-23 without stopping for routine implementation choices. Ask only for genuinely missing decisions or access. Create a commit and pull request targeting main for each ticket. Deon retains review and merge authority; do not enable automatic merge or merge on his behalf.
+Active goal: implement AI-16 through AI-23 without stopping for routine implementation choices. Ask only for genuinely missing decisions or access. Create a commit and pull request targeting main for each ticket.
+
+**Updated delivery instruction, 12 November:** Deon authorized the agent to open each PR, read CodeRabbit's review, assess the findings, fix valid problems, run the checks and merge the PR itself. Record reasons for findings not applied. This replaces the earlier instruction to wait for Deon to merge. Do not enable automatic merging or bypass failed checks.
 
 The [specification](company-policy-review-spec.md), [approved breakdown](company-policy-review-tickets-proposed.md) and [build plan](../../PLAN.md) are the source of scope. Preserve the existing team tickets and any unrelated work. Do not commit credentials, generated private review output or owner-local deployment tooling.
 

@@ -19,7 +19,7 @@ export async function reviewWorkbench(request, provider, validators) {
   return checkWorkbenchResult(snapshot, parseProviderJson(await provider.generate(snapshot)), validators);
 }
 
-export function checkWorkbenchResult(request, raw, validators) {
+export function checkWorkbenchResult(request, raw, validators, { requireOverviewEvidence = false } = {}) {
   validateReviewInput(request, validators.validateRequest);
   if (!validators.validateWorkbenchShell(raw)) {
     throw new ReviewValidationError('INVALID_WORKBENCH_FORMAT', 'Gemini returned an incomplete review format. Your saved version is available for a retry.');
@@ -87,6 +87,9 @@ export function checkWorkbenchResult(request, raw, validators) {
     if (!knownRule) {
       report('UNKNOWN_FINDING_RULE', path, 'A finding named a rule that was not supplied. It was excluded.');
       expected.forEach(id => uncertainRules.add(id));
+      for (const reference of Array.isArray(finding?.evidence) ? finding.evidence : []) {
+        if (reference?.revision_id === currentId) suspectSegments.add(reference.segment_id);
+      }
       return;
     }
     if (shaped('validateWorkbenchFinding', finding, path, 'This finding')
@@ -244,6 +247,9 @@ export function checkWorkbenchResult(request, raw, validators) {
   if (!overviewValid) report('INVALID_OVERVIEW', '/overview', 'Gemini did not supply a usable internal overview.');
   let overviewEvidence = [];
   let independentOverview = false;
+  if (requireOverviewEvidence && raw.overview_evidence === undefined) {
+    report('MISSING_EVIDENCE', '/overview_evidence', 'Gemini supplied no supporting passage for the overview.');
+  }
   if (raw.overview_evidence !== undefined) {
     if (shaped('validateWorkbenchOverviewEvidence', raw.overview_evidence, '/overview_evidence', 'The overview evidence')
         && references(raw.overview_evidence, currentId, '/overview_evidence', true, true)) {

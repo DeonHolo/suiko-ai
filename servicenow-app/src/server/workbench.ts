@@ -2,9 +2,8 @@ import { GlideRecord, GlideDateTime, gs } from '@servicenow/glide';
 import { RESTMessageV2 } from '@servicenow/glide/sn_ws';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
-import { parseProviderJson } from './generated/provider-json.js';
-import { checkWorkbenchResult } from './generated/workbench-review.js';
 import { normalizeStoryInput, storySnapshot } from './generated/story-input.js';
+import { persistReviewAttempt } from './generated/review-attempt.js';
 import reviewData from './generated/review-data.js';
 
 const tables = {
@@ -18,11 +17,13 @@ const parse = (text: string) => text ? JSON.parse(text) : null;
 const id = (record: GlideRecord) => String(record.getUniqueValue());
 const now = () => new GlideDateTime().getValue();
 
-class WorkbenchError extends Error {
+class WorkbenchError extends ReviewValidationError {
+  message: string;
   status: number;
   details: unknown;
   constructor(message: string, status = 400, details: unknown = null) {
-    super(message);
+    super('WORKBENCH_ERROR', message, details);
+    this.message = message;
     this.status = status;
     this.details = details;
   }
@@ -288,7 +289,7 @@ export function runReview(request, response) {
     run.setValue('model', model);
     run.setValue('request_json', JSON.stringify(prepared));
     if (!run.insert()) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
-    try {
+    persistReviewAttempt(run, prepared.input, () => {
       const message = new RESTMessageV2();
       message.setEndpoint('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent');
       message.setHttpMethod('POST');
@@ -327,24 +328,8 @@ export function runReview(request, response) {
       const raw = candidate.content.parts.filter(part => !part.thought && typeof part.text === 'string')
         .map(part => part.text).join('');
       run.setValue('model', payload.modelVersion || modelUsed);
-      const reply = parseProviderJson(raw);
-      run.setValue('response_json', JSON.stringify(reply));
-      const result = checkWorkbenchResult(prepared.input, reply, validators);
-      const checked = JSON.stringify(result);
-      if (checked.length > 199000) throw new WorkbenchError('The review exceeded the saved-result limit. Your draft is available for a retry.', 422);
-      run.setValue('response_json', checked);
-      run.setValue('state', 'complete');
-    } catch (error) {
-      const issue = {
-        message: error instanceof WorkbenchError || error instanceof ReviewValidationError ? error.message : 'The AI review could not be verified. Your draft is saved and you can retry or review it manually.',
-        details: error instanceof WorkbenchError ? error.details : error.issues || null,
-      };
-      run.setValue('error_json', JSON.stringify(issue));
-      run.setValue('state', 'failed');
-    } finally {
-      run.setValue('active_revision', 'NULL');
-      run.update();
-    }
+      return raw;
+    }, validators);
     return runView(run);
   });
 }

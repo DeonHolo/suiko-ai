@@ -29,7 +29,7 @@ const unicodeLength = typeof unicodeLengthModule === 'function' ? unicodeLengthM
 const helper = 'const unicodeLength = ' + unicodeLength.toString() + ';\n';
 await writeFile(new URL('validators.js', output), helper + validators);
 await rm(new URL('validators.cjs', output), { force: true });
-for (const name of ['assessment-checks.js', 'provider-json.js', 'workbench-review.js', 'story-input.js']) {
+for (const name of ['assessment-checks.js', 'provider-json.js', 'workbench-review.js', 'review-attempt.js', 'story-input.js']) {
   await writeFile(new URL(name, output), await readFile(new URL('ai-review/src/' + name, workspace), 'utf8'));
 }
 const promptFile = await readFile(new URL('prompts/editorial-review-v0.4.md', workspace), 'utf8');
@@ -40,7 +40,7 @@ const additions = [
   'Always write a short internal overview for the editor. It should describe this draft even when no rule raises a concern. It is separate from the public metadata description.',
   'Support the overview with exact title/body/caption passages in overview_evidence. Summarize the story content without declaring policy clearance or publication readiness. Prefer passages outside unresolved claims so the summary can remain useful if another check fails.',
   'Assess every supplied rule once in assessment.policy_assessments. The findings list may contain several distinct concerns under one rule. Each finding must cite its rule and exact current-revision evidence. Every potential_conflict needs at least one finding. Keep findings empty when no rule raises a concern.',
-  'Keep each rule status consistent with its findings. A rule with findings must be potential_conflict or not_assessable, never clear or not_applicable. Use not_applicable when a rule condition is absent; use not_assessable when required information is unavailable. Do not label a rule clear with an empty evidence list.',
+  'Keep each rule status consistent with its findings. A rule with findings must be potential_conflict or not_assessable, never no_potential_conflict_observed or not_applicable. Use not_applicable when a rule condition is absent; use not_assessable when required information is unavailable. Do not use no_potential_conflict_observed with an empty evidence list.',
   'Segments marked production_notes or source_notes are internal context. They may explain sourcing or permissions and can support a finding. Suggested public metadata must cite only title, body, or caption segments.',
   'A source named in a draft or supplied note can satisfy a sourcing rule. A supplied link identifies a source but you have not visited it. Assess what the editor was given. Avoid demanding a source for ordinary transitions or clearly identified opinion.',
   'Use the supplied short draft-N revision labels exactly in evidence references. The application retains the underlying record identities. Content format and kind describe the saved candidate. Source URLs and source_notes are unread references unless retrieved material is explicitly supplied; never claim to have opened them.',
@@ -56,7 +56,7 @@ profile.taxonomy.tags.push(
 );
 const data = {
   prompt: original + '\n\n' + additions.join('\n'),
-  promptVersion: '0.4-workbench-4', providerSchema, taxonomy: profile.taxonomy,
+  promptVersion: '0.4-workbench-4.1', providerSchema, taxonomy: profile.taxonomy,
 };
 await writeFile(new URL('review-data.js', output), 'export default ' + JSON.stringify(data, null, 2) + ';\n');
 await rm(new URL('review-data.json', output), { force: true });
