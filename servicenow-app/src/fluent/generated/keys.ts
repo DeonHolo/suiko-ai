@@ -62,6 +62,7 @@ declare global {
                     'src_server_generated_story-input_js': {
                         table: 'sys_module'
                         id: '09af6cc1c83d4003b349882828ddaa1b'
+                        deleted: true
                     }
                     src_server_generated_validators_js: {
                         table: 'sys_module'
