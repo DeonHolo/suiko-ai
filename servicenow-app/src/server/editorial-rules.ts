@@ -124,15 +124,21 @@ export function saveRuleDraft(input) {
   return { rules: listEditorialRules() };
 }
 
-export function approveSavedRule(input) {
+function countOtherActiveRules(parentId) {
+  return listEditorialRules().filter(rule => rule.active && rule.id !== parentId).length;
+}
+
+export function approveSavedRule(input, countOtherActive = countOtherActiveRules) {
   requireManager();
   const parent = saved(ruleTable, input?.id);
   checkVersion(parent, input);
   if (parent.getValue('draft_version_id') !== input.version_id) throw new WorkbenchError('This proposal was replaced. Reload it before approving.', 409);
+  if (json(parent.getValue('approved_json'))?.version_id === input.version_id) {
+    throw new WorkbenchError('This rule version is already approved. Save a new proposal to change it.', 409);
+  }
   const version = saved(versionTable, input.version_id);
   if (version.getValue('parent_rule') !== uid(parent)) throw new WorkbenchError('Choose the proposal belonging to this rule.');
-  const active = listEditorialRules().filter(rule => rule.active && rule.id !== uid(parent));
-  if (active.length >= 12) throw new WorkbenchError('Up to twelve rules can be active. Turn off another rule before approving this one.');
+  if (countOtherActive(uid(parent)) >= 12) throw new WorkbenchError('Up to twelve rules can be active. Turn off another rule before approving this one.');
   const approval = approvedRuleSnapshot(parent.getValue('rule_id'), json(version.getValue('definition_json')),
     uid(version), Number(version.getValue('version')), String(gs.getUserID()), new GlideDateTime().getValue(), String(gs.getUserDisplayName()));
   if (JSON.stringify(approval).length > 16000) throw new WorkbenchError('This approved rule is too large to save. Shorten its optional notes and save a new proposal.');
@@ -143,13 +149,13 @@ export function approveSavedRule(input) {
   return { rules: listEditorialRules() };
 }
 
-export function setSavedRuleActive(input) {
+export function setSavedRuleActive(input, countOtherActive = countOtherActiveRules) {
   requireManager();
   if (typeof input?.active !== 'boolean') throw new WorkbenchError('Choose whether to enable this approved rule.');
   const parent = saved(ruleTable, input.id);
   const approved = json(parent.getValue('approved_json'));
   if (input.active && !approved) throw new WorkbenchError('Approve a saved proposal before enabling this rule.');
-  if (input.active && listEditorialRules().filter(rule => rule.active && rule.id !== uid(parent)).length >= 12) {
+  if (input.active && countOtherActive(uid(parent)) >= 12) {
     throw new WorkbenchError('Up to twelve rules can be active. Turn off another rule first.');
   }
   changeParent(parent, input, { active: input.active });

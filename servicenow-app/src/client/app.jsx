@@ -79,6 +79,15 @@ const ruleStatuses = {
   not_applicable: 'Not applicable',
 };
 
+function reviewStatus(run) {
+  if (run.state === 'running') return 'In progress';
+  if (run.state !== 'complete') return 'Retry needed';
+  const status = run.result?.assessment?.status;
+  if (status === 'partial') return 'Some checks pending';
+  if (status === 'unable_to_assess') return 'Needs confirmation';
+  return 'Reviewed';
+}
+
 function ReviewChecks({ result, run }) {
   const issues = result.checks?.issues || [];
   const notes = result.checks?.notes || [];
@@ -129,7 +138,9 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
     {result.assessment.status !== 'reviewed' && <section className="notice" role="status">
       <strong>{result.assessment.status === 'partial' ? 'Some parts still need checking.' : 'This review could not assess the requested checks.'}</strong>
-      <p>Usable results are shown below. Open “What could not be checked” for the gaps, or retry this saved version.</p>
+      <p>{result.checks?.issues?.length || result.checks?.notes?.length
+        ? 'Open “What could not be checked” for the gaps, or retry this saved version.'
+        : 'See “Needs attention” for what you can confirm.'}</p>
     </section>}
     <section className="card overview"><h2>AI overview</h2>
       <p>{result.checks?.overview_available === false
@@ -423,7 +434,7 @@ export default function App() {
           <section className="review-panel" aria-label="AI review">
             {!!data.runs.length && <label>Review history<select value={runId || ''} disabled={busy} onChange={event => setRunId(event.target.value || null)}>
               <option value="">Choose a saved review</option>{data.runs.map(item => <option key={item.id} value={item.id}>
-                Version {data.revisions.find(revision => revision.id === item.revision_id)?.version} · {item.state} · {item.saved_at} UTC
+                Version {data.revisions.find(revision => revision.id === item.revision_id)?.version} · {reviewStatus(item)} · {item.saved_at} UTC
               </option>)}</select></label>}
             <ReviewResult run={run} taxonomy={data.taxonomy} busy={busy} latest={run?.revision_id === current?.id} onMetadata={saveMetadata} />
           </section>

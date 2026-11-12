@@ -13,7 +13,6 @@ const tables = {
   story: 'x_2236136_suiko_ai_story',
   revision: 'x_2236136_suiko_ai_revision',
   review: 'x_2236136_suiko_ai_review',
-  rule: 'x_2236136_suiko_ai_rule',
   config: 'x_2236136_suiko_ai_config',
 };
 const parse = (text: string) => text ? JSON.parse(text) : null;
@@ -77,33 +76,6 @@ function runView(row: GlideRecord) {
 
 function providerConfig() {
   return find(tables.config, 'name', 'gemini');
-}
-
-function initializeRules() {
-  const existing = new GlideRecord(tables.rule);
-  existing.setLimit(1);
-  existing.query();
-  // Disabled rules also count as an editor's choice. Upgrades never reset them.
-  if (existing.next()) return;
-  const starters = [
-    {
-      rule_id: 'SOURCING', title: 'Traceable sources for important claims',
-      instruction: 'For important externally checkable factual claims, check whether the draft or supplied notes identify a source the editor can trace. A named report, named speaker, source link, or firsthand reporting note may supply that context. Flag a missing or unclear source and quote the claim. Do not judge whether the claim is true. Ordinary transitions and clearly identified opinion do not require a factual source.',
-    },
-    {
-      rule_id: 'OUTSIDE-ASSETS', title: 'Permission for outside media',
-      instruction: 'Apply when the draft or production notes propose using a photo, video, or audio asset from outside the team. Flag it when the supplied notes do not document permission or a license. Quote the asset reference and ask the editor to verify permission. Staff-created footage alone does not trigger this check. Missing documentation does not establish that permission was denied.',
-    },
-  ];
-  for (const starter of starters) {
-    const rule = new GlideRecord(tables.rule);
-    rule.initialize();
-    for (const field of ['rule_id', 'title', 'instruction']) rule.setValue(field, starter[field]);
-    rule.setValue('priority', 'high');
-    rule.setValue('active', true);
-    rule.setValue('version', 1);
-    rule.insert();
-  }
 }
 
 export function getState(request, response) {
@@ -378,7 +350,6 @@ export function configureProvider(request, response) {
     config.setValue('model', model);
     const saved = config.isNewRecord() ? config.insert() : config.update();
     if (!saved) throw new WorkbenchError('The provider configuration could not be saved.', 500);
-    initializeRules();
     return { configured: !!config.getValue('api_key'), model };
   });
 }

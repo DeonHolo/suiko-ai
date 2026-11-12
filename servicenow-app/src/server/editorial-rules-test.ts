@@ -1,5 +1,6 @@
 import { GlideRecord, gs } from '@servicenow/glide';
 import { saveRule, approveRule, setRuleActive, saveRevision, getState } from './workbench.ts';
+import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
 
 function expect(value, message) {
@@ -18,6 +19,22 @@ function current(result, identity) {
   return rule;
 }
 
+function approvalInput(rule) {
+  return { id: rule.id, version_id: rule.draft.id, expected_modified: rule.modified };
+}
+
+function expectCapacityRejection(rule) {
+  try {
+    approveSavedRule(approvalInput(rule), () => 12);
+  } catch (error) {
+    expect(error.status === 400 && error.message.includes('twelve rules'), 'A full pack did not report the capacity limit.');
+    const saved = listEditorialRules().find(item => item.id === rule.id);
+    expect(!saved.active && !saved.approved && saved.modified === rule.modified, 'The capacity rejection changed the saved proposal.');
+    return;
+  }
+  throw new Error('The thirteenth rule was approved.');
+}
+
 export function runRuleManagerRegression() {
   expect(gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated rules-editor test user.');
   const identity = 'ATF-' + gs.generateGUID();
@@ -28,15 +45,21 @@ export function runRuleManagerRegression() {
   };
   let rule = current(action(saveRule, { rule_id: identity, ...definition }), identity);
   expect(rule.pending && !rule.active && !rule.approved, 'An unapproved proposal became active.');
+  // Use a controlled pack for capacity. This test does not turn off anyone's saved rules.
+  expectCapacityRejection(rule);
+  const fixtureCapacity = () => 11;
   const firstProposal = rule.draft.id;
-  const firstApproval = { id: rule.id, version_id: firstProposal, expected_modified: rule.modified };
+  const firstApproval = approvalInput(rule);
   const staleEdit = { id: rule.id, rule_id: identity, ...definition, expected_modified: rule.modified };
-  rule = current(action(approveRule, { id: rule.id, version_id: firstProposal, expected_modified: rule.modified }), identity);
+  rule = approveSavedRule(firstApproval, fixtureCapacity).rules.find(item => item.rule_id === identity);
   expect(rule.active && rule.approved.definition.text === definition.text, 'The first approval did not capture the saved wording.');
   expect(rule.approved.approval.by === String(gs.getUserID()), 'The approval did not identify the actual editor.');
   expect(action(approveRule, firstApproval).status === 409, 'A repeated approval with the old revision token was accepted.');
   expect(action(saveRule, staleEdit).status === 409, 'A stale edit was accepted after approval changed the rule.');
   const first = JSON.stringify(rule.approved);
+  expect(action(approveRule, approvalInput(rule)).status === 409, 'The same version was approved twice with a fresh revision token.');
+  const afterRetry = listEditorialRules().find(item => item.id === rule.id);
+  expect(afterRetry.modified === rule.modified && JSON.stringify(afterRetry.approved) === first, 'Repeat approval rewrote the original record.');
   const stale = { id: rule.id, version_id: firstProposal, expected_modified: rule.modified };
 
   // Model the retained version from an interrupted concurrent proposal.
@@ -56,17 +79,18 @@ export function runRuleManagerRegression() {
   expect(action(approveRule, { ...stale, expected_modified: rule.modified }).status === 409, 'An old version identity approved the replacement.');
 
   const secondProposal = rule.draft.id;
-  rule = current(action(approveRule, { id: rule.id, version_id: secondProposal, expected_modified: rule.modified }), identity);
+  rule = approveSavedRule(approvalInput(rule), fixtureCapacity).rules.find(item => item.rule_id === identity);
   expect(rule.approved.version_id === secondProposal && rule.approved.definition.text !== definition.text, 'The replacement approval did not identify its exact saved version.');
   const original = new GlideRecord('x_2236136_suiko_ai_rule_version');
   expect(original.get(firstProposal), 'The original rule version disappeared.');
   expect(JSON.parse(original.getValue('definition_json')).text === definition.text, 'The original rule wording was overwritten.');
+  expect(JSON.stringify(JSON.parse(original.getValue('approval_json'))) === JSON.stringify(JSON.parse(first).approval), 'The original approval details were overwritten.');
   const second = JSON.stringify(rule.approved);
   rule = current(action(setRuleActive, { id: rule.id, active: false, expected_modified: rule.modified }), identity);
   expect(!rule.active && JSON.stringify(rule.approved) === second, 'Turning a rule off changed its approval record.');
-  rule = current(action(setRuleActive, { id: rule.id, active: true, expected_modified: rule.modified }), identity);
+  rule = setSavedRuleActive({ id: rule.id, active: true, expected_modified: rule.modified }, fixtureCapacity).rules.find(item => item.rule_id === identity);
   expect(rule.active && JSON.stringify(rule.approved) === second, 'Re-enabling an approved rule changed its wording or approval.');
-  return 'Passed as a non-admin rules editor: inactive proposal, exact approval, pending replacement, retained interrupted version, two stale-approval checks, original wording and disable/re-enable.';
+  return 'Passed as a non-admin rules editor: capacity rejection, one approval per saved version, stale edits, pending replacement, retained interrupted version, original approval and disable/re-enable.';
 }
 
 export function runEverydayEditorRegression() {
