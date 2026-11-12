@@ -16,6 +16,7 @@ export default function Sources({ sources }) {
         ? <a href={source.url} target="_blank" rel="noreferrer">{source.url}</a> : source.url}</p>
       {source.final_url && <p className="hint source-url">Opened {source.final_url}</p>}
       {source.retrieved_at && <p className="hint">{source.passages?.length ? 'Retrieved' : 'Tried'} {source.retrieved_at} UTC{source.reader ? ' via ' + source.reader : ''}</p>}
+      {source.cached && <p className="hint">The reader reported a cached copy. Check the original for updates.</p>}
       {source.message && <p>{source.message}</p>}
       {source.status === 'not_read' && !source.message && <p>Saved as a reference for this review.</p>}
       {!!source.passages?.length && <details className="evidence">
