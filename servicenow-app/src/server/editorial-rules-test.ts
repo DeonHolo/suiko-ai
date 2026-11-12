@@ -1,15 +1,15 @@
 import { GlideRecord, gs } from '@servicenow/glide';
-import { saveRule, approveRule, setRuleActive, saveRevision, getState } from './workbench.ts';
+import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolicy, getPolicies, suggestPolicyChecks } from './workbench.ts';
 import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
 
 function expect(value, message) {
   if (!value) throw new Error(message);
 }
-function action(handler, data) {
+function action(handler, data, queryParams = {}) {
   let status = 200;
   let body;
-  handler({ body: { data } }, { setStatus: value => { status = value; }, setBody: value => { body = value; } });
+  handler({ body: { data }, queryParams }, { setStatus: value => { status = value; }, setBody: value => { body = value; } });
   return { status, body };
 }
 function current(result, identity) {
@@ -95,8 +95,8 @@ export function runRuleManagerRegression() {
 
 export function runEverydayEditorRegression() {
   expect(gs.hasRole('x_2236136_suiko_ai.editor') && !gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated everyday-editor test user.');
-  for (const handler of [saveRule, approveRule, setRuleActive]) {
-    expect(action(handler, {}).status === 403, 'The everyday editor could change shared rules.');
+  for (const handler of [saveRule, approveRule, setRuleActive, getPolicies, savePolicy, suggestPolicyChecks]) {
+    expect(action(handler, {}).status === 403, 'The everyday editor could change rules or open company-policy setup.');
   }
   const saved = action(saveRevision, {
     request_key: 'ATF-editor-' + gs.generateGUID(), title: 'ATF everyday editor draft', text: 'A fictional crew rehearses a scene.',
@@ -106,5 +106,33 @@ export function runEverydayEditorRegression() {
   let state;
   getState({ queryParams: { story: saved.body.story_id } }, { setBody: value => { state = value; }, setStatus: value => { throw new Error('State failed: ' + value); } });
   expect(state.can_manage_rules === false && state.revisions[0].text === 'A fictional crew rehearses a scene.', 'The everyday editor state did not preserve its role boundary or saved draft.');
-  return 'Passed as a non-admin everyday editor: story save/reopen allowed; all three shared-rule actions denied. No Gemini calls.';
+  return 'Passed as a non-admin everyday editor: story save/reopen allowed; shared-rule and company-policy setup actions denied. No Gemini calls.';
+}
+
+export function runPolicySetupRegression() {
+  expect(gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated rules-editor test user.');
+  const text = 'A proposal remains pending unless the council records a vote.\n\nThe editor confirms the recorded vote.';
+  const payload = { title: 'ATF handbook', text, request_key: 'ATF-' + gs.generateGUID() };
+  const saved = action(savePolicy, payload);
+  expect(saved.status === 200 && saved.body.policy.text === text, 'The saved policy lost its original text.');
+  const policy = saved.body.policy;
+  const repeated = action(savePolicy, payload);
+  expect(repeated.status === 200 && repeated.body.policy.id === policy.id, 'Retrying a save made a second copy.');
+  expect(action(savePolicy, { ...payload, text: 'Different wording.' }).status === 409, 'A conflicting save reused the old request.');
+  const replacement = action(savePolicy, { ...payload, text: 'Revised wording.', request_key: 'ATF-' + gs.generateGUID() });
+  expect(replacement.status === 200 && replacement.body.policy.id !== policy.id, 'An edited policy overwrote the original copy.');
+  const old = action(getPolicies, {}, { version: policy.id });
+  expect(old.status === 200 && old.body.policy.text === text, 'The original policy copy could not be reopened.');
+
+  const ruleId = 'ATF-' + gs.generateGUID();
+  const definition = {
+    rule_id: ruleId, title: 'ATF policy headline', text: policy.passages[0].text, priority: 'standard',
+    formats: ['article'], content_kinds: ['news'], origin: { kind: 'policy', policy_version_id: policy.id, passage_ids: ['policy-1'] },
+  };
+  expect(action(saveRule, { ...definition, origin: { ...definition.origin, passage_ids: ['policy-99'] } }).status === 400, 'A forged policy reference was accepted.');
+  const draft = current(action(saveRule, definition), ruleId);
+  expect(draft.pending && !draft.active && draft.text === policy.passages[0].text, 'The original wording was changed or activated without approval.');
+  const approved = approveSavedRule(approvalInput(draft), () => 0).rules.find(rule => rule.rule_id === ruleId);
+  expect(approved.active && approved.approved.definition.origin.policy_version_id === policy.id && approved.approved.definition.text === policy.passages[0].text, 'Approval lost the saved policy reference or verbatim wording.');
+  return 'Passed as rules editor: immutable policy copies, idempotent save, original wording, forged-reference rejection and explicit approval. No Gemini calls.';
 }

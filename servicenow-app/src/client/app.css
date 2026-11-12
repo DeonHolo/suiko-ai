@@ -118,3 +118,7 @@ pre { font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; white
   h1 { font-size: 37px; }
   .card { padding: 20px; }
 }
+.policy-setup textarea { min-height: 9rem; }
+.policy-original { margin: 0.7rem 0; }
+.policy-original blockquote { white-space: pre-wrap; overflow-wrap: anywhere; }
+.policy-suggestions .change { margin-top: 0.7rem; }

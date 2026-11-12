@@ -3,7 +3,7 @@ import {
   Acl, Role, Table, StringColumn, IntegerColumn, ReferenceColumn,
   BooleanColumn, GenericColumn, Form, default_view, RestApi, ApplicationMenu, Record,
 } from '@servicenow/sdk/core';
-import { getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive, configureProvider } from '../server/workbench';
+import { getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive, configureProvider, getPolicies, savePolicy, suggestPolicyChecks } from '../server/workbench';
 
 export const editor = Role({
   $id: Now.ID['suiko-editor-role'], name: 'x_2236136_suiko_ai.editor',
@@ -95,6 +95,27 @@ export const x_2236136_suiko_ai_rule_version = Table({
   allowWebServiceAccess: false,
   index: [{ element: 'version_key', unique: true }],
 });
+
+export const x_2236136_suiko_ai_policy_version = Table({
+  name: 'x_2236136_suiko_ai_policy_version', label: 'Suiko policy copy', audit: true,
+  schema: {
+    title: StringColumn({ label: 'Policy title', maxLength: 160, mandatory: true }),
+    body: StringColumn({ label: 'Original policy wording', maxLength: 12000, mandatory: true }),
+    saved_by_name: StringColumn({ label: 'Saved by', maxLength: 160 }),
+    request_key: StringColumn({ label: 'Save request', maxLength: 80, mandatory: true }),
+  },
+  allowWebServiceAccess: false,
+  index: [{ element: 'request_key', unique: true }],
+});
+
+Acl({ $id: Now.ID['policy-version-read'], type: 'record', table: 'x_2236136_suiko_ai_policy_version',
+  operation: 'read', roles: [rulesEditor], adminOverrides: true });
+Acl({ $id: Now.ID['policy-version-create'], type: 'record', table: 'x_2236136_suiko_ai_policy_version',
+  operation: 'create', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['policy-version-write'], type: 'record', table: 'x_2236136_suiko_ai_policy_version',
+  operation: 'write', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['policy-version-delete'], type: 'record', table: 'x_2236136_suiko_ai_policy_version',
+  operation: 'delete', roles: ['admin'], adminOverrides: true });
 
 Acl({ $id: Now.ID['rule-version-read'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
   operation: 'read', roles: [editor], adminOverrides: true });
@@ -317,6 +338,9 @@ RestApi({
     { $id: Now.ID['suiko-save-rule'], method: 'POST', path: '/rules', version: 1, script: saveRule },
     { $id: Now.ID['suiko-approve-rule'], method: 'POST', path: '/rules/approve', version: 1, script: approveRule },
     { $id: Now.ID['suiko-rule-active'], method: 'POST', path: '/rules/active', version: 1, script: setRuleActive },
+    { $id: Now.ID['suiko-list-policies'], method: 'GET', path: '/policies', version: 1, script: getPolicies },
+    { $id: Now.ID['suiko-save-policy'], method: 'POST', path: '/policies', version: 1, script: savePolicy },
+    { $id: Now.ID['suiko-suggest-policy'], method: 'POST', path: '/policies/suggest', version: 1, script: suggestPolicyChecks },
     { $id: Now.ID['suiko-provider-configuration'], method: 'POST', path: '/provider', version: 1, script: configureProvider },
   ],
 });

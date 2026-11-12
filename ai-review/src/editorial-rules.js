@@ -20,12 +20,14 @@ export const starterTemplates = [
     template_id: 'quotation-accuracy', title: 'Quotations match supplied material', priority: 'high', ...all,
     text: 'When public text quotes someone, compare the quotation with any relevant transcript, interview excerpt or source material supplied for this review. Flag meaningful wording or attribution differences. If the original wording is unavailable, ask the editor to confirm it.',
     conditions: 'Applies when the public text quotes a speaker or a written source.',
+    requires_sources: true,
     human_checks: ['Supply the original quotation or confirm the wording when it is unavailable.'],
   },
   {
     template_id: 'claim-support', title: 'Important claims have supporting material', priority: 'high', ...all,
     text: 'For important externally checkable claims, assess how the supplied source passages or reporting context support each claim. Show the claim and relevant material. Distinguish apparent support, contradiction and missing information. Give the editor a useful next action; ordinary transitions and clearly identified opinion do not require a factual source.',
     conditions: 'Applies to important factual claims, including factual claims inside opinion or sponsored content.',
+    requires_sources: true,
     human_checks: ['The editor decides whether the material is sufficient and trustworthy.'],
   },
   {
@@ -79,6 +81,7 @@ export function normalizeRuleDefinition(input) {
   }
   const confirmations = input.human_checks ?? [];
   if (!Array.isArray(confirmations) || confirmations.length > 6) invalid('Use up to six short human-confirmation notes.');
+  if (input.requires_sources !== undefined && typeof input.requires_sources !== 'boolean') invalid('Choose whether the rule needs source material.');
   return {
     title: text(input.title, 160, 'The rule title', true).trim(),
     text: text(input.text, 3000, 'The rule instruction', true), priority: input.priority,
@@ -86,6 +89,7 @@ export function normalizeRuleDefinition(input) {
     content_kinds: choices(input.content_kinds, contentKinds, 'content kind'),
     conditions: text(input.conditions ?? '', 1000, 'Additional conditions'),
     human_checks: confirmations.map(value => text(value, 240, 'A confirmation note', true)),
+    ...(input.requires_sources === undefined ? {} : { requires_sources: input.requires_sources }),
     origin: savedOrigin,
   };
 }
