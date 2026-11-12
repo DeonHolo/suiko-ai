@@ -23,4 +23,5 @@ The first review retained its overview and other usable sections. After the fict
 - Story `07a9114983a89b106fffc629feaad357`.
 - First review `13a9514983a89b106fffc629feaad3d4`, provider-busy retry `4bca99c983a89b106fffc629feaad3e3`, refreshed review `527a76498364db106fffc629feaad317`.
 - The local suite covers the rule gate, failed and partial links, unsafe redirects, the time budget, separate snapshots and the two text fields observed across the reader's response modes. Both modes returned the original page status, including a 404 inside an HTTP 200 response. The SDK build and installed page and API smoke checks passed.
+- A cache warning and an incomplete extraction can appear together. The result retains both facts.
 - The original and refreshed screenshots, saved source text, timings and expectations are in the ignored `ai-review/output/ai-20-2026-11-12/` folder.

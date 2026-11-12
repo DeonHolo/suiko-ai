@@ -43,7 +43,12 @@ test('a content-format reply needs a successful target status and retains known 
     : source(url, undefined, 200, { content: 'No target status.', httpStatus: undefined }) });
   assert.equal(cached.passages[0].text, 'Saved page text.');
   assert.equal(cached.cached, true);
+  assert.equal(cached.status, 'read');
   assert.equal(unconfirmed.status, 'unavailable');
+  const [partial] = collectSourceEvidence([brief], { ...options,
+    read: url => source(url, 'Only part of the page.', 200, { warning: 'This is a cached snapshot of the original page. Extraction was incomplete.' }) });
+  assert.equal(partial.cached, true);
+  assert.equal(partial.status, 'partial');
 });
 
 test('a changed link creates a separate snapshot while the earlier passages and fingerprint survive', () => {
