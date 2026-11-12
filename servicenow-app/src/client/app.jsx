@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { reviewService } from './services/ReviewService';
 import './app.css';
 
-const blank = { title: '', text: '', notes: '' };
+const blank = { title: '', text: '', notes: '', content_format: '', content_kind: '', source_urls_text: '' };
+const asForm = revision => revision ? {
+  ...blank, title: revision.title, text: revision.text, notes: revision.notes || '',
+  content_format: revision.content_format || '', content_kind: revision.content_kind || '',
+  source_urls_text: (revision.source_urls || []).join('\n'),
+} : { ...blank };
 const samples = {
   river1: {
     title: 'River cleanup video package',
@@ -155,6 +160,11 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata }) {
         </article>)}
     </section>
     <ReviewChecks result={result} run={run} />
+    {!!run.request.sources?.length && <section className="card"><h3>Sources</h3>
+      {run.request.sources.map((source, index) => <article className="change" key={index}>
+        <p>{source.url}</p><p className="hint">{source.status === 'not_read' ? 'Not read — saved as a reference only.' : source.status}</p>
+      </article>)}
+    </section>}
     <section className="card"><h3>What changed</h3>
       {!run.request.input.baseline_revision && <p>This is the first submitted version of this story.</p>}
       {run.request.input.baseline_revision && !result.assessment.changes.length && <p>{result.assessment.coverage.revision_comparison === 'incomplete'
@@ -208,13 +218,14 @@ export default function App() {
   const [newRule, setNewRule] = useState(null);
   const current = data?.revisions[0];
   const run = data?.runs.find(item => item.id === runId);
-  const dirty = !current || ['title', 'text', 'notes'].some(field => form[field] !== current[field]);
+  const currentForm = asForm(current);
+  const dirty = !current || Object.keys(blank).some(field => form[field] !== currentForm[field]);
 
   async function load(id, fill = true, preferredRun = null) {
     const next = await reviewService.state(id);
     setData(next); setStoryId(id);
     const revision = next.revisions[0];
-    if (fill) setForm(revision ? { title: revision.title, text: revision.text, notes: revision.notes } : blank);
+    if (fill) setForm(asForm(revision));
     setRunId(preferredRun || next.runs.find(item => item.revision_id === revision?.id)?.id || null);
   }
   useEffect(() => { load(null).catch(issue => setError(issue.message)); }, []);
@@ -233,11 +244,13 @@ export default function App() {
       setError('Save the first river draft before loading its second version.'); return;
     }
     if (which !== 'river2') startNew();
-    setForm(samples[which]); setMessage('Sample loaded. Save the version when you are ready.');
+    setForm({ ...blank, ...samples[which], content_format: which.startsWith('river') ? 'script' : 'article', content_kind: 'news' });
+    setMessage('Sample loaded. Save the version when you are ready.');
   }
   function save() {
     return act(async () => {
-      const revision = await reviewService.save({ ...form, story_id: storyId,
+      const { source_urls_text, ...fields } = form;
+      const revision = await reviewService.save({ ...fields, source_urls: source_urls_text.split(/\r?\n/).filter(line => line.trim()), story_id: storyId,
         expected_revision_id: current?.id || null, request_key: saveKey });
       await load(revision.story_id);
       setSaveKey(crypto.randomUUID()); setMessage('Version ' + revision.version + ' saved. You can review it now.');
@@ -298,19 +311,34 @@ export default function App() {
         <div className="workspace">
           <section className="card draft-panel">
             <div className="section-title"><h2>Your draft</h2><span className="hint">{current ? 'Version ' + current.version : 'First version'}{dirty ? ' · Unsaved changes' : ''}</span></div>
+            <div className="input-types">
+              <label>Format<select required disabled={busy} value={form.content_format} onChange={event => setForm({ ...form, content_format: event.target.value })}>
+                <option value="">Choose a format</option><option value="article">Article</option><option value="script">Script</option><option value="caption">Caption</option>
+              </select></label>
+              <label>Content kind<select required disabled={busy} value={form.content_kind} onChange={event => setForm({ ...form, content_kind: event.target.value })}>
+                <option value="">Choose a kind</option><option value="news">News</option><option value="opinion">Opinion</option><option value="sponsored">Sponsored</option>
+              </select></label>
+            </div>
+            {current && (!current.content_format || !current.content_kind) && <p className="notice">This older version has no format or kind saved. Choose both and save a new version to use the updated review setup. Its earlier reviews are still available.</p>}
             <label>Title<input disabled={busy} maxLength={160} value={form.title} onChange={event => setForm({ ...form, title: event.target.value })} /></label>
-            <label>Article, script, or caption<textarea className="draft-text" disabled={busy} maxLength={12000} value={form.text} onChange={event => setForm({ ...form, text: event.target.value })} /></label>
-            <label>Source links and production notes <span className="hint">Optional</span>
+            <label>Story text<textarea className="draft-text" disabled={busy} maxLength={12000} value={form.text} onChange={event => setForm({ ...form, text: event.target.value })} /></label>
+            <label>Sources <span className="hint">Optional · Up to five links, one per line</span>
+              <textarea disabled={busy} maxLength={8000} value={form.source_urls_text} onChange={event => setForm({ ...form, source_urls_text: event.target.value })} /></label>
+            <p className="hint">{data.capabilities?.source_reading ? 'Public sources are read when an approved rule needs them.'
+              : 'Links are saved as references. This version of Suiko has not opened them.'}</p>
+            <label>Review context <span className="hint">Optional · Briefs, interview excerpts or production notes</span>
               <textarea disabled={busy} maxLength={4000} value={form.notes} onChange={event => setForm({ ...form, notes: event.target.value })} /></label>
-            <p className="hint">{form.title.length + form.text.length + form.notes.length} of 12,000 characters</p>
-            <div className="actions"><button disabled={busy || !dirty || !form.title.trim() || !form.text.trim()} onClick={save}>Save version</button>
-              <button className="primary" disabled={busy || dirty || !current || !data.provider.configured} onClick={review}>Review this version</button></div>
+            <p className="hint">{[...form.title + form.text + form.notes + form.source_urls_text].length} of 12,000 characters, including context and links</p>
+            <div className="actions"><button disabled={busy || !dirty || !form.title.trim() || !form.text.trim() || !form.content_format || !form.content_kind} onClick={save}>Save version</button>
+              <button className="primary" disabled={busy || dirty || !current || !current.content_format || !current.content_kind || !data.provider.configured} onClick={review}>Review this version</button></div>
             {dirty && current && <p className="hint">Save your changes before running the next review.</p>}
             {!data.provider.configured && <p className="notice">Gemini needs its server configuration. You can still save versions.</p>}
             <p className="hint">Model · {data.provider.model}</p>
             {!!data.revisions.length && <details><summary>Saved versions</summary>{data.revisions.map(revision => <details className="version" key={revision.id}>
               <summary>Version {revision.version} · {revision.saved_at} UTC</summary><h4>{revision.title}</h4><pre>{revision.text}</pre>
-              <h4>Sources and production notes</h4><pre>{revision.notes || 'No notes supplied.'}</pre>
+              <p className="hint">{revision.content_format && revision.content_kind ? revision.content_format + ' · ' + revision.content_kind : 'Format and kind were not recorded for this older version.'}</p>
+              <h4>Sources</h4><pre>{revision.source_urls?.join('\n') || 'No separate source links saved.'}</pre>
+              <h4>{revision.content_format ? 'Review context' : 'Legacy sources and production notes'}</h4><pre>{revision.notes || 'No context supplied.'}</pre>
             </details>)}</details>}
           </section>
           <section className="review-panel" aria-label="AI review">

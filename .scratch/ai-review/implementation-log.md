@@ -12,8 +12,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
-| AI-16 | tested; review corrections ready | `1469343` plus corrections · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
-| AI-17 | ready-for-agent | pending | Saved format/kind/source/context inputs. |
+| AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
+| AI-17 | review fixes verified; PR open | `6eeb194` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 64 local checks; SDK/PDI build and smoke; versioned input UI/API checks; link-guard regressions verified in the installed app. |
 | AI-18 | ready-for-agent | pending | Approval, applicability and historical rule versions. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
@@ -43,3 +43,14 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - All four inline CodeRabbit findings were applicable and corrected. The installed server test now passes with actual records and generated validators: partial checked result, checklist mismatch, unreadable JSON, released lock, intact draft, retry and reopened history. See the public report's named evidence. AI-16 has 50 local checks; the preserved combined AI-17 build has 62.
 - Added the future stale-rule approval case to AI-23. React child-key warnings were not applied: the mapped outer article is already keyed. Historical responses remain readable; new attempts require overview references.
 - Deon confirmed useful advisory judgments, visible confidence and an easy editor experience as the goal. AI-21 includes the approved Decision 1 trial. No absolute-truth completion gate is required.
+
+## AI-17 delivery
+
+AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf0`. The follow-up review's evidence wording was corrected; its fixture-cleanup suggestion was declined after verifying ATF rollback and no leftover fixture stories. Local main was pulled successfully before integrating it into this branch.
+
+- Branch: `codex/ai-17-story-inputs`; original code commit `6eeb194`. AI-16 corrections were merged into this branch while preserving its installed schema and records.
+- Explicit format/kind, separate bounded source URLs and optional Review context are saved per revision. Classified 0.3 requests preserve legacy 0.2 baselines/reviews.
+- Short model-facing draft-N labels map to actual ServiceNow record identities in saved provenance.
+- 62 combined local checks passed, along with SDK/frozen-key build, installation and page/API smoke. Article/script creation, article version 2, switching stories and legacy history were verified through the in-app browser and saved API readback. A live direct 3.5 article review retained its overview and correctly identified the context edit.
+- Source links remain visibly Not read. Actual retrieval belongs to AI-20. Private inputs, assertions and screenshots are under `ai-review/output/ai-17-2026-11-12/`.
+- Both inline CodeRabbit findings were valid: fragment access parameters and serialized URL-list overflow. New tests failed before the fixes and passed afterward. The installed API rejected both examples with existing versions/reviews unchanged; the form showed the access-link message. No Gemini calls were made for these checks. The local suite now has 64 passing checks.
