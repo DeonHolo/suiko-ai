@@ -13,8 +13,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
 | AI-16 | done; merged | `ab679b7` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
-| AI-17 | implemented and tested; PR pending | `6eeb194` | 62 combined local checks; SDK/PDI build and smoke; article/script save-reopen, revision snapshots and live review. |
-| AI-18 | ready-for-agent | pending | Approval, applicability and historical rule versions. |
+| AI-17 | PR open; CodeRabbit reviewing | `6eeb194` · [PR #12](https://github.com/DeonHolo/suiko-ai/pull/12) | 62 combined local checks; SDK/PDI build and smoke; article/script save-reopen, revision snapshots and live review. |
+| AI-18 | in-progress | pending | Five editable starter definitions, exact wording/scope/approval snapshots; server/UI integration next. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
 | AI-20 | ready-for-agent | pending | Actual PDI source-reading proof and saved source text. |
 | AI-21 | ready-for-agent | pending | Claim/source matching, uncertainty and metadata. |
@@ -53,3 +53,9 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - Short model-facing draft-N labels map to actual ServiceNow record identities in saved provenance.
 - 62 combined local checks passed, along with SDK/frozen-key build, installation and page/API smoke. Article/script creation, article version 2, switching stories and legacy history were verified through the in-app browser and saved API readback. A live direct 3.5 article review retained its overview and correctly identified the context edit.
 - Source links remain visibly Not read. Actual retrieval belongs to AI-20. Private inputs, assertions and screenshots are under `ai-review/output/ai-17-2026-11-12/`.
+
+## AI-18 work in progress
+
+- Branch: `codex/ai-18-approved-rules`, based on the tested AI-17 branch while PR #12 is reviewed.
+- The shared rule-definition module offers the five editable starter templates, preserves manual instructions, validates typed applicability and captures exact approval snapshots. Five focused checks pass. This is not yet wired into the PDI.
+- Remaining: immutable saved rule versions, explicit save/approve/enable actions with stale-write checks, legacy approval labels, rule applicability in review input/results, editable UI and installed role/lifecycle tests.
