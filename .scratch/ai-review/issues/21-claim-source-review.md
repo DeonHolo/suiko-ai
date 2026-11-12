@@ -23,6 +23,8 @@
 7. Run the approved Gemini Decision 1 trial using the existing protected Gemini key. Send frozen claim/source material and explicit support/contradiction/insufficient-information choices. Compare its advisory judgments with Flash-Lite alone on a small, pre-labelled set. Record confidence, useful findings, misses, latency and input usage. Retain the integration if it improves the editor's experience; otherwise record why it was left out. See [trial notes](../decisions-api-research.md).
 8. Present the judgment, relevant passages, confidence where available and a concrete editor action. Uncertainty is review information, not a failed job or a reason to demand absolute truth. Keep the final publishing decision with the editor/legal reviewer.
 
+**Observed follow-up from AI-18:** The headline conflict correctly quoted both the overstated title and the cautious body. The description checker withheld an accurate description taken from that body simply because it also appeared as finding evidence. Separate the problematic claim from comparison/context evidence when deciding whether public metadata reuses the concern. Retain a meaningful safeguard without withholding harmless text solely due to co-citation.
+
 **Done when**
 
 - [ ] Bare URLs produce inspectable claim/source matches without editor-written mappings.
