@@ -12,7 +12,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 
 | Ticket | State | Commit / PR | Evidence |
 | --- | --- | --- | --- |
-| AI-16 | done; PR open | `1469343` · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 42 local tests; SDK/PDI builds; API smoke; three live UI attempts. |
+| AI-16 | tested; review corrections ready | `1469343` plus corrections · [PR #11](https://github.com/DeonHolo/suiko-ai/pull/11) | 50 local tests; SDK/PDI builds; API smoke; three live UI attempts; passing installed persistence/retry test. |
 | AI-17 | ready-for-agent | pending | Saved format/kind/source/context inputs. |
 | AI-18 | ready-for-agent | pending | Approval, applicability and historical rule versions. |
 | AI-19 | ready-for-agent | pending | Pasted policy proposals through editor approval. |
@@ -39,4 +39,7 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 - Pre-run expectations and screenshot/output are local under `ai-review/output/ai-16-2026-11-12/`. Three unchanged-radio reviews were clicked and inspected in the in-app browser. [Public evidence summary](../../docs/16-review-reliability-evidence.md). The final direct 3.5 attempt retained metadata while withholding an overview with a mistyped version reference. The earlier 3.1 attempt retained both expected sourcing concerns.
 - Remaining semantic gap for AI-21/AI-23: model outcomes varied, with unsupported assumptions that the station sourced the six-week duration and 420 registrations. Do not count a passed quote check as source-support accuracy.
 - AX follow-up for AI-17: use short model-facing version labels while retaining actual ServiceNow record identities in saved provenance, reducing long-ID transcription errors without weakening exact-passage checks.
-- AI-16 code/evidence are verified, committed as `1469343`, and published in PR #11 targeting main. No merge was performed. Continue with AI-17; no user question is required.
+- Initial AI-16 code/evidence were committed as `1469343` and published in PR #11. Deon's later instruction added the CodeRabbit/fix/test/agent-merge loop.
+- All four inline CodeRabbit findings were applicable and corrected. The installed server test now passes with actual records and generated validators: partial checked result, checklist mismatch, unreadable JSON, released lock, intact draft, retry and reopened history. See the public report's named evidence. AI-16 has 50 local checks; the preserved combined AI-17 build has 62.
+- Added the future stale-rule approval case to AI-23. React child-key warnings were not applied: the mapped outer article is already keyed. Historical responses remain readable; new attempts require overview references.
+- Deon confirmed useful advisory judgments, visible confidence and an easy editor experience as the goal. AI-21 includes the approved Decision 1 trial. No absolute-truth completion gate is required.
