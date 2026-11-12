@@ -831,6 +831,15 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: '31cee2561d3644f3bb5cd62a84207a7c'
+                        key: {
+                            name: 'x_2236136_suiko_ai_review'
+                            element: 'revision_diff_json'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_db_object'
                         id: '3262bdfb72bd4e0fa1beb49f734e5f2e'
                         key: {
@@ -2662,6 +2671,14 @@ declare global {
                             }
                             element: 'story'
                             position: '0'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'c6c11b5115bb440a9bc19c5a7ab6f2ae'
+                        key: {
+                            name: 'x_2236136_suiko_ai_review'
+                            element: 'revision_diff_json'
                         }
                     },
                     {
