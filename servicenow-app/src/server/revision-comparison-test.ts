@@ -83,6 +83,14 @@ export function runRevisionComparisonRegression() {
     ]);
   expect(dates.assessment.changes.length === 2 && dates.assessment.changes[1].change_id === 'deadline',
     'Independent facts with the same date replacement were merged.');
+  const omitted = compare('The opening is on December 5. Organizers expect 200 residents.',
+    'The opening is on December 12. More than 500 residents are expected.', (old, current) => [
+      { change_id: 'date', kind: 'modified', summary: 'The opening date changed.',
+        before: [old('The opening is on December 5.')], after: [current('The opening is on December 12.')] },
+    ]);
+  expect(omitted.assessment.changes.length === 1 && omitted.assessment.coverage.revision_comparison === 'incomplete'
+    && omitted.checks.issues.some(issue => issue.code === 'UNSUMMARIZED_EDIT'),
+    'A date summary hid the unreported attendance and attribution edits.');
   const sharedWords = compare('The crew sings. The crew dances.', 'The crew dances.', old => [
     { change_id: 'sentence', kind: 'removed', summary: 'The singing sentence was removed.', before: [old('The crew sings.')], after: [] },
   ]);

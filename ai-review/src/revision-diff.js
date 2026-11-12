@@ -91,6 +91,14 @@ function containsOnlyEditedText(quote, revision, other) {
   });
 }
 
+export function unrepresentedChanges(changes, baseline, candidate, diff) {
+  const before = changes.flatMap(change => change.before).map(reference => locate(baseline, reference));
+  const after = changes.flatMap(change => change.after).map(reference => locate(candidate, reference));
+  return diff.changes.filter(edit =>
+    (edit.before.length && !before.some(quote => quote.field === edit.field && touches(quote, edit, 'before')))
+    || (edit.after.length && !after.some(quote => quote.field === edit.field && touches(quote, edit, 'after'))));
+}
+
 export function fitsLiteralEdit(change, baseline, candidate, diff) {
   if (!diff?.changes.length || change.kind === 'formatting') return false;
   const before = change.before.map(reference => ({ ...locate(baseline, reference), quote: reference.quote }));

@@ -39,6 +39,11 @@
             "revision_id": "rev-001",
             "segment_id": "p1",
             "quote": "The new community library will open on December 5."
+          },
+          {
+            "revision_id": "rev-001",
+            "segment_id": "title",
+            "quote": "Community library to open on December 5"
           }
         ],
         "after": [
@@ -46,6 +51,11 @@
             "revision_id": "rev-002",
             "segment_id": "p1",
             "quote": "The new community library will open on December 12."
+          },
+          {
+            "revision_id": "rev-002",
+            "segment_id": "title",
+            "quote": "Community library opening moved to December 12"
           }
         ]
       },
