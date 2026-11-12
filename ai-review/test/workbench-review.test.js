@@ -47,6 +47,26 @@ test('two independent date changes keep their separate summaries and evidence', 
     revisionDiff: literalChanges(request.baseline_revision, request.candidate_revision),
   });
   assert.deepEqual(checked.assessment.changes.map(change => change.summary), ['The library opening changed.', 'The application deadline changed.']);
+  result.assessment.changes.pop();
+  const partial = checkWorkbenchResult(request, result, validators);
+  assert.equal(partial.assessment.changes.length, 1);
+  assert.equal(partial.assessment.coverage.revision_comparison, 'incomplete');
+  assert.ok(partial.checks.issues.some(issue => issue.code === 'UNSUMMARIZED_EDIT'));
+});
+
+test('the ordinary review entry point checks a claimed edit against unchanged saved text', async () => {
+  const { request, result } = sample();
+  const reference = revision => ({
+    revision_id: revision.revision_id, segment_id: 'p3', quote: revision.segments.find(segment => segment.segment_id === 'p3').text,
+  });
+  result.assessment.changes = [{
+    change_id: 'invented', kind: 'modified', summary: 'The admission terms changed.',
+    before: [reference(request.baseline_revision)], after: [reference(request.candidate_revision)],
+  }];
+  const checked = await review(request, result);
+  assert.deepEqual(checked.assessment.changes, []);
+  assert.ok(checked.checks.issues.some(issue => issue.code === 'CHANGE_NOT_IN_SAVED_EDITS'));
+  assert.equal(checked.assessment.coverage.revision_comparison, 'incomplete');
 });
 
 test('the workbench preserves a checked overview, findings and independent sections', async () => {

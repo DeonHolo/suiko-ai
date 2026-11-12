@@ -2,7 +2,7 @@ import { checkAssessmentEvidence, ReviewValidationError, validateReviewInput } f
 import { parseProviderJson } from './provider-json.js';
 import { ruleApplicability } from './editorial-rules.js';
 import { collectClaimChecks, claimRuleOutcome, overlapsPassage } from './claim-evidence.js';
-import { fitsLiteralEdit } from './revision-diff.js';
+import { fitsLiteralEdit, literalChanges, unrepresentedChanges } from './revision-diff.js';
 
 const firstDraftNote = 'No baseline revision was supplied; revision comparison was not performed.';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -24,6 +24,7 @@ export async function reviewWorkbench(request, provider, validators) {
 
 export function checkWorkbenchResult(request, raw, validators, { requireOverviewEvidence = false, revisionDiff } = {}) {
   validateReviewInput(request, validators.validateRequest);
+  if (revisionDiff === undefined) revisionDiff = literalChanges(request.baseline_revision, request.candidate_revision);
   if (!validators.validateWorkbenchShell(raw)) {
     throw new ReviewValidationError('INVALID_WORKBENCH_FORMAT', 'Gemini returned an incomplete review format. Your saved version is available for a retry.');
   }
@@ -229,6 +230,10 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
     changes.push(clone(change));
   });
   if (revisionDiff?.limited || (revisionDiff?.changes.length && !changes.length)) coverage.revision_comparison = 'incomplete';
+  if (revisionDiff && !revisionDiff.limited && unrepresentedChanges(changes, request.baseline_revision, request.candidate_revision, revisionDiff).length) {
+    report('UNSUMMARIZED_EDIT', '/assessment/changes', 'Some saved text edits are missing from the retained summaries. Open the literal edits to review them.');
+    coverage.revision_comparison = 'incomplete';
+  }
 
   const empty = {
     section: { suggested_id: null, reason: 'No checked section suggestion is available.', evidence: [] },
