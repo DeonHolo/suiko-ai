@@ -67,18 +67,21 @@ function decodeReaderReply(response, url, hash) {
   if (typeof data.warning === 'string' && /captcha|log\s?in|sign\s?in|paywall|access denied|authentication/i.test(data.warning)) {
     return unavailable('The page requires access Suiko does not have. Paste the relevant excerpt.', status);
   }
-  const text = typeof data.text === 'string' ? cleanText(data.text) : '';
+  const rawText = typeof data.text === 'string' ? data.text : data.content;
+  const text = typeof rawText === 'string' ? cleanText(rawText) : '';
   if (!text) return unavailable('The link returned no readable text. Paste the relevant excerpt.', status);
   const clipped = text.length > readerLimits.text;
   let retained = text.slice(0, readerLimits.text);
   if (/[\ud800-\udbff]$/.test(retained)) retained = retained.slice(0, -1);
   const passages = sourcePassages(retained);
-  const partial = clipped || status === 206 || Boolean(data.warning);
+  const cached = typeof data.warning === 'string' && /cached snapshot/i.test(data.warning);
+  const partial = clipped || status === 206 || Boolean(data.warning && !cached);
   return {
     status: partial ? 'partial' : 'read', http_status: status, passages,
     title: typeof data.title === 'string' ? cleanText(data.title).slice(0, 160) : '',
     ...(finalUrl === url ? {} : { final_url: finalUrl }),
     fingerprint: hash(JSON.stringify(passages)),
+    ...(cached ? { cached: true } : {}),
     ...(partial ? { message: clipped ? 'Suiko kept the first 6,000 characters. Paste another excerpt if you need more.'
       : 'The reader reported that some text may be missing. Check the original or paste an excerpt.' } : {}),
   };

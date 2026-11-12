@@ -37,6 +37,15 @@ test('the reader checks the target status, even when the reader wrapper returns 
   assert.equal(failed.passages, undefined);
 });
 
+test('a content-format reply needs a successful target status and retains known cache information', () => {
+  const [cached, unconfirmed] = collectSourceEvidence([brief, missing], { ...options, read: url => url === brief
+    ? source(url, undefined, 200, { content: 'Saved page text.', warning: 'This is a cached snapshot of the original page.' })
+    : source(url, undefined, 200, { content: 'No target status.', httpStatus: undefined }) });
+  assert.equal(cached.passages[0].text, 'Saved page text.');
+  assert.equal(cached.cached, true);
+  assert.equal(unconfirmed.status, 'unavailable');
+});
+
 test('a changed link creates a separate snapshot while the earlier passages and fingerprint survive', () => {
   const [first] = collectSourceEvidence([brief], { ...options, read: url => source(url, 'Starts at six.\r\n\r\nRoom A.') });
   const saved = JSON.stringify(first);
