@@ -63,6 +63,22 @@ test('invalid link and note types are rejected instead of silently becoming empt
   }
 });
 
+test('private access parameters in fragments are rejected while ordinary section references remain usable', () => {
+  for (const link of [
+    'https://example.com/report#access_token=synthetic-test-only',
+    'https://example.com/report#section?api_key=synthetic-test-only',
+    'https://example.com/report#section&authorization=synthetic-test-only',
+  ]) assert.throws(() => normalizeStoryInput({ ...draft(), source_urls: [link] }), { code: 'INVALID_STORY_INPUT' });
+  assert.deepEqual(normalizeSourceUrls(['https://example.com/report#section-two']), ['https://example.com/report#section-two']);
+});
+
+test('source sets that expand beyond the saved JSON capacity are rejected before saving', () => {
+  const links = Array.from({ length: 5 }, (_, index) => 'https://example.com/' + index + '/' + '"'.repeat(980));
+  assert.throws(() => normalizeStoryInput({ ...draft(), source_urls: links }), { code: 'INVALID_STORY_INPUT' });
+  const ordinary = Array.from({ length: 5 }, (_, index) => 'https://example.com/' + index + '/' + 'a'.repeat(1400));
+  assert.deepEqual(normalizeStoryInput({ ...draft(), source_urls: ordinary }).source_urls, ordinary);
+});
+
 test('the saved-text limit includes context and URLs and counts Unicode characters', () => {
   const unicodeTitle = '🎬'.repeat(160);
   assert.equal(normalizeStoryInput({ ...draft(), title: unicodeTitle }).title, unicodeTitle);

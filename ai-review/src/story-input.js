@@ -28,7 +28,7 @@ export function normalizeSourceUrls(values) {
         || ['localhost', 'local', 'internal'].some(suffix => host === suffix || host.endsWith('.' + suffix))) {
       invalid('Use a public website address. Local addresses, IP addresses and custom ports are not supported.');
     }
-    if (/[?&](?:access_token|api[_-]?key|token|password|secret|signature|sig|authorization)=/i.test(match[3])) {
+    if (/[?&#](?:access_token|api[_-]?key|token|password|secret|signature|sig|authorization)=/i.test(match[3] + '#' + (match[4] || ''))) {
       invalid('This source link appears to contain private access information. Use a public link or provide a source excerpt in review context.');
     }
     const protocol = match[1].toLowerCase();
@@ -52,6 +52,7 @@ export function normalizeStoryInput(input) {
   const text = normalize(input.text);
   const notes = normalize(input.notes || '');
   const sourceUrls = normalizeSourceUrls(input.source_urls === undefined ? [] : input.source_urls);
+  if (JSON.stringify(sourceUrls).length > 8000) invalid('Use shorter source links or fewer links for one version.');
   const total = [...title + text + notes + sourceUrls.join('\n')].length;
   if (!title || [...title].length > 160 || !text || [...notes].length > 4000 || total > 12000) {
     invalid('Enter a title and draft. Use up to 160 title characters, 4,000 context characters and 12,000 characters in total, including source links.');
