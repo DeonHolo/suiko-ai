@@ -54,7 +54,7 @@ Agree on two starter rules for the demo. A shared sourcing rule can work across 
 1. **Try the live review.** Use both saved river versions so the team has a shared example and can see the records that already exist.
 2. **Add the Inbox and editor decisions.** Open the existing Story screen from a row. Test **Request changes** and **Sign off** with the regular Editor account.
 3. **Add legal clearance and history.** Assign the exact version. Save the decision, then prove that a newer copy needs fresh clearance. Show the actor, time, and version in the Story screen.
-4. **Rehearse with the team.** Use the [demo ticket](TEAM-TASKS.md#qa-01-rehearse-the-demo) to check the full path and gather evidence.
+4. **Rehearse with the team.** Use the [demo ticket](TEAM-TASKS.md#qa-01-rehearse-the-whole-flow) to check the full path and gather evidence.
 
 ## Quick checks before the demo
 

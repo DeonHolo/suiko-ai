@@ -137,7 +137,11 @@ export function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManag
   const unresolved = result.assessment.policy_assessments.filter(rule => rule.status === 'not_assessable');
   const claimChecks = result.claim_checks || [];
   const sourceRules = run.request.input.source_rule_ids || [];
-  const claimConcerns = claimChecks.some(check => check.status === 'contradicted' || check.status === 'insufficient');
+  const claimConcerns = claimChecks.some(check => {
+    const second = result.decision_check?.answers?.[check.id];
+    return check.status === 'contradicted' || check.status === 'insufficient'
+      || (second && (second.status !== check.status || ['contradicted', 'insufficient'].includes(second.status)));
+  });
   const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
   const sourceGaps = hasSourceGaps(run);
   const missingSections = [];

@@ -7,7 +7,7 @@ import { href, isNormalClick } from './routes';
 
 const statusLabels = { pending: 'Waiting for you', cleared: 'Cleared', changes_requested: 'Changes requested' };
 
-export default function LegalReview({ taskId, onOpenTask, onBack, hasEditorAccess }) {
+export default function LegalReview({ taskId, onOpenTask, onBack, hasEditorAccess, onChange }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,6 +36,8 @@ export default function LegalReview({ taskId, onOpenTask, onBack, hasEditorAcces
       setData(current => ({ ...current, task: updated.task }));
       setAction('');
       toast.success(action === 'clear' ? 'Version cleared' : 'Changes requested');
+      try { await onChange?.(); }
+      catch { toast.error('Decision saved. Choose Refresh story to reload its status.'); }
     } catch (issue) { setActionError(issue.message); }
     finally { setBusy(false); }
   }
@@ -62,7 +64,7 @@ export default function LegalReview({ taskId, onOpenTask, onBack, hasEditorAcces
         <h3>What to check</h3><p>{task.reason}</p>
         {task.requested_by && <p className="hint">Requested by {task.requested_by} · {localDateTime(task.requested_at)}</p>}
       </section>
-      <section className="surface legal-request"><h2>Draft sent to legal</h2><div className="draft-copy">{task.revision.text}</div>
+      <section className="surface legal-request"><h2>Draft sent to legal</h2><h3>{task.revision.title}</h3><div className="draft-copy">{task.revision.text}</div>
         {task.revision.notes && <><h3>Story notes</h3><div className="draft-copy">{task.revision.notes}</div></>}
       </section>
       {task.decision && <section className="surface legal-request"><h2>{statusLabels[task.status]}</h2>

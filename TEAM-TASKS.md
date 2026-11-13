@@ -113,7 +113,7 @@ I own FE-03 (#3), now legal-task schema and protected read access. Read TEAM-TAS
 1. Inspect saveRevision and existing tables. Agree current-revision/status fields with FE-01. Use the contract's five status values.
 2. Backfill current revision. Changed text creates a new revision and Needs review. An identical save returns the same revision and preserves human status.
 3. Add POST `workbench/workflow/actions` using a shared server action for API/native callers. Accept revision ID, action and note. Get actor from the signed-in session.
-4. Implement request_changes with a required note and sign_off with an optional note. Check Editor role and exact current revision again when writing. Stale tabs get 409 and change nothing.
+4. Implement request_changes with a required note and sign_off with an optional note. Check Editor role, access to the target story, exact current revision and expected story modification count again when writing. Return workflow.modified for that guard. Stale tabs get 409 and change nothing.
 5. Integrate BE-02's gate: once a story has gone to legal, sign-off requires clearance of its exact current revision. Routine stories need no legal task.
 6. Record accepted actions once through BE-03's shared history writer. Guard repeated requests so they do not create duplicate decisions.
 7. Extend state with workflow status, server-allowed actions, reviewer choices and human history. Allowed buttons must match server checks.
@@ -180,10 +180,10 @@ Start after platform APIs and custom screens are installed together.
 
 1. Record installed commit, date, account role, story ID and revision ID. Write expectations before each run.
 2. As ordinary Editor, save a draft, run AI, inspect claim/source passages and save an edited description. Leave/reopen it. Ordinary UI should hide model names and raw UTC times.
-3. Search/filter Stories and open page two. Return to an unsaved draft without losing it; replacing it must ask first.
+3. Search/filter Stories and open page two. Return to an unsaved draft without losing it; replacing it must ask first. Create an unsaved new story, visit Stories and press Back: its text must remain. Delay a refresh for story A, open/edit B, then finish A's request: B must remain untouched.
 4. Request changes, save a revision and sign off a routine story. AI retry must not change human status; AI failure must not block a permitted manual decision.
 5. Send a different version to legal. Clear it using the assigned legal-only account. Save a revision as Editor and prove the old clearance cannot sign it off.
-6. Get fresh clearance, sign off and inspect both decisions. An unassigned account must neither read the task's draft nor respond.
+6. Get fresh clearance, return from Legal Review to the same story, sign off and inspect both decisions. Its status/actions must refresh after clearance. An unassigned account must neither read the task's draft nor respond.
 7. Edit/approve a rule as designated editor. Reopen an old review and verify original rule, sources and chosen metadata remain.
 8. Archive/restore a disposable story and unused rule. Restored rule stays off. Delete a separate eligible throwaway as admin. Protected examples and retained human/legal history stay protected.
 9. Check keyboard navigation, dialog focus/Escape, labels, narrow-screen overflow and local 12-hour times without seconds.

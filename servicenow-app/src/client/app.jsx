@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { reviewService, workspaceService } from './services/ReviewService';
 import Archive from './Archive';
@@ -67,6 +67,8 @@ export default function App() {
   const archived = data?.story?.archived === true;
   const canArchive = data?.capabilities.archive === true;
   const page = route.page;
+  const activeStory = useRef(null);
+  activeStory.current = { id: storyId, dirty, page, requested: route.story, revision: current?.id };
 
   function navigate(nextPage, id = null, replace = false) {
     const next = { page: nextPage, story: nextPage === 'story' ? id : null, task: nextPage === 'legal' ? id : null };
@@ -111,7 +113,7 @@ export default function App() {
       } else if (next.page === 'resume' && data) {
         const last = lastStory(viewer);
         navigate(last ? 'story' : 'stories', last, true);
-      } else if (next.page === 'story' && !next.story) {
+      } else if (next.page === 'story' && !next.story && storyId) {
         startNew();
       } else {
         setRoute(next); setError('');
@@ -199,12 +201,13 @@ export default function App() {
       const revision = await reviewService.save({ ...fields, source_urls: source_urls_text.split(/\r?\n/).map(line => line.trim()).filter(Boolean),
         story_id: storyId, expected_revision_id: current?.id || null, request_key: saveKey });
       applyStory({ ...data, story: { ...data.story, id: revision.story_id, title: revision.title },
+        workflow: revision.id === current?.id ? data.workflow : null,
         revisions: [revision, ...data.revisions.filter(item => item.id !== revision.id)], runs: data.runs });
       toast.success('Version ' + revision.version + ' saved');
       lastStory(viewer, revision.story_id);
       if (revision.story_id !== storyId) navigate('story', revision.story_id);
       try { applyStory(await reviewService.state(revision.story_id)); }
-      catch { setError('Your version was saved. Reopen the story to refresh its history.'); }
+      catch { setError('Your version was saved. Choose Refresh story to reload its history.'); }
     });
   }
 
@@ -214,7 +217,7 @@ export default function App() {
       setData(previous => ({ ...previous, runs: [result, ...previous.runs.filter(item => item.id !== result.id)] }));
       setRunId(result.id);
       try { applyStory(await reviewService.state(storyId), false, result.id); }
-      catch { setError('Your review was saved. Reopen the story to refresh its history.'); }
+      catch { setError('Your review was saved. Choose Refresh story to reload its history.'); }
       if (result.state === 'complete') toast.success('Review ready');
     });
   }
@@ -228,16 +231,33 @@ export default function App() {
   }
 
   async function refreshWorkspace() {
-    const next = await reviewService.state(storyId);
+    const target = activeStory.current.id;
+    const next = await reviewService.state(target);
+    if (!isActiveStory(target)) return;
+    if (activeStory.current.dirty && next.revisions[0]?.id !== activeStory.current.revision) {
+      setData(previous => ({ ...previous, workflow: null }));
+      setError('A newer version was saved elsewhere. Your unsaved text is still here. Reload the page when you are ready to open the latest version.');
+      return;
+    }
+    if (!activeStory.current.dirty && next.revisions[0]?.id !== activeStory.current.revision) {
+      applyStory(next);
+      return;
+    }
     setData(next);
-    if (runId && !next.runs.some(item => item.id === runId)) setRunId(null);
+    setRunId(previous => previous && next.runs.some(item => item.id === previous) ? previous : null);
+  }
+
+  function isActiveStory(id) {
+    const selected = activeStory.current;
+    return selected.id === id && (selected.page !== 'story' || selected.requested === id);
   }
 
   async function refreshRules(rules) {
     setData(previous => ({ ...previous, rules }));
+    const target = activeStory.current.id;
     try {
-      const next = await reviewService.state(storyId);
-      setData(previous => ({ ...previous, rules: next.rules, runs: next.runs }));
+      const next = await reviewService.state(target);
+      setData(previous => ({ ...previous, rules: next.rules, ...(isActiveStory(target) ? { runs: next.runs } : {}) }));
     } catch {
       setError('The rule was saved. Reopen the story to see whether its last review uses the current rules.');
     }
@@ -285,6 +305,7 @@ export default function App() {
         <div><h1>{current?.title || 'New story'}</h1>
           {current && <p className="story-subtitle">{['Version ' + current.version, formats[current.content_format], localDateTime(current.saved_at)].filter(Boolean).join(' · ')}</p>}</div>
         <div className="actions heading-actions">
+          {current && <button className="quiet" disabled={!!busy} onClick={() => act('Refreshing your story…', refreshWorkspace)}>Refresh story</button>}
           <button className="quiet" disabled={!!busy} onClick={() => setShowSamples(true)}>Try a sample</button>
           {canArchive && data.story?.can_archive && !archived && <button className="quiet" disabled={!!busy} onClick={() => leaveDraft(() => {
             setArchiveError(''); setArchiveTarget({ kind: 'story', item: data.story });
@@ -386,7 +407,7 @@ export default function App() {
       </div>}
       {canArchive && page === 'archive' && <Archive canManageRules={data.can_manage_rules} onChange={refreshWorkspace} onOpenStory={openStory} />}
       {page === 'legal' && <LegalReview key={route.task || 'tasks'} taskId={route.task} hasEditorAccess={!!data}
-        onOpenTask={id => navigate('legal', id)} onBack={() => navigate('stories')} />}
+        onOpenTask={id => navigate('legal', id)} onBack={() => navigate('stories')} onChange={data ? refreshWorkspace : undefined} />}
       {showSamples && <Dialog title="Try a sample story" onClose={() => setShowSamples(false)}>
         <p>Load a fictional draft to try a review.</p>
         <div className="actions"><button onClick={() => sample('river1')}>River script</button>

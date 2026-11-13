@@ -1,12 +1,16 @@
-import React, { useEffect, useId, useRef } from 'react';
+import React, { useLayoutEffect, useId, useRef } from 'react';
 
 export default function Dialog({ title, children, onClose, busy = false }) {
   const dialog = useRef(null);
   const titleId = useId();
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = dialog.current;
+    const opener = document.activeElement;
     element.showModal();
-    return () => element.close();
+    return () => {
+      element.close();
+      if (opener?.isConnected && typeof opener.focus === 'function') opener.focus({ preventScroll: true });
+    };
   }, []);
   return <dialog ref={dialog} aria-labelledby={titleId} onCancel={event => {
     event.preventDefault();

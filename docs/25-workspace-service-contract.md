@@ -39,6 +39,7 @@ Teammates add these fields as their features become ready:
   },
   "workflow": {
     "status": "needs_review",
+    "modified": "4",
     "actions": ["request_changes", "send_to_legal", "sign_off"],
     "reviewers": [{"id": "user-id", "name": "Reviewer name"}],
     "history": [{
@@ -99,10 +100,10 @@ Editor may archive/restore stories. Rules Editor may archive/restore rules. Admi
 ## BE-01/BE-02: POST workbench/workflow/actions
 
 ```json
-{"revision_id":"revision-id","action":"request_changes","note":"Confirm the opening time."}
+{"revision_id":"revision-id","expected_modified":"4","action":"request_changes","note":"Confirm the opening time."}
 ```
 
-Actions: `request_changes`, `sign_off`, `send_to_legal`. The latter also requires `reviewer_id` and a reason in `note`. Validate reviewer eligibility. Obtain actor from the session and reject archived/noncurrent drafts.
+Actions: `request_changes`, `sign_off`, `send_to_legal`. The latter also requires `reviewer_id` and a reason in `note`. Validate reviewer eligibility. Obtain actor from the session and check Editor authority plus access to the story owning that revision. Reject inaccessible targets without revealing their details. Reject archived/noncurrent drafts. Compare `expected_modified` with the story's current `sys_mod_count`; `workflow.modified` exposes that value. The revision is immutable, so its modification count cannot guard changes to human workflow state.
 
 Return `{ workflow: updatedWorkflow }`; the current screen then reloads state. Required notes: changes request and legal routing. Sign-off note is optional.
 

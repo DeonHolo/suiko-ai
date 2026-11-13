@@ -30,7 +30,7 @@ export function StoryWorkflow({ state, revision, disabled, onChange }) {
     setBusy(true);
     setError('');
     try {
-      await workspaceService.workflowAction({ revision_id: revision.id, action, note: note.trim(), ...(send ? { reviewer_id: reviewer } : {}) });
+      await workspaceService.workflowAction({ revision_id: revision.id, expected_modified: state.modified, action, note: note.trim(), ...(send ? { reviewer_id: reviewer } : {}) });
       setAction(null);
       toast.success(action === 'sign_off' ? 'Version signed off' : send ? 'Sent to legal' : 'Changes requested');
       try { await onChange(); }
