@@ -9,11 +9,11 @@ For example, the archive/delete buttons already exist in the frontend. **Ticket 
 Recommended order:
 
 1. **Check the existing screens as ordinary users.** Use an Editor and a Rules Editor, rather than only admin. Check story entry, save/review, source passages, publishing choices, rule setup and plain error messages. The live redesign was inspected as admin; these account checks remain useful independent work.
-2. **Improve the AI's useful mistakes.** Start with the recorded outside-photo example: it asked the right permission question but called missing information a conflict. Write the expected outcome first, refine the instructions, and compare the same case plus unrelated examples. Keep source passages and confidence visible for the editor to interpret.
+2. **Improve the AI's useful mistakes.** Start with the recorded outside-photo example: it asked the right permission question but called missing information a conflict. Write the expected outcome first, refine the instructions, and compare the same case plus unrelated examples. Keep source passages and clear claim results visible for the editor to interpret.
 3. **Prepare a small media review pack.** Include an article, unrelated script, caption and revision. Cover a supported claim, conflicting source, missing information, paid relationship and outside-media permission. State what should be flagged before running AI. Reuse the existing evaluation fixtures and preserve actual misses.
 4. **Finish the interaction details.** Check empty/loading/partial/failed states, keyboard use, long titles, long policy text, narrow screens and repeated feedback. Prioritize issues that make the next action hard to find. The dropdown inset and direct Priority field are examples.
 5. **Preview the prepared workflow screens with sample responses.** Archive, Legal Review and decision controls can be inspected locally using the agreed contract. Keep a local demo clearly identified and separate from the live instance; a simulated success does not complete a platform ticket.
-6. **Prepare the demo explanation and evidence.** Show one story moving from first draft to revision, explain the source check and optional second opinion, and capture the saved history. Leave the human sign-off segment marked pending until its actions exist.
+6. **Prepare the demo explanation and evidence.** Show one story moving from first draft to revision, explain the main source check and saved passages, and capture the saved history. Leave the human sign-off segment marked pending until its actions exist.
 
 The strongest next step after the current UI fixes is **ordinary-account checks on the existing AI flow**, followed by the recorded permission-label improvement. Both improve the working feature immediately.
 
@@ -27,7 +27,7 @@ Use the skills already installed on Deon's machine. Teammates do not need to ins
 | --- | --- | --- |
 | 1. Ordinary accounts | `e2e-testing` | Follow the existing save → review → open evidence flow as Editor and Rules Editor. Include a direct unauthorized request: hiding a button alone does not prove access is protected. Record what works and what fails. |
 | 2. Known AI mistakes | `evaluation` | Write expected observations before calling Gemini. Compare the permission case and unrelated examples. Score useful concerns, missed concerns, needless warnings and matching evidence. Do not require identical wording or claim that confidence proves truth. |
-| 3. Media example pack | `evaluation` | Keep a small repeatable article, script, caption and revision pack, plus examples not used while tuning the prompt. Compare Flash-Lite and the optional Decision 1 source check using the same retrieved passages. Keep disagreements and misses in the report. |
+| 3. Media example pack | `evaluation` | Keep a small repeatable article, script, caption and revision pack, plus examples not used while tuning the prompt. Evaluate the main review against retrieved passages. Decision 1 is retained only for separately requested experiments, outside the editor flow. Keep disagreements and misses in the report. |
 | 4. Interaction details | `accessibility-compliance-accessibility-audit` plus `e2e-testing` | Check keyboard access, visible focus, clear labels and useful messages, then the empty, loading, failed and partly completed states. Inspect narrow screens and long story/rule names. An automated scan does not replace the walkthrough. |
 | 5. Pending workflow screens | `e2e-testing` | Exercise the prepared Archive and Legal screens locally with example API responses. Label these as simulations. Repeat against real ServiceNow actions after the teammate's work is integrated. |
 | 6. Review and handoff | `code-review` | Compare the PR against both the agreed requirements and repository standards, then assess CodeRabbit's findings. After installation, repeat the relevant editor journey and record evidence. Code review cannot prove the deployed app works. |
@@ -69,3 +69,7 @@ Start with the ordinary-account walkthrough. The review-history fixes are a sepa
 If one half is ready, test that half and keep the remaining integration check visible. Do not turn on every capability because one endpoint exists.
 
 [Detailed teammate steps](../TEAM-TASKS.md) · [Current AI handoff](26-ai-review-handoff.md) · [Screen results](24-newsroom-workspace.md)
+
+## Decision 1 update — 14 November 2026
+
+The owner removed the optional second check from normal editor reviews. Keep its experiment code and historical results; do not request it during ordinary walkthroughs. See [the decision and verification expectations](30-decision-1-retirement.md).

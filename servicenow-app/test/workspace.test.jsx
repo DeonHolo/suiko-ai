@@ -8,6 +8,7 @@ import Archive from '../src/client/Archive.jsx';
 import Rules from '../src/client/Rules.jsx';
 import Stories from '../src/client/Stories.jsx';
 import { ReviewResult } from '../src/client/ReviewPanel.jsx';
+import Sources from '../src/client/Sources.jsx';
 import { localDateTime } from '../src/client/presentation.js';
 import { lastStory } from '../src/client/routes.js';
 import { reviewService, workspaceService } from '../src/client/services/ReviewService.js';
@@ -280,7 +281,7 @@ test('a changed save cannot inherit an earlier sign-off when history reload fail
   screen.getByText(/Version 2 · Script/);
 });
 
-test('a second-source disagreement prevents a no-concerns summary', () => {
+test('saved historical second-source disagreement still prevents a no-concerns summary', () => {
   const review = completed();
   review.request.rules = [{ rule_id: 'source-rule', title: 'Support claims', text: 'Compare claims with sources.', active: true, version: 1 }];
   review.result.assessment.policy_assessments = [{ rule_id: 'source-rule', status: 'no_potential_conflict_observed', reason: 'Support found.', evidence: [] }];
@@ -290,6 +291,30 @@ test('a second-source disagreement prevents a no-concerns summary', () => {
   assert.equal(screen.queryByText('No concerns found in the completed checks.') === null, true);
   screen.getByText('The two checks disagree. Compare the draft and source before deciding.');
   screen.getByRole('link', { name: 'Compare the claims with their sources' });
+});
+
+test('source-enabled review offers one review action without a second-check request', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const sourced = { ...river, source_urls: ['https://example.org/brief'] };
+  mock.method(reviewService, 'state', async id => state(id ? sourced : null, { rules: [{ id: 'source-rule', title: 'Support claims', active: true, approved: { definition: {
+    requires_sources: true, formats: ['script'], content_kinds: ['news'],
+  } } }] }));
+  const review = mock.method(reviewService, 'review', async () => completed(sourced));
+  render(<App />);
+  const action = await screen.findByRole('button', { name: 'Review this version' });
+  assert.equal(screen.queryByRole('checkbox', { name: /second check/i }), null);
+  fireEvent.click(action);
+  await waitFor(() => assert.equal(review.mock.callCount(), 1));
+  assert.deepEqual(review.mock.calls[0].arguments, [sourced.id]);
+});
+
+test('retrieved source text has clear status, timestamp and inspectable saved passages', () => {
+  render(<Sources sources={[{ source_id: 'one', url: 'https://example.org/brief', status: 'read',
+    retrieved_at: '2026-11-13 01:48:49', passages: [{ passage_id: 'p1', text: 'The doors open at noon.' }] }]} />);
+  screen.getByText('Source text retrieved');
+  screen.getByText(/^Retrieved Nov 13/);
+  fireEvent.click(screen.getByText('View saved passages'));
+  screen.getByText('The doors open at noon.');
 });
 
 test('a legal decision refreshes the cached editor workflow before returning to its story', async () => {

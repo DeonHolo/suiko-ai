@@ -49,7 +49,6 @@ export default function App() {
   const [form, setForm] = useState(blank);
   const [saveKey, setSaveKey] = useState(() => crypto.randomUUID());
   const [runId, setRunId] = useState(null);
-  const [secondCheck, setSecondCheck] = useState(false);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [bootError, setBootError] = useState('');
@@ -84,7 +83,6 @@ export default function App() {
     if (fill) {
       setForm(revision ? asForm(revision) : { ...blank, title: next.story?.title || '' });
       setSaveKey(crypto.randomUUID());
-      setSecondCheck(false);
     }
     setRunId(next.runs.find(item => item.id === preferred)?.id
       || next.runs.find(item => item.revision_id === revision?.id)?.id || null);
@@ -168,7 +166,6 @@ export default function App() {
     setForm(draft);
     setRunId(null);
     setSaveKey(crypto.randomUUID());
-    setSecondCheck(false);
     navigate('story');
   }
 
@@ -213,7 +210,7 @@ export default function App() {
 
   function review() {
     return act('Reviewing your draft…', async () => {
-      const result = await reviewService.review(current.id, canRequestSecondCheck && secondCheck);
+      const result = await reviewService.review(current.id);
       setData(previous => ({ ...previous, runs: [result, ...previous.runs.filter(item => item.id !== result.id)] }));
       setRunId(result.id);
       try { applyStory(await reviewService.state(storyId), false, result.id); }
@@ -295,9 +292,6 @@ export default function App() {
     finally { setBusy(''); }
   }
 
-  const canRequestSecondCheck = !!data?.capabilities.source_reading && !!form.source_urls_text.trim()
-    && data.rules.some(rule => rule.active && rule.approved?.definition.requires_sources
-      && rule.approved.definition.formats.includes(form.content_format) && rule.approved.definition.content_kinds.includes(form.content_kind));
   const body = page === 'story' && data && (storyLoading || route.story !== storyId)
     ? <p role="status">Opening your story…</p>
     : page === 'story' && data ? <div className="story-page">
@@ -339,8 +333,6 @@ export default function App() {
                   <textarea name="story-notes" className="short-input" rows={2} maxLength={4000} value={form.notes} onChange={event => updateField('notes', event.target.value)} />
                 </label>
               </details>
-              {canRequestSecondCheck && <label className="check-panel"><input type="checkbox" name="second-check" checked={secondCheck} onChange={event => setSecondCheck(event.target.checked)} />
-                <span><strong>Get a second check on sources</strong><span className="field-hint">See a second opinion on claims with source passages.</span></span></label>}
               {!archived && <div className="actions">
                 <button className={!current || dirty ? 'primary' : ''} disabled={!!current && !dirty}>Save version</button>
                 <button type="button" className={current && !dirty ? 'primary' : ''} disabled={dirty || !current?.content_format || !current?.content_kind || !data.provider.configured} onClick={review}>Review this version</button>
