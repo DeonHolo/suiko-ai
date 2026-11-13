@@ -151,7 +151,9 @@ test('a delayed decision refresh cannot replace another story or its unsaved dra
   fireEvent.change(within(dialog).getByLabelText('What needs to change?'), { target: { value: 'Confirm the time.' } });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Request changes' }));
   await waitFor(() => assert.equal(riverCalls, 2));
-  assert.equal(decision.mock.calls[0].arguments[0].expected_modified, '4');
+  assert.deepEqual(decision.mock.calls[0].arguments[0], {
+    revision_id: river.id, expected_modified: '4', action: 'request_changes', note: 'Confirm the time.',
+  });
   fireEvent.click(screen.getByRole('link', { name: 'Stories' }));
   fireEvent.click(await screen.findByRole('link', { name: /Library opening/ }));
   await screen.findByRole('heading', { name: library.title, level: 1 });
