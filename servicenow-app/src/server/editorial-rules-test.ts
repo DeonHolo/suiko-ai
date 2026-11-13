@@ -290,5 +290,11 @@ export function runClaimEvidenceRegression() {
   const reopened = history.body.runs.find(review => review.id === mixed.id);
   expect(reopened.request.sources[1].http_status === 404 && reopened.request.input.source_material[0].final_url === openedUrl
     && reopened.result.decision_check.skipped_claim_ids[0] === 'claim-13', 'Saved retrieval and confidence coverage did not reopen.');
+  expect(reopened.rules_current === true, 'The unchanged approved rules were marked out of date.');
+  const ruleToDisable = listEditorialRules().find(rule => rule.rule_id === secondSourceId);
+  action(setRuleActive, { id: ruleToDisable.id, active: false, expected_modified: ruleToDisable.modified });
+  const changed = action(getState, {}, { story: saved.body.story_id }).body.runs.find(review => review.id === mixed.id);
+  expect(changed.rules_current === false && JSON.stringify(changed.request.rules) === JSON.stringify(reopened.request.rules),
+    'The changed configuration lost its currentness notice or rewrote the saved rule evidence.');
   return 'Passed saved-story review with injected reader and provider: redirect, 404, late conflict, omitted claim, bad quote, contradictory status, partial overview, metadata guard and saved Decision 1 limit.';
 }

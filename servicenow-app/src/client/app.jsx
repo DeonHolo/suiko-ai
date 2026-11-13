@@ -147,6 +147,7 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
   if (result.assessment.coverage.metadata_suggestions === 'incomplete') missingSections.push('metadata suggestions');
   return <>
     {!latest && <p className="notice">This review belongs to an earlier draft. Open the latest version to save metadata.</p>}
+    {run.rules_current === false && <p className="notice">The editorial rules have changed since this review. Run a new review to use the current rules. The rule versions used here are saved below.</p>}
     {(result.assessment.status !== 'reviewed' || sourceGaps) && <section className="notice" role="status">
       <strong>{result.assessment.status === 'unable_to_assess' ? 'This review could not assess the requested checks.' : 'Some parts still need checking.'}</strong>
       {hasDiagnostics ? <p>Open “What could not be checked” for the gaps.</p> : null}
@@ -372,9 +373,18 @@ export default function App() {
   function approveRule(rule) {
     return act(async () => {
       const result = await reviewService.approveRule(rule);
-      setData(current => ({ ...current, rules: result.rules }));
+      await refreshReviewRules(result.rules);
       setMessage('Rule version ' + rule.draft.version + ' approved. New reviews will use it.');
     });
+  }
+  async function refreshReviewRules(rules) {
+    setData(current => ({ ...current, rules }));
+    try {
+      const next = await reviewService.state(storyId);
+      setData(current => ({ ...current, rules: next.rules, runs: next.runs }));
+    } catch {
+      setError('Your rule change was saved, but saved-review status could not be refreshed. Use Reload rules before checking whether a review uses the current rules.');
+    }
   }
   function startRule(template = null) {
     setOpenRuleId(null);
@@ -387,7 +397,7 @@ export default function App() {
   function setRuleActive(rule, active) {
     return act(async () => {
       const result = await reviewService.setRuleActive(rule, active);
-      setData(current => ({ ...current, rules: result.rules }));
+      await refreshReviewRules(result.rules);
       setMessage(active ? 'The approved rule is enabled for new reviews.' : 'The rule is off for new reviews. Earlier reviews keep their results.');
     });
   }

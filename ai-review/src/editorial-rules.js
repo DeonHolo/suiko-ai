@@ -130,3 +130,11 @@ export function approvedRulesForReview(states) {
     };
   });
 }
+
+export function reviewRulesCurrent(recorded, current) {
+  if (!Array.isArray(recorded) || recorded.some(rule => !rule.rule_id || !rule.version_id)) return null;
+  const saved = recorded.map(rule => rule.rule_id + ':' + rule.version_id).sort();
+  const active = current.filter(rule => rule.active)
+    .map(rule => rule.rule_id + ':' + rule.approved?.version_id).sort();
+  return JSON.stringify(saved) === JSON.stringify(active);
+}

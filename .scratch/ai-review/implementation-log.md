@@ -18,8 +18,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | AI-19 | done | `f11c6de` · [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
 | AI-20 | done | `24845b6` · [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) | 84 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
 | AI-21 | done | `5f9cf3f` · [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
-| AI-22 | implemented and verified | [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) | Library and caption comparisons with exact saved text. First drafts and unchanged text produce no change entries. |
-| AI-23 | ready-for-agent | pending | Full PDI UI evaluation with expectations recorded first. |
+| AI-22 | done | `11a6dd2` · [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) | Library and caption comparisons, unchanged copy, omitted edits and ambiguous quote coverage. |
+| AI-23 | done | [PR #18](https://github.com/DeonHolo/suiko-ai/pull/18) | Fresh UI article, script and revision, stale approval, reopened old/new evidence, same-session rule notice and installed role/failure tests. |
 
 ## Working notes
 
@@ -95,3 +95,14 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - The library comparison grouped the date update, identified the removed attribution and kept the estimate out of the description. The shortened caption kept the cast-interview sentence and showed only the removed sponsorship wording and the release-day change.
 - A version with the same text and a changed content kind reported unchanged text. A source-link-only edit showed a literal link addition even though Gemini omitted it from the summary. [Results and limits](../../docs/22-revision-comparisons.md).
 - CodeRabbit caught whole-caption additions/removals and the numeric grouping of unrelated facts. One-sided quotations now preserve the text matched to the opposite version. Gemini groups related facts in its explanation, and the checker retains independent summaries. The installed suite `9aafcf458328db106fffc629feaad371` verified the caption and independent-date cases.
+- The follow-up fixed missing checks in the ordinary review entry point, unreported edits and ambiguous short quotations. The extended installed suite `caf4df418368db106fffc629feaad36b` passed. GitHub validation and CodeRabbit passed on `0949b57`, with no new actionable comments. PR #17 merged as `11a6dd2`.
+
+## AI-23 evaluation
+
+- [Expected cases](../../docs/23-acceptance-cases.md) were committed before the first live review. The browser runs matched the expected article headline, time, seats and price findings. The revised article retained the corrected details. The unrelated script identified the outside photograph and next action, with its status mismatch recorded.
+- Two editor views verified a stale approval. B remained pending until it was explicitly approved after reload. The supplemental API history review used the noon source and rule version 3, while earlier reviews retained the 11 a.m. source, version 1 and the saved metadata choice.
+- The installed suite passed the fixed-response failures and the non-admin Editor/Rules Editor boundary. [Results and team handoff](../../docs/23-acceptance-results.md).
+- The final audit found a missing rule-currentness notice. The API and panel now expose a changed approved configuration. API readback preserved all saved inputs, results and metadata. The extended suite `caf4df418368db106fffc629feaad36b` and 99 local checks passed.
+- CodeRabbit's same-session rule-change finding was valid. Approvals and enable/disable actions now refresh the saved review statuses without replacing the draft or selected review. A failed refresh explains that the rule change was already saved. The updated app passed all 99 local checks, the SDK build, installation and page/API smoke.
+- On 13 November, the restored in-app browser reopened the original article, earlier revision and changed-source review. The old reviews displayed 11 a.m., headline rule version 1 and the original saved description. The latest displayed noon and rule version 3. Original policy wording remained inspectable.
+- The same-session disable/restore check passed without a page reload: the notice appeared and cleared, while the selected review and unsaved draft stayed intact. The rule was restored and the unsaved test text removed. Browser snapshots and screenshots are saved with the AI-23 evidence. All seven teammate issues remain open and unassigned.

@@ -2,9 +2,9 @@
 
 **Owner:** Deon
 
-**Status:** ready-for-agent
+**Status:** complete. The ServiceNow UI flow, saved-history inspection, same-session rule notice and repeatable failure/access checks passed. [PR #18](https://github.com/DeonHolo/suiko-ai/pull/18).
 
-**Approved:** 12 November 2026. Implementation has not started.
+**Approved:** 12 November 2026.
 
 **Specification:** [Company-policy AI review](../company-policy-review-spec.md).
 
@@ -24,10 +24,12 @@
 
 **Done when**
 
-- [ ] The complete AI feature works from the PDI UI with inspectable saved evidence.
-- [ ] A fresh example has been assessed without editing the expected result after seeing Gemini's answer.
-- [ ] Repeatable checks cover the known failure cases without requiring repeated live error calls.
-- [ ] The handoff states which assignment capabilities this proves and which teammate workflow work still remains.
+- [x] The complete AI feature works from the PDI UI with inspectable saved evidence.
+- [x] A fresh example has been assessed without editing the expected result after seeing Gemini's answer.
+- [x] Repeatable checks cover the known failure cases without requiring repeated live error calls.
+- [x] The handoff states which assignment capabilities this proves and which teammate workflow work still remains.
+
+[Expected inputs](../../../docs/23-acceptance-cases.md) and [observed results, limits and handoff](../../../docs/23-acceptance-results.md).
 
 **Ask your AI**
 

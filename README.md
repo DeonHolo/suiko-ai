@@ -7,8 +7,8 @@ Suiko AI is a ServiceNow app for a small newsroom or media team. An editor saves
 ## Try the app
 
 1. [Open the Suiko AI workbench](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do) on the team's ServiceNow developer instance (PDI). Sign in with your ServiceNow account.
-2. Under **Saved stories**, choose **River cleanup video package**. Use **Review history** to open the completed reviews for Version 1 and Version 2. Version 2 moved the event from Saturday at 8 a.m. to Sunday at 9 a.m. and flagged the outside drone clip for a permission check.
-3. To try your own draft, choose **New story**, select its format and kind, paste the text and any notes, then click **Save version → Review this version**. You can edit and save the metadata suggestions. The designated editor can [set up and approve editorial rules](docs/18-approved-rule-setup.md).
+2. Under **Saved stories**, choose **Halyard Desk proposes a listening room for its radio archive (AI-23 demo)**. Open Version 1 and Version 2 under **Review history**. The first review found an overconfident headline, a time conflict and an unconfirmed price. The revision corrected those details. [Expected story inputs and observed results](docs/23-acceptance-results.md)
+3. To try your own draft, choose **New story**, select its format and kind, paste the text, public links and optional context, then click **Save version → Review this version**. An applicable approved rule can ask Suiko to read the links. Open the claim/source passages and choose which metadata to save. The designated editor can [set up and approve editorial rules](docs/18-approved-rule-setup.md).
 
 The workbench already serves as the **Story** screen. The next build adds a **Review Inbox** to find stories by status, human decisions on the Story screen, and a **Legal Review** form for assigned clearances. Use the existing Suiko AI app in **ServiceNow Studio** to work on native lists and forms. [Screen plan](TEAM-TASKS.md#which-screens-do-we-need)
 
@@ -18,7 +18,7 @@ The workbench already serves as the **Story** screen. The next build adds a **Re
 | --- | --- |
 | **Frontend** | Add the Review Inbox list in ServiceNow and connect it to the current Story screen. Then add status and decision controls. [Frontend tickets](TEAM-TASKS.md#frontend-tickets) |
 | **Backend** | Add the current version, workflow status, and editor decisions to the existing records. Then add legal approval and decision history. [Backend tickets](TEAM-TASKS.md#backend-tickets) |
-| **Deon** | Own the AI prompt, checks, review quality, and panel. Pair with frontend on opening a saved story from the Inbox. [AI panel checklist](.scratch/ai-review/issues/08-ai-review-interface.md) |
+| **Deon** | Own the AI prompt, checks, review quality, and panel. Pair with frontend on opening a saved story from the Inbox. [AI review results and known limits](docs/23-acceptance-results.md) |
 
 The scoped app, saved drafts, and AI reviews have working demo paths. The Inbox, human approvals, and decision history are next. [Status against the assignment](TEAM-TASKS.md#how-much-of-the-assignment-works)
 

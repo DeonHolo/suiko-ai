@@ -52,7 +52,7 @@ Each row opens an editable checklist. Dependencies describe what the team needs 
 
 ## Company-policy review follow-up
 
-The [approved specification](.scratch/ai-review/company-policy-review-spec.md) defines the next AI build. The existing steps above retain their implementation/evidence history. All eight follow-up slices belong to **Deon** and now have individual local ticket files.
+The [approved specification](.scratch/ai-review/company-policy-review-spec.md) defines this AI build. The existing steps above retain their implementation/evidence history. All eight follow-up slices belong to **Deon** and have individual local ticket files.
 
 | ID | What it delivers | Blocked by | Status |
 | --- | --- | --- | --- |
@@ -62,10 +62,10 @@ The [approved specification](.scratch/ai-review/company-policy-review-spec.md) d
 | [AI-19](.scratch/ai-review/issues/19-policy-to-proposed-checks.md) | Company policy and refinements turned into editable proposed checks | AI-18 | done, [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) merged |
 | [AI-20](.scratch/ai-review/issues/20-source-reading-and-evidence.md) | Public sources read and retained as inspectable evidence | AI-18 | done, [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) merged |
 | [AI-21](.scratch/ai-review/issues/21-claim-source-review.md) | Advisory claim/source matches, confidence and Decision 1 trial | AI-16, AI-20 | done, [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) merged |
-| [AI-22](.scratch/ai-review/issues/22-grounded-revision-comparison.md) | Revision summaries grounded in actual saved-text changes | AI-16 | implemented and verified in ServiceNow, [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) |
-| [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | ready-for-agent |
+| [AI-22](.scratch/ai-review/issues/22-grounded-revision-comparison.md) | Revision summaries grounded in actual saved-text changes | AI-16 | done, [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) merged |
+| [AI-23](.scratch/ai-review/issues/23-company-policy-acceptance.md) | Complete AI flow evaluated in ServiceNow with saved expected/actual evidence | AI-19, AI-21, AI-22 | done, [PR #18](https://github.com/DeonHolo/suiko-ai/pull/18), UI history and rule-notice checks passed |
 
-Start with AI-16 to address the confusing behaviour already observed. AI-17 is also unblocked. Reader/difference libraries require a compatibility proof before adoption. LangExtract remains optional; the first policy-proposal implementation uses the existing Gemini route.
+AI-16 through AI-23 are implemented and evaluated. The [AI-23 report](docs/23-acceptance-results.md) records the full example, final browser checks, remaining model limits and team handoff. Jina Reader and jsdiff passed the ServiceNow compatibility checks. LangExtract was not needed for this build.
 
 Teammates retain FE-01 through QA-01. Their human/legal workflow is required for the whole-app demo, while this AI feature can be developed and evaluated independently against the existing saved-story path.
 
