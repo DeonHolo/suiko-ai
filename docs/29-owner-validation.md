@@ -1,5 +1,7 @@
 # Owner validation and remaining acceptance
 
+> Update, 14 November 2026: Decision 1 is removed from new editor reviews; the results below remain historical evidence. See [the owner decision](30-decision-1-retirement.md).
+
 These checks use fictional stories in the team development instance. Expectations were saved before model calls in `ai-review/output/owner-validation-2026-11-13/expected-results.md`. Raw replies, failures, checked results, browser states and screenshots remain in the ignored output folder. The repeatable [media pack](../ai-review/fixtures/owner-media-pack.json) uses isolated fixture rules; it does not edit live approvals.
 
 ## Reviewed and installed history fix

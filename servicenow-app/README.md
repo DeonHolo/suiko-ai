@@ -49,7 +49,7 @@ GitHub runs these checks on PRs. Deon installs reviewed builds and manages the G
 
 The Gemini key is stored in the instance's encrypted provider configuration. Provider setup adds the two starter rules when the rules table is empty. An editor can change or disable them, and each review retains the rule versions it used.
 
-Gemini 3.5 Flash-Lite is the default. If it returns HTTP 503, the server makes one attempt with 3.1 Flash-Lite. The model remains in saved data and optional Technical details. Decision 1 supplies the optional second source check. Other failures leave a retryable result on the same saved draft. [Results and limits](../docs/26-ai-review-handoff.md)
+Gemini 3.5 Flash-Lite is the default. If it returns HTTP 503, the server makes one attempt with 3.1 Flash-Lite. The model remains in saved data and optional Technical details. New editor reviews use only the main model. Decision 1 remains in backend experiment code and saved historical results; legacy editor requests cannot enable it. Other failures leave a retryable result on the same saved draft. [Decision and rationale](../docs/30-decision-1-retirement.md) · [Results and limits](../docs/26-ai-review-handoff.md)
 
 ## Local preview
 

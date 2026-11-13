@@ -7,7 +7,6 @@ import { requireRulesEditor } from './rule-access.ts';
 import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } from './generated/policy-proposals.js';
 import { sourceRuleIds, sourceMaterial } from './generated/source-reader.js';
 import { readSavedSources } from './read-sources.ts';
-import { addDecisionConfidence } from './decision-check.ts';
 import { literalChanges } from './generated/revision-diff.js';
 import * as validators from './generated/validators.js';
 import { ReviewValidationError } from './generated/assessment-checks.js';
@@ -231,7 +230,7 @@ function snapshot(revision: GlideRecord | null) {
   return storySnapshot(revision ? revisionView(revision) : null);
 }
 
-function buildRequest(revision: GlideRecord, requestId: string, decisionCheck: boolean) {
+function buildRequest(revision: GlideRecord, requestId: string) {
   const previous = new GlideRecord(tables.revision);
   previous.addQuery('story', revision.getValue('story'));
   previous.addQuery('version', Number(revision.getValue('version')) - 1);
@@ -266,7 +265,7 @@ function buildRequest(revision: GlideRecord, requestId: string, decisionCheck: b
       version: rule.approved.version, version_id: rule.approved.version_id, approval: rule.approved.approval,
     })),
     revision_records: { [candidate.revision_id]: id(revision), ...(baseline ? { [earlier.revision_id]: id(baseline) } : {}) },
-    decision_check_requested: decisionCheck,
+    decision_check_requested: false,
     sources,
   };
 }
@@ -281,9 +280,6 @@ function liveReviewProvider() {
     generate(input, onFallback) {
       const message = geminiMessage(key, model, reviewData.prompt, input, reviewData.providerSchema);
       return executeGemini(message, model, 'complete this review', 'Your draft is saved and you can retry.', onFallback);
-    },
-    finish(input, result) {
-      return addDecisionConfidence(input, result, key);
     },
   };
 }
@@ -303,7 +299,9 @@ export function reviewSavedVersion(request, response, createProvider, readSource
     const revision = record(tables.revision, body.revision_id);
     const provider = createProvider();
     const model = provider.model;
-    const prepared = buildRequest(revision, body.request_key, body.decision_check === true);
+    // Decision 1 is retained for offline experiments, not editor review requests.
+    // Legacy clients may still send decision_check; it cannot enable a second call.
+    const prepared = buildRequest(revision, body.request_key);
     const revisionDiff = literalChanges(prepared.input.baseline_revision, prepared.input.candidate_revision);
     prepared['provider'] = { requested_model: model, prompt_version: reviewData.promptVersion };
     if (JSON.stringify(prepared).length > 190000) throw new WorkbenchError('The saved review input is too large. Shorten the active instructions or context before trying again.');
@@ -348,7 +346,7 @@ export function reviewSavedVersion(request, response, createProvider, readSource
       });
       run.setValue('model', reply.model);
       return reply.raw;
-    }, validators, result => prepared.decision_check_requested ? provider.finish(input, result) : result, revisionDiff);
+    }, validators, result => result, revisionDiff);
     return runView(run);
   });
 }

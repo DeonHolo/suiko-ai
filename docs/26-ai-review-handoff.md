@@ -17,7 +17,11 @@ AI-16–AI-23 are merged. The AI feature saves a draft, reviews it against appro
 
 Jina Reader and jsdiff were reused. LangExtract was not needed and was not added. No independent web search is performed: the editor supplies up to five public links.
 
-## Did Decision 1 make it in?
+## Decision 1 status — updated 14 November 2026
+
+**Removed from the normal editor flow by owner decision.** The backend experiment code and saved historical results remain. New editor reviews use only the main model, including when an older client requests the second check. See [the current decision](30-decision-1-retirement.md).
+
+### Historical implementation and trials
 
 **Yes. It is an optional second source check, not the main writer.** Flash-Lite writes the overview, changes, suggested publishing details and rule results. Decision 1 gives probabilities for eligible claim/source comparisons that already have retrieved passages. The new checkbox is **Get a second check on sources**.
 
@@ -51,7 +55,7 @@ The new Archive/Legal/decision controls depend on those APIs. They stay unavaila
 2. Choose its first and revised reviews in Review history. The earlier choice remains read-only while you inspect that saved result.
 3. Compare the claim and source passages, inspect the earlier publishing choice and open Rules used.
 4. To try another review, save a fictional draft with format/type, supplied public links and optional notes. Approved source-reading rules determine whether those links are read.
-5. If applicable source rules and links are present, choose Get a second check on sources before reviewing. Open its result to inspect confidence or disagreement.
+5. If applicable source rules and links are present, run the main review and inspect its saved source passages. Historical second-check results remain readable; new reviews do not request Decision 1.
 
 Editors and legal reviewers retain publishing authority. Suiko helps them inspect the material and decide; publication remains in the team's existing publishing tools.
 
