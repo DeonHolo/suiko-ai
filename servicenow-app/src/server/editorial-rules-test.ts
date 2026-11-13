@@ -3,7 +3,6 @@ import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolic
 import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
 import { readSavedSources } from './read-sources.ts';
-import { addDecisionConfidence } from './decision-check.ts';
 
 function expect(value, message) {
   if (!value) throw new Error(message);
@@ -251,14 +250,7 @@ export function runClaimEvidenceRegression() {
           },
         }) };
       },
-      finish(input, result) {
-        return addDecisionConfidence(input, result, '', request => ({
-          getStatusCode: () => 200,
-          getBody: () => JSON.stringify({ answers: Object.fromEntries(Object.keys(request.questions).map(id => [id, {
-            type: 'choice', choice: 'supported', confidence: 0.8, probabilities: { supported: 0.8, contradicted: 0.1, insufficient: 0.1 },
-          }])) }),
-        }));
-      },
+      finish() { throw new Error('An editor review must not invoke the retained experiment hook.'); },
     }), fixtureRead), { request_key: 'ATF-review-' + gs.generateGUID(), revision_id: saved.body.id, decision_check: decision });
     expect(result.status === 200 && result.body.state === 'complete', 'Review did not retain usable results: ' + JSON.stringify(result.body.error));
     return result.body;
@@ -266,7 +258,7 @@ export function runClaimEvidenceRegression() {
   const mixed = run([...seats, conflict], false, 'potential_conflict', { decision: true });
   const sourceRule = review => review.result.assessment.policy_assessments.find(rule => rule.rule_id === sourceId);
   expect(sourceRule(mixed).status === 'potential_conflict' && sourceRule(mixed).evidence[0].quote === time, 'The conflict was displaced by the supported claims.');
-  expect(mixed.result.decision_check.status === 'partial' && mixed.result.decision_check.skipped_claim_ids[0] === 'claim-13', 'The confidence coverage limit was not saved.');
+  expect(mixed.request.decision_check_requested === false && !mixed.result.decision_check, 'A legacy request enabled Decision 1 in the editor flow.');
   expect(mixed.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'An empty concern list let the flagged headline into the description.');
   expect(mixed.result.checks.issues.some(issue => issue.code === 'CONTRADICTORY_RULE_STATUS'), 'The headline rule cleared a retained finding.');
   const omitted = run([seats[0]], true, 'no_potential_conflict_observed');
@@ -289,12 +281,12 @@ export function runClaimEvidenceRegression() {
   const history = action(getState, {}, { story: saved.body.story_id });
   const reopened = history.body.runs.find(review => review.id === mixed.id);
   expect(reopened.request.sources[1].http_status === 404 && reopened.request.input.source_material[0].final_url === openedUrl
-    && reopened.result.decision_check.skipped_claim_ids[0] === 'claim-13', 'Saved retrieval and confidence coverage did not reopen.');
+    && reopened.request.decision_check_requested === false && !reopened.result.decision_check, 'Saved retrieval or the retired experiment request state did not reopen.');
   expect(reopened.rules_current === true, 'The unchanged approved rules were marked out of date.');
   const ruleToDisable = listEditorialRules().find(rule => rule.rule_id === secondSourceId);
   action(setRuleActive, { id: ruleToDisable.id, active: false, expected_modified: ruleToDisable.modified });
   const changed = action(getState, {}, { story: saved.body.story_id }).body.runs.find(review => review.id === mixed.id);
   expect(changed.rules_current === false && JSON.stringify(changed.request.rules) === JSON.stringify(reopened.request.rules),
     'The changed configuration lost its currentness notice or rewrote the saved rule evidence.');
-  return 'Passed saved-story review with injected reader and provider: redirect, 404, late conflict, omitted claim, bad quote, contradictory status, partial overview, metadata guard and saved Decision 1 limit.';
+  return 'Passed saved-story review with injected reader and provider: redirect, 404, late conflict, omitted claim, bad quote, contradictory status, partial overview, metadata guard and ignored legacy Decision 1 request.';
 }
