@@ -88,7 +88,7 @@ The following new reviews were run through the actual in-app browser as **Suiko 
 
 The final Halyard second check completed all three eligible claims in 392 ms with 1,493 input tokens. Its brief and text PDF were read again; the missing URL remained unavailable, and no claim used the unrelated PDF. The new overview and all three actual text-change summaries remained available. These observed calls do not establish general accuracy or comparative performance.
 
-The Orchard review also retained invalid concern references, an unmatched duplicate source finding and an unverifiable overview reference. The usable claim and second opinion survived; its overview was withheld. The saved technical issues and plain-language gaps were not counted as a clean model-quality pass.
+The Orchard review also recorded diagnostics for invalid concern references, an unmatched duplicate source finding and an unverifiable overview reference. The invalid references were removed; the usable claim, second opinion and unmatched finding remained inspectable, and its overview was withheld. The saved technical issues and plain-language gaps were not counted as a clean model-quality pass.
 
 Selecting the earlier Cedar review and refreshing retained its original wrong label and internal rule identifier. Selecting the Halyard Version 1 review and refreshing retained the Editor's original description, with publishing fields read-only for that earlier version. API fingerprints separately confirmed that every pre-existing review in the three acceptance stories and all their saved revisions remained unchanged. The repeated-review component fixture now gives its prior-version run an earlier timestamp too, so its entire newest-first order is explicit.
 
