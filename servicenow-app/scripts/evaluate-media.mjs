@@ -5,6 +5,7 @@ import { storySnapshot } from '../../ai-review/src/story-input.js';
 import { reviewWorkbench } from '../../ai-review/src/workbench-review.js';
 import { literalChanges } from '../../ai-review/src/revision-diff.js';
 import { buildDecisionRequest, decisionResults } from '../../ai-review/src/decision-review.js';
+import { evaluationFailed, readProviderReply } from '../../ai-review/src/evaluation-results.js';
 import * as validators from '../src/server/generated/validators.js';
 import reviewData from '../src/server/generated/review-data.js';
 
@@ -38,8 +39,7 @@ async function request(path, body) {
     method: 'POST', headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
     redirect: 'error', signal: AbortSignal.timeout(45000), body: JSON.stringify(body),
   });
-  const payload = await response.json();
-  return { http: response.status, payload };
+  return readProviderReply(response);
 }
 const results = [];
 for (const item of entries) {
@@ -54,6 +54,7 @@ for (const item of entries) {
       });
       record.provider = reply;
       if (reply.http !== 200) throw new Error('Provider HTTP ' + reply.http);
+      if (reply.decode_error) throw new Error(reply.decode_error);
       const candidate = reply.payload.candidates?.[0];
       if (candidate?.finishReason !== 'STOP') throw new Error('Provider reply did not finish.');
       const raw = candidate.content.parts.filter(part => !part.thought).map(part => part.text || '').join('');
@@ -93,6 +94,4 @@ for (const item of entries) {
   console.log(JSON.stringify(summary));
 }
 await writeFile(new URL('summary.json', directory), JSON.stringify(results, null, 2));
-if (results.some(result => result.failure || result.comparisons.some(check => !check.match)
-  || result.claims.some(check => !check.matches.length || check.matches.some(match => !match.match))
-  || (result.decision && (result.decision.http !== 200 || !result.decision.coverage_complete || result.decision.comparisons.some(check => !check.match))))) process.exitCode = 1;
+if (results.some(evaluationFailed)) process.exitCode = 1;
