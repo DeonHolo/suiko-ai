@@ -147,12 +147,14 @@ export function getState(request, response) {
     row.orderByDesc('sys_updated_on');
     row.setLimit(50);
     row.query();
-    while (row.next()) stories.push({ id: id(row), title: row.getValue('title') });
+    while (row.next()) stories.push({ id: id(row), title: row.getValue('title'), updated_at: row.getValue('sys_updated_on') });
     const storyId = String(request.queryParams.story || '');
+    let story = null;
     const revisions = [];
     const runs = [];
     if (storyId) {
-      record(tables.story, storyId);
+      const parent = record(tables.story, storyId);
+      story = { id: id(parent), title: parent.getValue('title'), modified: parent.getValue('sys_mod_count') };
       const revision = new GlideRecord(tables.revision);
       revision.addQuery('story', storyId);
       revision.orderByDesc('version');
@@ -168,7 +170,8 @@ export function getState(request, response) {
     }
     const config = providerConfig();
     return {
-      stories, revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
+      stories, story, revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
+      viewer_id: String(gs.getUserID()),
       capabilities: { source_reading: true },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },

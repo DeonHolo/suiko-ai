@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { reviewService } from './services/ReviewService';
+import { formats, kinds, localDateTime } from './presentation';
 
 const blank = { title: '', text: '' };
 
@@ -27,7 +28,7 @@ export function OriginalPolicy({ origin, initial }) {
     {loading && <p role="status">Opening the saved policy…</p>}
     {error && <p role="alert">{error} <button type="button" onClick={load}>Try again</button></p>}
     {policy && <>
-      <p className="hint">{policy.title} · Saved {policy.saved_at} UTC</p>
+      <p className="hint">{policy.title} · {localDateTime(policy.saved_at)}</p>
       {policy.passages.filter(passage => origin.passage_ids.includes(passage.id)).map(passage =>
         <blockquote key={passage.id}>{passage.text}</blockquote>)}
     </>}
@@ -103,10 +104,15 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
     }, policy);
   }
 
-  return <details className="card policy-setup" onToggle={event => {
-    if (event.currentTarget.open && versions === null && !busy && !error) openCopy('');
-  }}>
-    <summary>Company policy</summary>
+  useEffect(() => { openCopy(''); }, []);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = event => { event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  return <section className="surface policy-setup" aria-label="Company policy">
     <p>Paste your publication’s rules. Use the original wording or ask Suiko for suggested checks.</p>
     <div aria-live="polite">
       {busy && <p role="status">Working with your saved policy…</p>}
@@ -117,7 +123,7 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
     {!!versions?.length && <label>Saved policy copies<select disabled={unavailable || dirty} value={policy?.id || ''}
       onChange={event => openCopy(event.target.value)}>
       <option value="">New policy</option>
-      {versions.map(copy => <option key={copy.id} value={copy.id}>{copy.title} · {copy.saved_at} UTC</option>)}
+      {versions.map(copy => <option key={copy.id} value={copy.id}>{copy.title} · {localDateTime(copy.saved_at)}</option>)}
     </select></label>}
     <form onSubmit={event => { event.preventDefault(); save(); }}>
       <label>Policy title<input required maxLength={160} disabled={unavailable} value={draft.title} onChange={event => update('title', event.target.value)} /></label>
@@ -134,8 +140,8 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
     </form>
     {policy && dirty && <p className="hint">Save this edit as a new copy before using it.</p>}
     {policy && !dirty && <>
-      <p className="hint">Saved {policy.saved_at} UTC{policy.saved_by ? ' by ' + policy.saved_by : ''}.</p>
-      {!providerReady && <p className="hint">You can use the original wording now. Suggestions need Gemini setup.</p>}
+      <p className="hint">Saved {localDateTime(policy.saved_at)}{policy.saved_by ? ' by ' + policy.saved_by : ''}.</p>
+      {!providerReady && <p className="hint">Suggestions are unavailable. You can use the original wording.</p>}
       <details className="policy-original"><summary>Use or refine a passage</summary>
         {policy.passages.map((passage, index) => <section className="change" key={passage.id}>
           <h4>Passage {index + 1}</h4><blockquote>{passage.text}</blockquote>
@@ -148,13 +154,12 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
       </details>
       {result && <div className="policy-suggestions">
         {!!result.proposals.length && <h3>Suggested checks</h3>}
-        {result.fallback_model && <p className="hint">Gemini 3.5 was busy. These suggestions used Gemini 3.1 Flash-Lite.</p>}
         {result.skipped > 0 && <p className="notice">Suiko left out {result.skipped} suggestions or questions it could not use. You can use the original wording or ask again.</p>}
         {result.proposals.map(proposal => <article key={proposal.index} className="change">
           <h4>{proposal.definition.title}</h4><p>{proposal.definition.text}</p>
-          <p className="hint">{proposal.definition.formats.join(', ')} · {proposal.definition.content_kinds.join(', ')}</p>
+          <p className="hint">{proposal.definition.formats.map(value => formats[value]).join(', ')} · {proposal.definition.content_kinds.map(value => kinds[value]).join(', ')}</p>
           {proposal.definition.conditions && <p>{proposal.definition.conditions}</p>}
-          <p className="hint">{proposal.checks.join(' · ')}</p>
+          {proposal.definition.requires_sources && <p className="hint">Reads the story’s source links.</p>}
           {proposal.definition.human_checks.map((check, index) => <p key={index}>{check}</p>)}
           <ProposalEvidence evidence={proposal.evidence} policy={policy} />
           <div className="actions">
@@ -179,5 +184,5 @@ export default function PolicySetup({ disabled, providerReady, onUse }) {
         </details>}
       </div>}
     </>}
-  </details>;
+  </section>;
 }

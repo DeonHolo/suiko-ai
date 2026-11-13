@@ -1,5 +1,7 @@
 # Suiko AI Build Guide
 
+**13 November update:** Deon now owns every custom screen. Teammates build ServiceNow records, business rules, APIs, legal actions and permissions. Use [Team tasks](TEAM-TASKS.md) for current steps and ownership, [the workspace guide](docs/24-newsroom-workspace.md) for the new screens and [the service contract](docs/25-workspace-service-contract.md) for integration. The original division below is retained as earlier planning history.
+
 Team Backyardigans · 12 November 2026
 
 Claim work in [Team tasks](TEAM-TASKS.md). This guide walks through what the team should show in the demo. The [full build plan](PLAN.md) records the earlier decisions and checks.

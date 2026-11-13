@@ -1,6 +1,6 @@
 # Suiko AI build plan
 
-Team Backyardigans · 12 November 2026 · First-build workflow confirmed with Deon
+Team Backyardigans · Updated 13 November 2026 · First-build workflow confirmed with Deon
 
 Claim work in [Team tasks](TEAM-TASKS.md). It has the next steps for each teammate and the status of the five assignment requirements.
 
@@ -20,9 +20,10 @@ Suiko AI is a private ServiceNow workspace for a small media team. One **Editor*
 
 | Owner | Work | What can start first |
 | --- | --- | --- |
-| **Deon** | Own the Gemini behavior, prompt, checks, evaluation, and AI panel. The first PDI workbench also supplies saved revisions, editable rules, metadata choices, and the local push. | Test the live workbench, edit it locally, and push an update using AI-15. |
-| **Frontend teammate** | Add the native Review Inbox and legal form. Extend the existing Story screen with status and human decisions. | Start with the existing Suiko story records and the named Inbox view. |
-| **Backend teammate** | Extend the shared app with human decisions, legal tasks, and version-specific sign-off. Verify editor and rule-editor access using ordinary accounts. | Use the existing story, revision, review, rule, and provider records. |
+| **Deon** | AI behavior, evaluation, integration and every custom screen: Story, Stories, Rules, Legal Review and Archive. | Finish screen acceptance and connect teammate APIs. |
+| **Najarro** | FE-01 story data/filter API and BE-01 editor decisions. | Current revision/status fields and story listing in Studio. |
+| **MGP** | FE-02 archive/restore/deletion and BE-03 history/access. | Archive fields, retention policy and shared decision log. |
+| **Russjie** | FE-03 legal schema/read access and BE-02 routing/decisions. | One agreed legal task table, exact revision and assigned-only access. |
 
 Use the existing app `x_2236136_suiko_ai` and keep its app ID and generated record identities. The panel already saves versions, starts live Gemini reviews, opens quoted text, and saves metadata choices through the app API. The first PDI spike proved the live path directly. AI-07 records the earlier fixture-only step as superseded. [Working project and push command](servicenow-app/README.md)
 
@@ -67,7 +68,9 @@ The [approved specification](.scratch/ai-review/company-policy-review-spec.md) d
 
 AI-16 through AI-23 are implemented and evaluated. The [AI-23 report](docs/23-acceptance-results.md) records the full example, final browser checks, remaining model limits and team handoff. Jina Reader and jsdiff passed the ServiceNow compatibility checks. LangExtract was not needed for this build.
 
-Teammates retain FE-01 through QA-01. Their human/legal workflow is required for the whole-app demo, while this AI feature can be developed and evaluated independently against the existing saved-story path.
+Teammates retain FE-01 through QA-01 and their existing claims. Deon owns every custom screen. FE-01/02/03 now cover ServiceNow list data, archive lifecycle and legal schema/access. BE-01/02/03 retain human decisions, routing, history and access. [Detailed steps](TEAM-TASKS.md) · [API contract](docs/25-workspace-service-contract.md).
+
+The [newsroom UI direction](docs/24-newsroom-workspace.md) adds a last-story entry point, separate lists/forms, plain labels, local 12-hour timestamps and optional technical details. Archive and Legal screens await teammate APIs and are gated by server capabilities. Component checks and browser acceptance are recorded separately. [AI handoff and Decision 1 result](docs/26-ai-review-handoff.md).
 
 ## What the earlier prototype demo needs to prove
 

@@ -39,6 +39,8 @@ jobs:
           npm --prefix servicenow-app ci
       - name: Run the review checks
         run: npm --prefix ai-review test
+      - name: Check the newsroom screens
+        run: npm --prefix servicenow-app run test:ui
       - name: Build the app with committed record identities
         run: npm --prefix servicenow-app run build -- --frozenKeys
       - uses: actions/upload-artifact@v7.0.2

@@ -1,6 +1,8 @@
 # Developing and pushing Suiko AI
 
-Team Backyardigans · 12 November 2026
+Team Backyardigans · Updated 13 November 2026
+
+Deon owns all custom screens. Teammates build ServiceNow records, actions and permissions. The current [task steps](../TEAM-TASKS.md) and [screen/API contract](25-workspace-service-contract.md) supersede the earlier native-Inbox/legal-form screen split. GitHub also runs the newsroom component suite with `npm --prefix servicenow-app run test:ui`.
 
 ## Development workflow
 
@@ -49,11 +51,11 @@ The initial development build included the two starter rules in the app package.
 ## Test the review
 
 1. Open [Suiko AI](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do).
-2. Choose **Load a sample**, then **River draft 1**. Save it and click **Review this version**.
+2. Choose **Try a sample story**, then **River script**. Save it and click **Review this version**.
 3. Read the overview and findings. Expand a passage and inspect the rule that prompted it.
-4. Load **River draft 2**, save it under the same story, and review it. Check the grouped schedule change and the outside-clip permission question.
+4. Choose **Try a sample → River script revision**, save it under the same story, and review it. Check the grouped schedule change and outside-clip permission question.
 5. Edit a suggested tag or description and save your choice.
-6. Open **Editorial rules**, edit a shared rule, and run a new review. Open the earlier run to inspect its original rule wording.
+6. Open **Rules**, edit and approve a shared rule, and run a new review. Open the earlier run to inspect its original rule wording.
 
 ## Remaining team setup
 
