@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** ServiceNow UI cases and source/history API checks passed. The final UI reopen needs the in-app browser connection.
+**Status:** complete. The ServiceNow UI flow, saved-history inspection, same-session rule notice and repeatable failure/access checks passed. [PR #18](https://github.com/DeonHolo/suiko-ai/pull/18).
 
 **Approved:** 12 November 2026.
 
@@ -24,7 +24,7 @@
 
 **Done when**
 
-- [ ] The complete AI feature works from the PDI UI with inspectable saved evidence.
+- [x] The complete AI feature works from the PDI UI with inspectable saved evidence.
 - [x] A fresh example has been assessed without editing the expected result after seeing Gemini's answer.
 - [x] Repeatable checks cover the known failure cases without requiring repeated live error calls.
 - [x] The handoff states which assignment capabilities this proves and which teammate workflow work still remains.

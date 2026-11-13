@@ -1,8 +1,8 @@
 # Company-policy AI review specification
 
-**Status:** ready-for-agent — scope and eight-ticket breakdown approved.
+**Status:** implemented and evaluated — AI-16 through AI-23.
 
-**Implementation status:** in progress under the authorized execution goal; the implementation log records delivered slices and remaining work. This document describes the agreed next build, not a claim that all features are deployed.
+**Implementation status:** the AI feature is installed on the shared PDI and evaluated against the approved cases. See the [implementation log](implementation-log.md) and [results and limits](../../docs/23-acceptance-results.md). The team's Inbox, human decisions, legal routing and wider human-action history remain separate tickets. The problem statement below records the prototype's state when this build was approved.
 
 **Approved:** 12 November 2026. **Owner:** Deon.
 

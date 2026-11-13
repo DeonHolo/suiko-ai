@@ -18,7 +18,7 @@ The workbench already serves as the **Story** screen. The next build adds a **Re
 | --- | --- |
 | **Frontend** | Add the Review Inbox list in ServiceNow and connect it to the current Story screen. Then add status and decision controls. [Frontend tickets](TEAM-TASKS.md#frontend-tickets) |
 | **Backend** | Add the current version, workflow status, and editor decisions to the existing records. Then add legal approval and decision history. [Backend tickets](TEAM-TASKS.md#backend-tickets) |
-| **Deon** | Own the AI prompt, checks, review quality, and panel. Pair with frontend on opening a saved story from the Inbox. [AI review delivery and remaining checks](docs/23-acceptance-results.md) |
+| **Deon** | Own the AI prompt, checks, review quality, and panel. Pair with frontend on opening a saved story from the Inbox. [AI review results and known limits](docs/23-acceptance-results.md) |
 
 The scoped app, saved drafts, and AI reviews have working demo paths. The Inbox, human approvals, and decision history are next. [Status against the assignment](TEAM-TASKS.md#how-much-of-the-assignment-works)
 

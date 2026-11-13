@@ -1,6 +1,6 @@
 # Newsroom review results
 
-The [expected cases](23-acceptance-cases.md) were committed before the live reviews. The publisher, stories and brief are fictional. The runs below used the ServiceNow workbench in the in-app browser.
+The [expected cases](23-acceptance-cases.md) were committed before the live reviews. The publisher, stories and brief are fictional. The first article, revision, separate script and setup actions used the ServiceNow workbench in the in-app browser. The supplemental API review and subsequent browser inspection are identified below.
 
 | Case | What Suiko returned | Assessment |
 | --- | --- | --- |
@@ -11,14 +11,14 @@ The [expected cases](23-acceptance-cases.md) were committed before the live revi
 | Revised article | Three changes covering the headline, time and admission wording. Support for the corrected time and seats. | The new headline kept the proposal status. Gemini 3.5 was busy, so this review used the recorded Gemini 3.1 Flash-Lite fallback. |
 | Unrelated script | A workshop overview and a permission follow-up for the outside photograph. Article-only rules were marked outside scope. | The useful finding matched the photo and action. Gemini called it Potential conflict where the policy requested Needs confirmation. It also put a rule identifier in the overview and returned a concern reference that required a diagnostic. |
 | Two editor views | Proposal A stayed open while another view saved B. Approving A produced “This rule changed elsewhere. Reload it before saving or approving.” | B remained pending and version 1 stayed active. After reload, the screen showed pending version 3. The admin explicitly approved that version. The UI account was System Administrator and had rule-management access. Dedicated non-admin roles were checked in the installed suite below. |
-| Changed source and rule | A supplemental API review used the same saved second draft, the noon source and headline rule version 3. It found the new time conflict. | API readback confirmed that the earlier reviews still held their 11 a.m. source and rule version 1. The first review kept the editor's saved description. |
-| Review currentness | Final acceptance found a missing notice for reviews that used an earlier rule configuration. The API now reports whether the saved approvals match today's enabled rules, and the panel has a notice for a changed configuration. | API readback identified the new review as current and the earlier two as using older rules. Every saved input, result and metadata choice remained identical. The notice's on-screen check is pending the browser reconnect. |
+| Changed source and rule | A supplemental API review used the same saved second draft, the noon source and headline rule version 3. It found the new time conflict. The browser then reopened that review and both earlier reviews. | The panel showed noon and version 3 for the new review, and 11 a.m. and version 1 for the earlier reviews. The first review kept the editor's saved description and original policy passage. |
+| Review currentness | Earlier reviews showed the changed-rules notice. The latest review matched the approved configuration. Turning its headline rule off displayed the notice immediately, and restoring the rule cleared it. | Both actions were verified in the same browser session without reloading the page. The selected review and unsaved story text survived. The test text was then removed without saving a new version. |
 
-## Remaining verification
+## Final screen checks
 
-The browser connection became unavailable before reopening the changed-source result and the original reviews on screen. The supplemental API check above passed. The final UI reopen is pending.
+Completed on 13 November 2026 after the in-app browser connection returned. The original article review, earlier revision review and changed-source review all reopened with their recorded evidence. The first review also displayed the editor's saved description and original company-policy passage. The earlier two showed the changed-rules notice; the latest did not.
 
-CodeRabbit also caught a same-session refresh problem. Approving or switching a rule on or off now reloads the saved review statuses while preserving the selected story, selected review and unsaved draft. If the refresh fails, the screen explains that the rule change was saved and asks the editor to reload the statuses. This fix passed the build and installation checks. Its on-screen check remains pending alongside the history reopen.
+CodeRabbit caught a same-session refresh problem. Approving or switching a rule on or off now reloads the saved review statuses while preserving the selected story, selected review and unsaved draft. The browser verified the disable/restore path against review `c20d0b018328db106fffc629feaad359`: the notice appeared, then cleared, and the unsaved text stayed intact. The headline rule was restored and the unsaved test text removed. No new Gemini call or story version was needed for this check. If the status refresh fails, the app explains that the rule change was saved and asks the editor to reload the statuses.
 
 ## Repeatable ServiceNow checks
 
@@ -44,6 +44,7 @@ Installed suite `caf4df418368db106fffc629feaad36b` passed. It used saved story/r
 - Changed-source API review `c20d0b018328db106fffc629feaad359`, Gemini 3.1 Flash-Lite.
 - Headline rule `c1484b4583e4db106fffc629feaad326`. Proposal A is version 2, `c4e8034583e4db106fffc629feaad39a`, which remains unapproved. Replacement B is version 3, `49f843c583e4db106fffc629feaad3dd`, which the admin explicitly approved after reloading.
 - Local inputs, full saved responses and screenshots are under `ai-review/output/ai-23-2026-11-13/`.
+- Final browser evidence includes `original-history-ui`, `earlier-revision-history-ui` and `latest-history-ui` snapshots/screenshots, plus `same-session-rule-off-ui.json`, `same-session-rule-restored-ui.json` and `final-review-ui.png`.
 
 ## Team handoff
 
