@@ -45,7 +45,35 @@ The new frontend calls the existing live draft/review/rule/policy APIs. Archive,
 
 All **16 component checks passed** locally. They cover resuming a story, local timestamps, unsaved draft protection, successful saves/reviews with failed refreshes, partial/failed replies, policy draft retention, stale search pagination, archive permissions and legal-only access. Review follow-ups also cover Back to an unsaved new story, late refreshes after switching stories, old sign-off labels after a new save, legal-to-editor refresh, second-check disagreements and dialog focus restoration. The existing **99 AI checks also passed** after the redesign. These checks do not replace real-browser checks for layout, keyboard focus, dialog behavior and the complete installed workflow.
 
-At this document's creation, the in-app browser connection was unavailable. Visual acceptance is pending. Record actual later checks here rather than treating the older prototype screenshots as proof of the redesign.
+## Installed screen checks
+
+[PR #19](https://github.com/DeonHolo/suiko-ai/pull/19) merged as `c227d0d`. The reviewed build was installed on 13 November 2026. Its GitHub validation and CodeRabbit checks passed. Installation readback compared fingerprints of the saved demo's revisions, review requests/results and metadata choices: all were preserved. The provider configuration remained available.
+
+The in-app browser connection returned. The checks below were performed on the installed app as **System Administrator**. They establish these screen behaviors; they do not replace ordinary-account or unfinished platform acceptance.
+
+| Check | Observed result |
+| --- | --- |
+| Entry point | Opening the app without a story ID resumed the last Halyard Desk story |
+| Stories search | Searching River cleanup showed the matching saved story using the current recent-story list |
+| Unsaved new story | Typed text survived Stories → browser Back without saving a version |
+| Replacing a draft | Opening another story asked before discarding; Escape kept the draft and returned focus to the story link |
+| Rule form | Conditions, source reading and human reminders had separate labels; the source checkbox toggled beside its text |
+| Company-policy draft | Unsaved title/text survived leaving and reopening setup; temporary test text was discarded afterwards |
+| Screen sizes | Story used two columns at 1280px. Rule form and claim/source cards fitted a 390px viewport with a 375px page width and no horizontal overflow |
+| Technical details | Model names were absent from the ordinary review; opening Technical details revealed the saved model and fallback note |
+| Times | Version, review and source times used local AM/PM and minutes without seconds |
+| Earlier evidence | The first Halyard review retained the editor's original description and its 11 a.m. source passage |
+| Optional second opinion | The saved Makers’ Night review showed the main Potential conflict result beside Needs confirmation at 97%, with a visible disagreement explanation |
+
+No new Gemini call, story version, rule approval or permanent data deletion was needed. Temporary text was cleared, the viewport override was reset and the saved Halyard story was left open. No browser console errors were captured in the final check.
+
+Remaining acceptance: regular Editor/Rules Editor screens; assigned/unassigned legal access; real archive actions and retention/deletion guards; the full human/legal workflow; and a teammate-led ordinary-account rehearsal. The new platform capabilities remain off. Component simulations are not evidence that those APIs exist.
+
+Full browser snapshots, installation fingerprints and screenshots are retained locally under `ai-review/output/newsroom-ui-2026-11-13/`. The examples below show the actual browser's dark appearance.
+
+![Stories list with search and local times](images/newsroom-stories.jpg)
+
+![Source-reading checkbox and separate editor reminder on a narrow screen](images/newsroom-source-controls.jpg)
 
 The existing brand is retained: readable sans-serif body text, serif page headings, restrained green accents and clear spacing. The priority is scanning and completing an editorial task. The earlier generic design search suggested unrelated landing-page treatments; those were not adopted.
 

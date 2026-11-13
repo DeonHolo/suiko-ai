@@ -33,7 +33,7 @@ The evaluated article correctly identified an overconfident headline, a time mis
 
 The unrelated script correctly asked for outside-photo permission, but Flash-Lite labelled the missing permission a Potential conflict when the approved instruction wanted Needs confirmation. It also exposed a rule identifier in its generated overview. These remain recorded model-quality limits; the UI redesign does not pretend the model's judgment became infallible.
 
-Before this UI work, **99 local AI checks** and the installed ServiceNow regression suite passed. The acceptance report records actual browser/API evidence and account-role checks. The redesigned screens have a separate component suite; browser and full human-workflow acceptance must be recorded separately.
+The **99 AI checks and 16 screen checks passed**, including on GitHub. The redesign was merged in [PR #19](https://github.com/DeonHolo/suiko-ai/pull/19), installed and inspected in the in-app browser. Saved evidence and publishing choices survived installation. The new screen inspection used admin; ordinary-account and full human-workflow acceptance remain separate. [Exact checks and screenshots](24-newsroom-workspace.md#installed-screen-checks).
 
 ## Who does what next?
 
@@ -41,14 +41,18 @@ Deon owns the custom Story, Stories, Rules, Legal Review and Archive screens, AI
 
 Najarro owns story-list data and editor decisions (#1/#4). MGP owns archive/restore and history/access (#2/#6). Russjie owns legal records and routing (#3/#5). Existing claim comments remain; #7 is the whole-app rehearsal.
 
-The new Archive/Legal/decision controls depend on those APIs. They stay unavailable in normal navigation until the server declares them ready. Component tests using simulated responses prove frontend behavior, not completed teammate work.
+The new Archive/Legal/decision controls depend on those APIs. They stay unavailable in normal navigation until the server declares them ready. Component tests using simulated responses prove frontend behavior, not completed teammate work. All seven issue bodies now contain the updated ServiceNow steps and AI prompts; their existing claims were preserved.
 
 ## Try the saved evidence
 
-1. Open Suiko AI and go to Stories.
-2. Find **Halyard Desk proposes a listening room for its radio archive (AI-23 demo)**. Choose its first and revised reviews in Review history.
+1. [Open the saved Halyard Desk demo](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do?story=89688f4583e4db106fffc629feaad327), or find it in Stories.
+2. Choose its first and revised reviews in Review history. The earlier choice remains read-only while you inspect that saved result.
 3. Compare the claim and source passages, inspect the earlier publishing choice and open Rules used.
 4. To try another review, save a fictional draft with format/type, supplied public links and optional notes. Approved source-reading rules determine whether those links are read.
 5. If applicable source rules and links are present, choose Get a second check on sources before reviewing. Open its result to inspect confidence or disagreement.
 
 Editors and legal reviewers retain publishing authority. Suiko helps them inspect the material and decide; publication remains in the team's existing publishing tools.
+
+The saved disagreement was reopened in the redesigned UI. No new model call was made for this screenshot.
+
+![Main review and optional second source check disagree, with source passage and confidence visible](images/newsroom-second-opinion.jpg)
