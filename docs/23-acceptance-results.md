@@ -12,6 +12,7 @@ The [expected cases](23-acceptance-cases.md) were committed before the live revi
 | Unrelated script | A workshop overview and a permission follow-up for the outside photograph. Article-only rules were marked outside scope. | The useful finding matched the photo and action. Gemini called it Potential conflict where the policy requested Needs confirmation. It also put a rule identifier in the overview and returned a concern reference that required a diagnostic. |
 | Two editor views | Proposal A stayed open while another view saved B. Approving A produced “This rule changed elsewhere. Reload it before saving or approving.” | B remained pending and version 1 stayed active. After reload, the screen showed pending version 3. The admin explicitly approved that version. The UI account was System Administrator and had rule-management access. Dedicated non-admin roles were checked in the installed suite below. |
 | Changed source and rule | A supplemental API review used the same saved second draft, the noon source and headline rule version 3. It found the new time conflict. | API readback confirmed that the earlier reviews still held their 11 a.m. source and rule version 1. The first review kept the editor's saved description. |
+| Review currentness | Final acceptance found a missing notice for reviews that used an earlier rule configuration. The API now reports whether the saved approvals match today's enabled rules, and the panel has a notice for a changed configuration. | API readback identified the new review as current and the earlier two as using older rules. Every saved input, result and metadata choice remained identical. The notice's on-screen check is pending the browser reconnect. |
 
 ## Remaining verification
 
@@ -19,7 +20,7 @@ The browser connection became unavailable before reopening the changed-source re
 
 ## Repeatable ServiceNow checks
 
-Installed suite `9aafcf458328db106fffc629feaad371` passed. It used saved story/review records and injected source-reader and provider replies. Its earlier run `0b6c0b8d83e4db106fffc629feaad316` also passed.
+Installed suite `caf4df418368db106fffc629feaad36b` passed. It used saved story/review records and injected source-reader and provider replies. The earlier suites `9aafcf458328db106fffc629feaad371` and `0b6c0b8d83e4db106fffc629feaad316` also passed. The combined local suite has 99 passing checks.
 
 | Case | Verified result |
 | --- | --- |
@@ -29,6 +30,8 @@ Installed suite `9aafcf458328db106fffc629feaad371` passed. It used saved story/r
 | Missing and redirected source | A 404 stayed unavailable. The opened URL and actual passages were saved with the redirect. |
 | Editor access | A dedicated non-admin everyday Editor could save and reopen a story. It received 403 responses for rule/policy setup actions. |
 | Designated editor access | A dedicated non-admin Rules Editor could save, approve and replace rules. The suite checked stale edits, stale approvals and preserved approval history. |
+| Comparison coverage | Whole-caption additions/removals were excluded while actual edits survived. Independent dates retained their summaries. A missing attribution summary or ambiguous repeated date quote kept comparison coverage incomplete. |
+| Changed rule configuration | The saved review was current before a rule was disabled, then became out of date without rewriting its recorded rules. |
 
 ## Saved evidence
 

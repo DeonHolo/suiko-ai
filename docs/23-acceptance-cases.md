@@ -70,4 +70,6 @@ Expect an overview about the sound workshop and a permission follow-up for the o
 
 After both article reviews, approve a replacement headline check that extends the uncertainty rule to the body and change the same brief URL from 11 a.m. to noon. Review the unchanged second saved draft again. Expect the new rule version and noon evidence, and a new time conflict. If the source reader reports its cached copy, record the attempt and retry after it reads the updated brief. Reopen the original first and second reviews. Expect the earlier rule wording, 11 a.m. snapshot, original findings, and the first review's saved editor choice.
 
+The earlier reviews should also say that the editorial rules have changed. The new review should match the current approved configuration. A proposal awaiting approval still uses the prior approved configuration.
+
 Use two open editor views to keep proposal A available while a separate view saves B. Attempt to approve A. Expect a stale-change message and a pending B. Then approve the intended current version explicitly.
