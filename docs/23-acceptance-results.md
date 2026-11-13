@@ -18,6 +18,8 @@ The [expected cases](23-acceptance-cases.md) were committed before the live revi
 
 The browser connection became unavailable before reopening the changed-source result and the original reviews on screen. The supplemental API check above passed. The final UI reopen is pending.
 
+CodeRabbit also caught a same-session refresh problem. Approving or switching a rule on or off now reloads the saved review statuses while preserving the selected story, selected review and unsaved draft. If the refresh fails, the screen explains that the rule change was saved and asks the editor to reload the statuses. This fix passed the build and installation checks. Its on-screen check remains pending alongside the history reopen.
+
 ## Repeatable ServiceNow checks
 
 Installed suite `caf4df418368db106fffc629feaad36b` passed. It used saved story/review records and injected source-reader and provider replies. The earlier suites `9aafcf458328db106fffc629feaad371` and `0b6c0b8d83e4db106fffc629feaad316` also passed. The combined local suite has 99 passing checks.

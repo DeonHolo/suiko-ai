@@ -72,4 +72,6 @@ After both article reviews, approve a replacement headline check that extends th
 
 The earlier reviews should also say that the editorial rules have changed. The new review should match the current approved configuration. A proposal awaiting approval still uses the prior approved configuration.
 
+With a current review open, make an unsaved draft edit, switch to Editorial rules and turn off a rule used by that review. Return to Review without reloading the page. Expect the changed-rules notice, the same selected review and the unsaved text. Turn the rule back on, then expect the notice to clear if its approved configuration matches again. Replacing an approved rule should refresh the notice in the same way.
+
 Use two open editor views to keep proposal A available while a separate view saves B. Attempt to approve A. Expect a stale-change message and a pending B. Then approve the intended current version explicitly.
