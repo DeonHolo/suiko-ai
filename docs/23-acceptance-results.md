@@ -50,6 +50,6 @@ Installed suite `caf4df418368db106fffc629feaad36b` passed. It used saved story/r
 
 The AI feature provides editable approved rules, policy-to-check suggestions, saved content and revisions, source reading, claim/source comparison, metadata suggestions and inspectable review history. Editors choose their metadata and keep publishing authority.
 
-The assignment also needs the human review workflow. The seven teammate issues are still open. FE-01 adds the Inbox. FE-02 connects it to the existing Story screen. FE-03 builds the Legal Review form. BE-01 adds editor decisions, BE-02 adds legal routing, and BE-03 adds wider human-action history and access checks. QA-01 rehearses the combined demo. [Claim a team ticket](../TEAM-TASKS.md)
+The assignment also needs the human review workflow. The seven teammate issues remain open. Their updated scope is ServiceNow platform work: FE-01 supplies story-list data, FE-02 archive/restore/deletion, FE-03 legal records/read access, BE-01 editor decisions, BE-02 legal routing and BE-03 human history/access. Deon owns all custom screens. QA-01 rehearses the combined app. [Detailed team steps](../TEAM-TASKS.md) · [AI handoff including Decision 1](26-ai-review-handoff.md)
 
 The next model-quality improvement to investigate is the permission result. The evidence and next action were useful, but the label should match the approved instruction. The saved script preserves that example for a future test.

@@ -1,4 +1,5 @@
 import React from 'react';
+import { localDateTime } from './presentation';
 
 const labels = { read: 'Read', partial: 'Partly read', unavailable: 'Couldn’t read', not_read: 'Not read' };
 
@@ -8,15 +9,14 @@ export function hasSourceGaps(run) {
 
 export default function Sources({ sources }) {
   if (!sources?.length) return null;
-  return <section className="card"><h3>Source material</h3>
+  return <section className="card" id="review-sources"><h3>Sources used</h3>
     {sources.map(source => <article className="change source-card" key={source.source_id || source.url}>
-      <h4>{source.title || 'Supplied link'}</h4>
+      <h4>{source.title || 'Source link'}</h4>
       <p className="rule-status">{labels[source.status] || 'Not read'}</p>
       <p className="source-url">{source.passages?.length && /^https?:\/\//i.test(source.url)
         ? <a href={source.url} target="_blank" rel="noreferrer">{source.url}</a> : source.url}</p>
-      {source.final_url && <p className="hint source-url">Opened {source.final_url}</p>}
-      {source.retrieved_at && <p className="hint">{source.passages?.length ? 'Retrieved' : 'Tried'} {source.retrieved_at} UTC{source.reader ? ' via ' + source.reader : ''}</p>}
-      {source.cached && <p className="hint">The reader reported a cached copy. Check the original for updates.</p>}
+      {source.retrieved_at && <p className="hint">{source.passages?.length ? 'Read' : 'Tried'} {localDateTime(source.retrieved_at)}</p>}
+      {source.cached && <p className="hint">This is a saved copy. Open the source link for updates.</p>}
       {source.message && <p>{source.message}</p>}
       {source.status === 'not_read' && !source.message && <p>Saved as a reference for this review.</p>}
       {!!source.passages?.length && <details className="evidence">

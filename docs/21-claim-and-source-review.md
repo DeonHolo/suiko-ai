@@ -2,7 +2,7 @@
 
 When an approved rule asks for source material, Suiko checks important claims in the saved story. Open **Claim and source checks** to compare the draft quote with a retrieved passage, read the suggested next step, and see which claims need confirmation. Editor notes appear as **Editor-supplied review context**.
 
-Choose **Add a Decision 1 confidence check** before starting a review to get an additional judgment on claims with retrieved passages. Open its result to see the confidence for each answer. If the two models disagree, the card shows that disagreement alongside the source. The editor chooses what to do with the information.
+Choose **Get a second check on sources** before starting a review to get an additional judgment on claims with retrieved passages. Open its result to see the confidence for each answer. If the two models disagree, the card shows that disagreement alongside the source. The editor chooses what to do with the information. Editor notes are now labelled **Notes supplied by your team**.
 
 ## Live Makers’ Night example
 

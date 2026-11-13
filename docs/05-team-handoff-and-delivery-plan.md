@@ -1,5 +1,7 @@
 # Team handoff and delivery plan
 
+**13 November update:** the current handoff is [What the AI work delivered](26-ai-review-handoff.md). Deon owns all custom screens; teammate work is now the ServiceNow platform tasks in [TEAM-TASKS.md](../TEAM-TASKS.md), with [response contracts](25-workspace-service-contract.md). The earlier split and suggested dates below are historical planning.
+
 **Original planning notes · 11 November 2026**
 
 The PDI workbench now saves versions and runs Gemini. Use [Team tasks](../TEAM-TASKS.md) for the current owners, steps, and screen plan. The milestones and ownership notes below describe the earlier proposal.

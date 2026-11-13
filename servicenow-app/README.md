@@ -1,6 +1,6 @@
 # Suiko AI on ServiceNow
 
-This is the SDK project for the team's developer instance. Edit the page, server actions, and app definitions here. The build also takes the shared review schemas, prompt, and quote checks from the workspace.
+This is the SDK project for the team's developer instance. Deon owns the custom screens and AI behavior. Teammates own the ServiceNow data, archive, human/legal actions and access work in [Team tasks](../TEAM-TASKS.md). Follow the [screen/API contract](../docs/25-workspace-service-contract.md). The build also takes shared review schemas, prompts and quote checks from the workspace.
 
 ## App identity
 
@@ -20,7 +20,9 @@ The app ID in `now.config.json` and record IDs in `src/fluent/generated/keys.ts`
 
 | Change | Source |
 | --- | --- |
-| Review panel | `src/client/app.jsx` and `src/client/app.css` |
+| Navigation and Story | `src/client/app.jsx`, `routes.js` and `app.css` |
+| Review results | `src/client/ReviewPanel.jsx`, `ClaimChecks.jsx` and `Sources.jsx` |
+| Rules and policy | `src/client/Rules.jsx` and `PolicySetup.jsx` |
 | App page and navigation | `src/fluent/` |
 | Save, review, rules, and metadata actions | `src/server/workbench.ts` |
 | Shared quote and identity checks | `../ai-review/src/assessment-checks.js` |
@@ -37,6 +39,7 @@ Install Node 24 and restore both packages from the workspace root.
 npm --prefix ai-review ci
 npm --prefix servicenow-app ci
 npm --prefix ai-review test
+npm --prefix servicenow-app run test:ui
 npm --prefix servicenow-app run build -- --frozenKeys
 ```
 
@@ -46,7 +49,7 @@ GitHub runs these checks on PRs. Deon installs reviewed builds and manages the G
 
 The Gemini key is stored in the instance's encrypted provider configuration. Provider setup adds the two starter rules when the rules table is empty. An editor can change or disable them, and each review retains the rule versions it used.
 
-Gemini 3.5 Flash-Lite is the default. If it returns HTTP 503, the server makes one attempt with 3.1 Flash-Lite. The review records and displays the model used. Other failures leave a retryable result on the same saved draft.
+Gemini 3.5 Flash-Lite is the default. If it returns HTTP 503, the server makes one attempt with 3.1 Flash-Lite. The model remains in saved data and optional Technical details. Decision 1 supplies the optional second source check. Other failures leave a retryable result on the same saved draft. [Results and limits](../docs/26-ai-review-handoff.md)
 
 ## Local preview
 
@@ -61,6 +64,6 @@ The preview listens at `http://127.0.0.1:13542`. Saved versions and reviews go t
 
 ## Working with teammates
 
-Deon owns the panel and review behavior. Use the existing Story screen and add the Inbox, legal task form, and human decisions in the same app. Claim the work in [Team tasks](../TEAM-TASKS.md). If you edit app files in Studio, use the [Studio sync steps](../docs/13-servicenow-development-and-cicd.md#changes-made-in-studio) before the next build.
+Claim the platform work in [Team tasks](../TEAM-TASKS.md). Keep capability flags false until real endpoints pass their tests. If you edit app files in Studio, use the [Studio sync steps](../docs/13-servicenow-development-and-cicd.md#changes-made-in-studio) before the next build. Custom screens remain Deon's responsibility.
 
 The [development guide](../docs/13-servicenow-development-and-cicd.md) explains the GitHub checks and how to get a reviewed change onto the PDI.

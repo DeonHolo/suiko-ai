@@ -1,5 +1,7 @@
 # Suiko AI Build Guide
 
+**13 November update:** Deon now owns every custom screen. Teammates build ServiceNow records, business rules, APIs, legal actions and permissions. Use [Team tasks](TEAM-TASKS.md) for current steps and ownership, [the workspace guide](docs/24-newsroom-workspace.md) for the new screens and [the service contract](docs/25-workspace-service-contract.md) for integration. The original division below is retained as earlier planning history.
+
 Team Backyardigans · 12 November 2026
 
 Claim work in [Team tasks](TEAM-TASKS.md). This guide walks through what the team should show in the demo. The [full build plan](PLAN.md) records the earlier decisions and checks.
@@ -52,7 +54,7 @@ Agree on two starter rules for the demo. A shared sourcing rule can work across 
 1. **Try the live review.** Use both saved river versions so the team has a shared example and can see the records that already exist.
 2. **Add the Inbox and editor decisions.** Open the existing Story screen from a row. Test **Request changes** and **Sign off** with the regular Editor account.
 3. **Add legal clearance and history.** Assign the exact version. Save the decision, then prove that a newer copy needs fresh clearance. Show the actor, time, and version in the Story screen.
-4. **Rehearse with the team.** Use the [demo ticket](TEAM-TASKS.md#qa-01-rehearse-the-demo) to check the full path and gather evidence.
+4. **Rehearse with the team.** Use the [demo ticket](TEAM-TASKS.md#qa-01-rehearse-the-whole-flow) to check the full path and gather evidence.
 
 ## Quick checks before the demo
 

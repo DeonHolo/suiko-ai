@@ -1,6 +1,6 @@
 # AI review UX/UI brief
 
-Deon designs and builds the AI review panel. The frontend teammate builds the story page that contains it. Use [AI-08](../.scratch/ai-review/issues/08-ai-review-interface.md) for the agreed first-build actions and this brief for reference layouts.
+This is the earlier panel brief. As of 13 November, Deon owns all custom screens. The current [newsroom workspace](24-newsroom-workspace.md), [team tasks](../TEAM-TASKS.md) and [service contract](25-workspace-service-contract.md) supersede the earlier screen split. Keep the reference layouts below as planning history.
 
 ## Reviewer goal
 
