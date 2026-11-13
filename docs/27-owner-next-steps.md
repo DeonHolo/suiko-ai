@@ -26,8 +26,8 @@ These are proposed next actions. This document does not create new GitHub ticket
 3. Check field names, response shape, allowed actions, modification guards and useful error messages. Backend actions derive the actor and permissions from the signed-in account.
 4. Test the actual actions using the relevant ordinary accounts. Include the failure cases below. A button being hidden is not proof that the server rejects an unauthorized request.
 5. Deon decides whether to merge a teammate PR. The assistant can review and prepare integration fixes; it does not automatically merge teammate work. Use a reference instead of closing the issue if its integrated Done when check is still pending.
-6. Before installation, inspect newer shared Studio changes and include the reviewed ones. Install from Deon's local clone. Recheck the app so the feature survives a rebuild.
-7. Connect or adjust the prepared frontend, then enable the relevant server capability only when its dependencies work. Record the installed result and close the ticket after its Done when check passes.
+6. Connect or adjust the prepared frontend. Put any source changes through Deon's own PR/review loop. Keep the feature gated until its real actions and dependencies work; a compatible response may need no frontend code changes.
+7. Inspect newer shared Studio changes, then build and install the complete reviewed platform and frontend changes from Deon's local clone. Test the integrated screens in that installed app with the relevant ordinary accounts. Enable the feature only once its dependencies pass, record the result and close the ticket after its Done when check passes.
 
 ## What you do after each ticket
 
