@@ -148,8 +148,8 @@ test('Decision 1 receives checked claims and retrieved passages and preserves an
   assert.deepEqual(skippedClaimIds, []);
   assert.deepEqual(Object.keys(extra.questions), ['claim-1', 'claim-2']);
   const input = JSON.parse(extra.input);
-  assert.match(input[0].sources[0].text, /7 p.m./);
-  assert.equal(input[0].claim, time);
+  assert.match(input.cases[0].sources[0].text, /7 p.m./);
+  assert.equal(input.cases[0].claim, time);
   const answers = decisionResults(extra, { answers: {
     'claim-1': { type: 'choice', choice: 'insufficient', confidence: 0.57, probabilities: { supported: 0.1, contradicted: 0.33, insufficient: 0.57 } },
     'claim-2': { type: 'choice', choice: 'supported', confidence: 4 },
@@ -158,6 +158,22 @@ test('Decision 1 receives checked claims and retrieved passages and preserves an
   assert.equal(answers['claim-1'].status, 'insufficient');
   assert.equal(answers['claim-2'], undefined);
   assert.equal(checked.claim_checks[0].status, 'contradicted');
+});
+
+test('Decision 1 receives the current public story identity when the claim alone does not name the project', async () => {
+  const { request, reply } = sample();
+  request.candidate_revision.segments[0].text = 'Orchard Screen plans a new auditorium';
+  request.candidate_revision.segments.splice(1, 0, { segment_id: 'introduction', field: 'body', text: 'Orchard Screen is planning an auditorium for its outdoor cinema.' });
+  reply.overview_evidence = [ref('introduction', 'Orchard Screen is planning an auditorium for its outdoor cinema.')];
+  reply.claim_checks = [reply.claim_checks[1]];
+  const checked = await review(request, reply);
+  request.baseline_revision = { revision_id: 'earlier-private-copy', segments: [{ segment_id: 'old', field: 'body', text: 'Earlier unrelated reporting.' }] };
+  const { request: extra } = buildDecisionRequest(request, checked.claim_checks);
+  const input = JSON.parse(extra.input);
+  assert.ok(input.candidate_revision?.segments.some(segment => segment.text.includes('Orchard Screen')), 'The second opinion needs the claim’s project identity, not just the seats sentence.');
+  assert.equal(input.candidate_revision.segments.some(segment => segment.field === 'production_notes'), false);
+  assert.equal(input.candidate_revision.revision_id, request.candidate_revision.revision_id);
+  assert.equal(JSON.stringify(input).includes(request.baseline_revision.revision_id), false);
 });
 
 test('support under one rule cannot clear another rule’s unresolved source requirement', async () => {
@@ -185,6 +201,6 @@ test('a redirected source keeps both URLs and Decision 1 reports which claims ex
   const batch = buildDecisionRequest(request, claims);
   assert.equal(Object.keys(batch.request.questions).length, 12);
   assert.deepEqual(batch.skippedClaimIds, ['claim-13']);
-  assert.equal(JSON.parse(batch.request.input)[0].sources[0].url, openedUrl);
+  assert.equal(JSON.parse(batch.request.input).cases[0].sources[0].url, openedUrl);
   assert.equal(request.source_material[0].url, 'https://example.org/brief');
 });

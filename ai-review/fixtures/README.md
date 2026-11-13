@@ -8,3 +8,5 @@ These two fictional cases use the same plain-text request format as the library 
 | [Harbor Film Night social teaser](sponsored-caption.request.json) | The public caption lost the paid partnership disclosure for Lantern Coffee. The full video moved from Friday to Saturday at 6 p.m. | Flag the missing disclosure using the caption and paid production note. The caption has no unsupported superlatives. Suggest Arts and culture, Film, and Social video. Build the short description from the teaser title and release card. |
 
 The rules are examples for this project. The producer or editor checks the footage permission or restores the disclosure before the piece goes out.
+
+The [owner media pack](owner-media-pack.json) adds first/revised articles, missing and documented media permission, explicit refusal, missing/visible paid disclosure and a different-project source case. It includes expected observations, isolated approved-rule fixtures and frozen public passages. [Owner validation](../../docs/29-owner-validation.md) records actual misses, HTTP failures and commands for a repeatable live evaluation. Supplying these frozen passages is not a new source retrieval.

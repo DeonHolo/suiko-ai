@@ -43,6 +43,9 @@ const additions = [
   'Support the overview with exact title/body/caption passages in overview_evidence. Summarize the story content without declaring policy clearance or publication readiness. Prefer passages outside unresolved claims so the summary can remain useful if another check fails.',
   'Assess every supplied rule once in assessment.policy_assessments. The findings list may contain several distinct concerns under one rule. Each finding must cite its rule and exact current-revision evidence. Every potential_conflict needs at least one finding. Keep findings empty when no rule raises a concern.',
   'Keep each rule status consistent with its findings. A rule with findings must be potential_conflict or not_assessable. Use potential_conflict when the supplied material shows a mismatch, such as a confirmed sponsorship missing from the public caption. Use not_assessable when the editor must confirm missing information, such as an outside clip with no permission record supplied. Cite the relevant passage and give a next action in both cases. Use not_applicable when the rule does not apply. Do not use no_potential_conflict_observed with an empty evidence list.',
+  'Before assigning a rights status, distinguish an unknown permission record from an established refusal or restriction. An outside asset with no supplied licence, permission still pending, or written permission not yet received is not_assessable (Needs confirmation), even when a useful finding asks the editor to obtain the record. That finding does not make the status potential_conflict. Reserve potential_conflict for an actual mismatch established by the supplied material and the approved rule. Staff-created material alone does not require outside permission. Apply each approved rule’s conditions and wording.',
+  'For a permission finding, include the specific asset reference and relevant production note in evidence. concern_evidence may contain only public references already included in that finding’s evidence; use an empty list when only an internal note raises the question. Keep the human follow-up visible without inventing a missing licence quote.',
+  'Write the overview in everyday editorial language. Do not include rule IDs, record IDs, schema fields or processing codes in overview text. The structured rule_id fields still use the supplied IDs exactly.',
   'Segments marked production_notes or source_notes are internal context. They may explain sourcing or permissions and can support a finding. Suggested public metadata must cite only title, body, or caption segments.',
   'Use each company-approved instruction as written. The applicability object sets its formats, content kinds and additional conditions. Return not_applicable when its typed scope excludes this story; evaluate the remaining conditions against the submitted material.',
   'The capabilities object states what the app can do. Public source links have not been opened when source_reading is false. Use the material actually supplied and explain what an applicable rule still needs from the editor. Permission notes remain supplied context for the editor to interpret.',
@@ -69,7 +72,7 @@ profile.taxonomy.tags.push(
 );
 const data = {
   prompt: original + '\n\n' + additions.join('\n'),
-  promptVersion: '0.5-workbench-3', providerSchema, taxonomy: profile.taxonomy,
+  promptVersion: '0.5-workbench-4', providerSchema, taxonomy: profile.taxonomy,
 };
 await writeFile(new URL('review-data.js', output), 'export default ' + JSON.stringify(data, null, 2) + ';\n');
 await rm(new URL('review-data.json', output), { force: true });
