@@ -17,8 +17,8 @@ The [specification](company-policy-review-spec.md), [approved breakdown](company
 | AI-18 | done | `c9c8790` · [PR #13](https://github.com/DeonHolo/suiko-ai/pull/13) | 73 local checks, installed role and rule lifecycle tests, live headline and permission examples. |
 | AI-19 | done | `f11c6de` · [PR #14](https://github.com/DeonHolo/suiko-ai/pull/14) | 78 local checks, installed policy and role checks, and a live policy proposal used in a story review. |
 | AI-20 | done | `24845b6` · [PR #15](https://github.com/DeonHolo/suiko-ai/pull/15) | 84 local tests, five live link outcomes, preserved earlier source text after a fresh fetch. |
-| AI-21 | implemented and verified | [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
-| AI-22 | ready-for-agent | pending | Literal edits and accurate change summaries. |
+| AI-21 | done | `5f9cf3f` · [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) | Per-claim evidence, mixed outcomes, saved metadata, and live Decision 1 confidence. |
+| AI-22 | implemented and verified | [PR #17](https://github.com/DeonHolo/suiko-ai/pull/17) | Library and caption comparisons with exact saved text. First drafts and unchanged text produce no change entries. |
 | AI-23 | ready-for-agent | pending | Full PDI UI evaluation with expectations recorded first. |
 
 ## Working notes
@@ -87,3 +87,11 @@ AI-16 merged at 20:35 Singapore on 12 November after checks succeeded on `d9cedf
 - Branch `codex/ai-21-claim-evidence`. ServiceNow supplies retrieved text to the review. Each claim has a saved rule, draft quote, source or context quote, and suggested action. The public description guard checks the flagged passage and can retain nearby supported text.
 - The nine-case Decision 1 trial matched eight expected answers, as did Flash-Lite. The installed rerun showed both models' judgments about an unannounced exhibition time. Decision 1 returned Needs confirmation at 97% while Flash-Lite called it a conflict. The editor can open the exact source and confidence distribution.
 - The live example supported the seat count, found a conflicting screening time, and separated the unsupported price from the editor's note. The rerun's description omitted all three disputed or unconfirmed details. [Results](../../docs/21-claim-and-source-review.md).
+- CodeRabbit's source-gap, redirect, confidence-limit, evidence and description findings were assessed and fixed. The installed suite `9aafcf458328db106fffc629feaad371` passed the added saved-review cases. GitHub checks passed on `8ea6da1`, and PR #16 merged as `5f9cf3f`.
+
+## AI-22 delivery
+
+- The ServiceNow SDK ran jsdiff's synchronous word comparison and saved the literal changes. The editor can inspect these alongside Gemini's summaries.
+- The library comparison grouped the date update, identified the removed attribution and kept the estimate out of the description. The shortened caption kept the cast-interview sentence and showed only the removed sponsorship wording and the release-day change.
+- A version with the same text and a changed content kind reported unchanged text. A source-link-only edit showed a literal link addition even though Gemini omitted it from the summary. [Results and limits](../../docs/22-revision-comparisons.md).
+- CodeRabbit caught whole-caption additions/removals and the numeric grouping of unrelated facts. One-sided quotations now preserve the text matched to the opposite version. Gemini groups related facts in its explanation, and the checker retains independent summaries. The installed suite `9aafcf458328db106fffc629feaad371` verified the caption and independent-date cases.

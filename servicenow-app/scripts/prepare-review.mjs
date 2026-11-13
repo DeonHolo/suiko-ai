@@ -31,7 +31,7 @@ await writeFile(new URL('validators.js', output), helper + validators);
 await rm(new URL('validators.cjs', output), { force: true });
 // Branches without classified inputs must not bundle an old generated module.
 await rm(new URL('story-input.js', output), { force: true });
-for (const name of ['assessment-checks.js', 'provider-json.js', 'workbench-review.js', 'review-attempt.js', 'story-input.js', 'editorial-rules.js', 'policy-proposals.js', 'source-reader.js', 'claim-evidence.js', 'decision-review.js']) {
+for (const name of ['assessment-checks.js', 'provider-json.js', 'workbench-review.js', 'review-attempt.js', 'story-input.js', 'editorial-rules.js', 'policy-proposals.js', 'source-reader.js', 'claim-evidence.js', 'decision-review.js', 'revision-diff.js']) {
   await writeFile(new URL(name, output), await readFile(new URL('ai-review/src/' + name, workspace), 'utf8'));
 }
 const promptFile = await readFile(new URL('prompts/editorial-review-v0.4.md', workspace), 'utf8');
@@ -53,6 +53,8 @@ const additions = [
   'Example: a story says a workshop opens at 6 p.m. and the source says the time has not been announced. The outcome is insufficient because the source provides no competing opening time. Ask the editor to confirm the schedule. The outcome is contradicted if the source says the same workshop opens at 7 p.m.',
   'Do not duplicate source-rule claim checks in findings. Keep findings for other rules. In each finding set concern_evidence to the exact problematic public passage, as a subset of the evidence. Other evidence can explain the concern, such as a cautious body passage that shows why a headline overstates it. If the concern has only internal evidence, use an empty concern_evidence list.',
   'For the public description, avoid the actual problematic passage or materially unsupported claim. You may cite accurate comparison context from public story text. Never add facts that appear only in source material or internal notes. Choose one short, uninterrupted candidate quote for each detail you use. Never insert ellipses, brackets or other edits inside a quote. A separate confirmed sentence can support a useful short description.',
+  'Use literal_edits to locate actual text changes. Use exact before and after quotes from the saved revisions, never the offset or excerpt as an evidence identity. With no baseline, return no changes and comparison not_requested. When the supplied literal edits list is empty, return no changes and comparison complete.',
+  'Group repeated edits to the same date, time or other fact into one change. Cite each changed location where possible. When a retained sentence loses a source name, explain that attribution was dropped. For a shortened caption, label the full before-and-after caption modified, or label just the deleted words removed with an empty after list.',
 ];
 const remove = new Set(['$schema', '$id', 'minLength', 'maxLength', 'minItems', 'maxItems', 'uniqueItems']);
 const providerSchema = JSON.parse(JSON.stringify(response), (key, value) => remove.has(key) ? undefined : value);
@@ -67,7 +69,7 @@ profile.taxonomy.tags.push(
 );
 const data = {
   prompt: original + '\n\n' + additions.join('\n'),
-  promptVersion: '0.5-workbench-2', providerSchema, taxonomy: profile.taxonomy,
+  promptVersion: '0.5-workbench-3', providerSchema, taxonomy: profile.taxonomy,
 };
 await writeFile(new URL('review-data.js', output), 'export default ' + JSON.stringify(data, null, 2) + ';\n');
 await rm(new URL('review-data.json', output), { force: true });

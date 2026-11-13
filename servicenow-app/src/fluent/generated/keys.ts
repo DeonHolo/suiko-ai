@@ -45,6 +45,10 @@ declare global {
                         table: 'sys_atf_step'
                         id: 'a8edb3b62f394be3b4775358f6047c8b'
                     }
+                    'ai22-revision-step': {
+                        table: 'sys_atf_step'
+                        id: '5fc233390b6c42b189e729e4c4aa24a6'
+                    }
                     'ajv@8.20.0/dist/runtime/ucs2length.js': {
                         table: 'sys_module'
                         id: 'd77602b3ed7a43abbacc3eaf7ef7a277'
@@ -58,6 +62,14 @@ declare global {
                     bom_json: {
                         table: 'sys_module'
                         id: '2b56dd9171ea4623ae91d4506313e30c'
+                    }
+                    'diff@9.0.0/index.js': {
+                        table: 'sys_module'
+                        id: '80b5e6021f7d459a8c86d0cccaeacc11'
+                    }
+                    'diff@9.0.0/package.json': {
+                        table: 'sys_module'
+                        id: '7f6958deaccc4422bbcc9fcff113fb44'
                     }
                     'jsonc-parser@3.3.1/index.js': {
                         table: 'sys_module'
@@ -147,6 +159,10 @@ declare global {
                         table: 'sys_module'
                         id: '808a3fec8dd947a68b7ef6e8bc17c63a'
                     }
+                    'src_server_generated_revision-diff_js': {
+                        table: 'sys_module'
+                        id: 'c37b4ef4328944178dbccbb9c4bddba5'
+                    }
                     'src_server_generated_source-reader_js': {
                         table: 'sys_module'
                         id: 'c1837ca8406645fdb3dc907321c45024'
@@ -174,6 +190,10 @@ declare global {
                     'src_server_review-persistence-test_ts': {
                         table: 'sys_module'
                         id: '299f3408d2f74d019f84797e40284c6a'
+                    }
+                    'src_server_revision-comparison-test_ts': {
+                        table: 'sys_module'
+                        id: '354ede403b684644bf0ebadcc5fc04bc'
                     }
                     'src_server_rule-access_ts': {
                         table: 'sys_module'
@@ -820,6 +840,15 @@ declare global {
                                 }
                             }
                             sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '31cee2561d3644f3bb5cd62a84207a7c'
+                        key: {
+                            name: 'x_2236136_suiko_ai_review'
+                            element: 'revision_diff_json'
+                            language: 'en'
                         }
                     },
                     {
@@ -1485,6 +1514,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '633829050fed4e8a8a1b9153403b9be2'
+                        key: {
+                            document_key: '5fc233390b6c42b189e729e4c4aa24a6'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '641768d6cfcf4bd88abff5125207eaf4'
                         key: {
@@ -2091,6 +2128,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '9a15db702d80488aa9ca04bde9fd80b4'
+                        key: {
+                            document_key: '5fc233390b6c42b189e729e4c4aa24a6'
+                            variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
                         table: 'sys_ui_form'
                         id: '9a47b15d63904b0a997b59c3cd2a7b08'
                         key: {
@@ -2670,6 +2715,14 @@ declare global {
                             }
                             element: 'story'
                             position: '0'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'c6c11b5115bb440a9bc19c5a7ab6f2ae'
+                        key: {
+                            name: 'x_2236136_suiko_ai_review'
+                            element: 'revision_diff_json'
                         }
                     },
                     {

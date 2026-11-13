@@ -2,7 +2,7 @@
 
 **Owner:** Deon
 
-**Status:** implemented and tested in ServiceNow. [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16).
+**Status:** done. [PR #16](https://github.com/DeonHolo/suiko-ai/pull/16) merged after CodeRabbit fixes and installed tests.
 
 **Approved:** 12 November 2026.
 

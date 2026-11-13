@@ -193,11 +193,20 @@ function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManageRules 
     <section className="card"><h3>What changed</h3>
       {!run.request.input.baseline_revision && <p>This is the first submitted version of this story.</p>}
       {run.request.input.baseline_revision && !result.assessment.changes.length && <p>{result.assessment.coverage.revision_comparison === 'incomplete'
-        ? 'The revision comparison could not be fully checked. Retry to check it again.' : 'No meaningful changes were reported.'}</p>}
+        ? 'The revision comparison could not be fully checked. Open the saved edits below or retry.'
+        : run.request.literal_edits?.changes.length === 0 ? 'The saved text is unchanged.' : 'No meaningful changes were reported.'}</p>}
       {result.assessment.changes.map(change => <article className="change" key={change.change_id}>
         <h4>{change.summary}</h4><p className="hint">{change.kind}</p>
         <Evidence references={[...change.before, ...change.after]} run={run} />
       </article>)}
+      {!!run.request.literal_edits?.changes.length && <details><summary>See literal edits</summary>
+        {run.request.literal_edits.limited && <p>Some edits are excerpts. Open the saved versions for the full text.</p>}
+        {run.request.literal_edits.changes.map((edit, index) => <div key={index} className="change">
+          <p className="hint">{edit.field.replaceAll('_', ' ')}</p>
+          {edit.before && <p className="literal-edit"><strong>Before</strong> {edit.before}</p>}
+          {edit.after && <p className="literal-edit"><strong>After</strong> {edit.after}</p>}
+        </div>)}
+      </details>}
     </section>
     <Metadata key={run.id + ':' + run.modified} run={run} taxonomy={taxonomy} disabled={busy || !latest} onSave={onMetadata} />
     <details className="card"><summary>Rules and review details</summary>
