@@ -6,7 +6,9 @@ export async function readProviderReply(response) {
 }
 
 export function evaluationFailed(result) {
-  return !!(result.failure || result.comparisons?.some(check => !check.match)
+  const expectedGaps = new Set(['MISSING_EVIDENCE', 'DESCRIPTION_NEEDS_CONFIRMATION']);
+  return !!(result.failure || result.issues?.some(code => !expectedGaps.has(code))
+    || result.comparisons?.some(check => !check.match)
     || result.claims?.some(check => !check.matches.length || check.matches.some(match => !match.match))
     || (result.decision && (result.decision.http !== 200 || !result.decision.coverage_complete
       || result.decision.comparisons.some(check => !check.match))));

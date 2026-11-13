@@ -35,3 +35,11 @@ test('evaluation fails when an expected claim was omitted or a provider call fai
   assert.equal(evaluationFailed({ comparisons: [], claims: [{ matches: [] }] }), true);
   assert.equal(evaluationFailed({ failure: 'Provider HTTP 503' }), true);
 });
+
+test('matching labels cannot hide invalid observations, while explicit confirmation gaps remain reported', () => {
+  const matching = { comparisons: [{ match: true }], claims: [{ matches: [{ match: true }] }] };
+  for (const code of ['INVALID_METADATA_SECTION', 'QUOTE_MISMATCH', 'INVALID_CONCERN_PASSAGE', 'INTERNAL_METADATA_SOURCE']) {
+    assert.equal(evaluationFailed({ ...matching, issues: [code] }), true, code);
+  }
+  assert.equal(evaluationFailed({ ...matching, issues: ['MISSING_EVIDENCE', 'DESCRIPTION_NEEDS_CONFIRMATION'] }), false);
+});
