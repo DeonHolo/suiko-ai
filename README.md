@@ -4,6 +4,8 @@ Suiko AI is a ServiceNow app for a small newsroom or media team. An editor saves
 
 **Team Backyardigans.** Claim a ticket in [GitHub Issues](https://github.com/DeonHolo/suiko-ai/issues). Each ticket has steps, a prompt for your coding assistant, and a check you can demo. [Team task overview](TEAM-TASKS.md)
 
+**Deon:** [work you can do now and your next step after each teammate ticket](docs/27-owner-next-steps.md).
+
 ## Try the app
 
 1. [Open the Suiko AI workbench](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do) on the team's ServiceNow developer instance (PDI). Sign in with your ServiceNow account.

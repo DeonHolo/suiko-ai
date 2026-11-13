@@ -43,6 +43,8 @@ Najarro owns story-list data and editor decisions (#1/#4). MGP owns archive/rest
 
 The new Archive/Legal/decision controls depend on those APIs. They stay unavailable in normal navigation until the server declares them ready. Component tests using simulated responses prove frontend behavior, not completed teammate work. All seven issue bodies now contain the updated ServiceNow steps and AI prompts; their existing claims were preserved.
 
+[Deon's next steps](27-owner-next-steps.md) lists work that can continue independently and the exact integration/test handoff after each of the seven teammate tickets.
+
 ## Try the saved evidence
 
 1. [Open the saved Halyard Desk demo](https://dev309702.service-now.com/x_2236136_suiko_ai_review.do?story=89688f4583e4db106fffc629feaad327), or find it in Stories.

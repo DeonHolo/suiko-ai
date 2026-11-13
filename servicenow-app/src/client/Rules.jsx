@@ -96,12 +96,9 @@ function RuleForm({ rule, fromPolicy, sourceReading, canArchive, busy, error, on
           <textarea className="short-input" name="rule-editor-reminders" rows={2} disabled={busy} maxLength={1500} value={draft.human_checks_text} onChange={event => edit('human_checks_text', event.target.value)} placeholder="One reminder per line…" />
         </label>
       </div>
-      <details className="optional-field" open={draft.priority === 'high' || undefined}>
-        <summary>More options</summary>
-        <label>Priority<select name="rule-priority" disabled={busy} value={draft.priority} onChange={event => edit('priority', event.target.value)}>
-          <option value="standard">Standard</option><option value="high">High</option>
-        </select></label>
-      </details>
+      <label>Priority<select name="rule-priority" disabled={busy} value={draft.priority} onChange={event => edit('priority', event.target.value)}>
+        <option value="standard">Standard</option><option value="high">High</option>
+      </select></label>
       {(validation || error) && <p className="error" role="alert">{validation || error}</p>}
       {dirty && pending && <p className="hint">Save your edits before approving this rule.</p>}
       <div className="actions">
