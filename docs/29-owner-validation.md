@@ -12,7 +12,7 @@ The actual in-app browser worked. Using an ordinary Editor, view A held an unrev
 
 ## Actual source and Decision 1 results
 
-Story `8d67aa5583605f106fffc629feaad392` has a first draft and corrected revision. The main first review fell back from Gemini 3.5 Flash-Lite after HTTP 503 to 3.1 Flash-Lite; the revised review completed on 3.5. Both read the public noon brief and text PDF, and recorded the missing URL as unavailable. No claim cited the unrelated PDF. Missing-link status did not erase the usable overview or publishing controls.
+Story `8d67aa5583605f106fffc629feaad392` has a first draft and corrected revision. The main first review fell back from Gemini 3.5 Flash-Lite after HTTP 503 to 3.1 Flash-Lite; the revised review completed on 3.5. Both read the public noon brief and text PDF, and recorded the missing URL as unavailable. No claim cited the unrelated PDF. Missing-link status did not erase the usable overview or publishing controls. The table below describes those preserved pre-PR #23 runs; the final installed rerun is recorded at the end of this document.
 
 | Saved copy | Main review | Decision 1 |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ A held-out Orchard Screen auditorium case used a Halyard brief about a different
 
 A new regression failed on that missing context. The second opinion now receives the current public title/body/caption once alongside its claim cases. Internal notes and the baseline are excluded; the current story identifies the claim's subject and is not independent source evidence. The question version is `source-support-3`.
 
-Replaying the identical saved claim/source material with that context changed Decision 1 to Needs confirmation at 97.72%. The conflicting-time, unknown-price and supported-time/seat comparison labels remained appropriate. All 100 AI checks pass. This context rerun was a real Decision 1 API call from the local evaluation; installed verification of the new question remains separate until deployment.
+Replaying the identical saved claim/source material with that context changed Decision 1 to Needs confirmation at 97.72%. The conflicting-time, unknown-price and supported-time/seat comparison labels remained appropriate. All 100 AI checks passed at that stage. This was a real Decision 1 API call from the local evaluation; the separate installed verification is recorded below.
 
 ## Repeating the controlled pack
 
@@ -62,7 +62,7 @@ Ordinary Editor save/review/source inspection and publishing-choice actions pass
 
 Keyboard activation and Escape returned focus to the sample-dialog opener. Labels, loading, partial results and historical read-only publishing controls were inspected. A requested 390px viewport was clamped by the in-app browser to a wider rendered view. A separate local 390px frame then rendered the built frontend with a 375px page and 335px long-title area, without horizontal overflow. This confirms that local narrow layout; an exact-width live ServiceNow phone walkthrough and a full assistive-technology audit remain pending.
 
-Archive, Legal and human decisions remain platform-team dependencies. Component simulations verify prepared frontend behavior; they do not complete a teammate ticket or prove live assignment, deletion, retention or clearance guards. Teammate PRs remain for Deon's approval. Final installed follow-up and account cleanup are recorded below when complete.
+Archive, Legal and human decisions remain platform-team dependencies. Component simulations verify prepared frontend behavior; they do not complete a teammate ticket or prove live assignment, deletion, retention or clearance guards. Teammate PRs remain for Deon's approval. Final installed follow-up and account cleanup are recorded below.
 
 ## Further ordinary-account and simulated checks
 
@@ -70,4 +70,36 @@ The ordinary Rules Editor saved and approved a new rule named Owner validation o
 
 In the in-app browser, a local page explicitly labelled LOCAL SIMULATION supplied example contract responses to the built frontend. Routing a saved version to legal, viewing the submitted copy and reason, clearing it, returning to the editor and signing off all worked. The simulated AI failure remained visible without blocking those human controls. The requests included revision and modification guards. Archive hid permanent delete for retained evidence, kept the simulated stale-delete error in its confirmation, restored both example items and displayed the empty state. These results establish screen behavior only; no ServiceNow legal, archive or sign-off action was performed.
 
-CodeRabbit's further valid finding concerned non-JSON provider failures in the evaluation runner. Two new checks reproduced lost status/body evidence before the fix. The runner now records HTTP status and raw response text before decoding; plain-text/HTML failures remain available. Optional-check coverage, wrong labels and omitted expected claims have separate failure-verdict regressions. All 104 AI checks and 21 screen checks pass.
+CodeRabbit's further valid findings concerned non-JSON provider failures and invalid evidence being counted as a passing evaluation. Focused checks reproduced both before their fixes. The runner now records HTTP status and raw response text before decoding, and invalid checker outcomes fail its verdict. Optional-check coverage, wrong labels and omitted expected claims have separate regressions. All 105 AI checks and 21 screen checks pass.
+
+## Final installed results — 14 November 2026, Singapore
+
+[PR #23](https://github.com/DeonHolo/suiko-ai/pull/23) merged as `8a13505` after CI and CodeRabbit passed, valid findings were fixed, and the discussions were resolved. The reviewed build was installed from `main`. A fresh preflight again found no newer shared Studio app files. Before/after fingerprints preserved all 20 current stories, saved revisions/reviews/sources, publishing choices, rule approvals and policy records. The provider remained configured. The installed server regression suite passed both tests again, including six direct rule/policy handlers returning 403 for the non-admin Editor, and restored its test-runner settings.
+
+The following new reviews were run through the actual in-app browser as **Suiko Temporary Editor**, with only the Editor role. Each stored review references the selected saved revision and prompt `0.5-workbench-4`. No saved draft was rewritten to obtain these outcomes.
+
+| Installed case | Expected | Actual |
+| --- | --- | --- |
+| Cedar Frame outside photo | Ask for the named photo's permission, Needs confirmation | Both applicable rights rules returned Needs confirmation with specific follow-ups. No source rule applied and no source/Decision 1 call was requested. The overview was withheld because it cited internal notes as overview evidence. |
+| Orchard Screen's 40 seats, linked to the Halyard brief | The other project's brief cannot establish this project's capacity | The brief was read. Main review and Decision 1 both returned Needs confirmation. Decision 1: **98.24%**, question `source-support-3`, 235 ms, 571 input tokens. |
+| Halyard Version 2: noon | Supported by the brief | Main review supported it; Decision 1 Support **98.01%**. |
+| Halyard Version 2: 40 seats | Supported by the brief | Main review supported it; Decision 1 Support **98.97%**. |
+| Halyard Version 2: admission pending | Supported by the matching source wording | Main review supported it; Decision 1 instead returned Needs confirmation **50.92%**, with Support at **48.45%**. The screen showed the disagreement. This is an actual remaining model miss, not a corrected label. |
+
+The final Halyard second check completed all three eligible claims in 392 ms with 1,493 input tokens. Its brief and text PDF were read again; the missing URL remained unavailable, and no claim used the unrelated PDF. The new overview and all three actual text-change summaries remained available. These observed calls do not establish general accuracy or comparative performance.
+
+The Orchard review also recorded diagnostics for invalid concern references, an unmatched duplicate source finding and an unverifiable overview reference. The invalid references were removed; the usable claim, second opinion and unmatched finding remained inspectable, and its overview was withheld. The saved technical issues and plain-language gaps were not counted as a clean model-quality pass.
+
+Selecting the earlier Cedar review and refreshing retained its original wrong label and internal rule identifier. Selecting the Halyard Version 1 review and refreshing retained the Editor's original description, with publishing fields read-only for that earlier version. API fingerprints separately confirmed that every pre-existing review in the three acceptance stories and all their saved revisions remained unchanged. The repeated-review component fixture now gives its prior-version run an earlier timestamp too, so its entire newest-first order is explicit.
+
+Both password-free temporary accounts were **disabled and locked** after testing. The temporary rule remains off; unsaved test text was cleared; the original administrator session and default viewport were restored. The verified Orchard source result was left open in the in-app browser. No teammate PR was merged and no unfinished workflow capability was enabled.
+
+![Actual installed different-project comparison and second opinion](images/owner-source-context.jpg)
+
+Raw expected/actual inputs, failed attempts, original and final server-suite results, installation fingerprints, browser states and screenshots are saved locally under `ai-review/output/owner-validation-2026-11-13/`, with additional controlled calls in timestamped `ai-review/output/media-*/` folders. The folder name marks the start of the session; final installed checks crossed into 14 November Singapore time. The raw files contain no provider credentials.
+
+## Next demonstration and tests
+
+For the demo, open the saved Owner validation Halyard story. Compare Version 1's time/price concerns with Version 2's actual edits; reopen the earlier publishing choice. Show Sources used to distinguish read, unrelated and failed links. Show the optional second check and the preserved admission-pending disagreement, then the Orchard example explaining why a matching number from another project is insufficient. Keep human sign-off marked pending in the live-app segment; the completed sign-off preview was a local simulation.
+
+The next real integration work remains the teammate APIs: full story search/status/pagination, archive/restore and retention/deletion guards, assigned/unassigned legal access, frozen legal submissions, fresh clearance after revision, editor decisions, human history and the independent whole-app rehearsal. Complete the role-specific HTTP authorization matrix and assistive-technology audit too. The existing server-handler denial checks and screen walkthroughs do not prove every transport/role boundary or live workflow action.

@@ -69,7 +69,7 @@ test('review history selects the latest saved review without offering a blank re
   window.history.replaceState(null, '', '?story=river');
   const previous = { ...river, id: 'r0', version: 1 };
   const current = { ...river, id: 'r2', version: 2 };
-  const olderReview = { ...completed(previous), id: 'older-review' };
+  const olderReview = { ...completed(previous), id: 'older-review', saved_at: '2026-11-13 01:30:00' };
   const earlierCurrentReview = { ...completed(current), id: 'earlier-current-review', saved_at: '2026-11-13 01:40:00' };
   const latestReview = { ...completed(current), id: 'latest-review' };
   olderReview.result = { ...olderReview.result, overview: 'The earlier review.' };
