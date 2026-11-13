@@ -70,19 +70,60 @@ test('review history selects the latest saved review without offering a blank re
   const previous = { ...river, id: 'r0', version: 1 };
   const current = { ...river, id: 'r2', version: 2 };
   const olderReview = { ...completed(previous), id: 'older-review' };
+  const earlierCurrentReview = { ...completed(current), id: 'earlier-current-review', saved_at: '2026-11-13 01:40:00' };
   const latestReview = { ...completed(current), id: 'latest-review' };
   olderReview.result = { ...olderReview.result, overview: 'The earlier review.' };
+  earlierCurrentReview.result = { ...earlierCurrentReview.result, overview: 'An earlier review of the current version.' };
   latestReview.result = { ...latestReview.result, overview: 'The latest review.' };
   mock.method(reviewService, 'state', async id => id ? state(current, {
-    revisions: [current, previous], runs: [latestReview, olderReview],
+    revisions: [current, previous], runs: [latestReview, earlierCurrentReview, olderReview],
   }) : state());
   render(<App />);
   await screen.findByText('The latest review.');
   const picker = screen.getByLabelText('Review history');
   assert.equal(picker.value, 'latest-review');
   assert.equal([...picker.options].some(option => option.value === ''), false);
+  fireEvent.change(picker, { target: { value: 'earlier-current-review' } });
+  await screen.findByText('An earlier review of the current version.');
   fireEvent.change(picker, { target: { value: 'older-review' } });
   await screen.findByText('The earlier review.');
+});
+
+test('refresh selects a newly available current-version review and preserves unsaved text', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const current = { ...river, id: 'r2', version: 2 };
+  let reviewedElsewhere = false;
+  const latestReview = { ...completed(current), id: 'new-review' };
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, river], runs: reviewedElsewhere ? [latestReview, completed()] : [completed()],
+  }) : state());
+  render(<App />);
+  await screen.findByRole('heading', { name: river.title, level: 1 });
+  assert.equal(screen.getByLabelText('Review history').value, '');
+  fireEvent.change(screen.getByLabelText('Story text'), { target: { value: 'Keep my unsaved rewrite.' } });
+  reviewedElsewhere = true;
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh story' }));
+  await waitFor(() => assert.equal(screen.getByLabelText('Review history').value, 'new-review'));
+  screen.getByText('A local volunteer cleanup is planned.');
+  assert.equal(screen.queryByRole('option', { name: /hasn’t been reviewed/ }), null);
+  assert.equal(screen.getByLabelText('Story text').value, 'Keep my unsaved rewrite.');
+});
+
+test('refresh preserves an explicitly selected older review while a newer result arrives', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const current = { ...river, id: 'r2', version: 2 };
+  const older = completed();
+  const latest = { ...completed(current), id: 'new-review', result: { ...completed(current).result, overview: 'The new result.' } };
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, river], runs: [latest, older],
+  }) : state());
+  render(<App />);
+  await screen.findByText('The new result.');
+  fireEvent.change(screen.getByLabelText('Review history'), { target: { value: older.id } });
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh story' }));
+  await waitFor(() => assert.equal(screen.getByRole('button', { name: 'Refresh story' }).disabled, false));
+  assert.equal(screen.getByLabelText('Review history').value, older.id);
+  screen.getByText('A local volunteer cleanup is planned.');
 });
 
 test('an unreviewed latest version is identified without pretending an older review covers it', async () => {

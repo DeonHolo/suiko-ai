@@ -43,6 +43,8 @@ Recommended follow-up: let the editor decide whether the paid-relationship rule 
 
 ## Verification
 
+PR #22 follow-up: refreshing a previously unreviewed version now selects a review completed in another session. It preserves an explicitly selected older review and unsaved draft text. The regression reproduced the empty selection before the fix; all 21 screen checks pass afterward. The repeated-review fixture also includes an older result for the same current version, with newest-first ordering and both results selectable. The 99 AI checks and frozen-key SDK build pass. Installed browser verification is recorded separately after deployment.
+
 - Three new screen checks failed before the fix and passed afterward: no blank review choice; an unreviewed current version is not presented as reviewed; saved format/type and changes remain visible when text is unchanged.
 - All 19 screen checks and 99 existing AI checks passed. The ServiceNow SDK build completed.
 - The unchanged-save check used the real ServiceNow action and preserved all four versions and reviews.

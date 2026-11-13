@@ -244,7 +244,8 @@ export default function App() {
       return;
     }
     setData(next);
-    setRunId(previous => previous && next.runs.some(item => item.id === previous) ? previous : null);
+    setRunId(previous => next.runs.find(item => item.id === previous)?.id
+      || next.runs.find(item => item.revision_id === next.revisions[0]?.id)?.id || null);
   }
 
   function isActiveStory(id) {
@@ -361,7 +362,7 @@ export default function App() {
         <section className="review-panel" aria-label="AI review">
           {!!data.runs.length && <div className="review-toolbar">
             <label>Review history<select value={runId || ''} disabled={!!busy} onChange={event => setRunId(event.target.value || null)}>
-              {!runId && <option value="" disabled>Version {current?.version} hasn’t been reviewed</option>}{data.runs.map(item => {
+              {!data.runs.some(item => item.revision_id === current?.id) && <option value="" disabled>Version {current?.version} hasn’t been reviewed</option>}{data.runs.map(item => {
                 const version = data.revisions.find(revision => revision.id === item.revision_id)?.version;
                 return <option key={item.id} value={item.id}>{[version ? 'Version ' + version : 'Earlier version', localDateTime(item.saved_at), reviewStatus(item)].filter(Boolean).join(' · ')}</option>;
               })}
