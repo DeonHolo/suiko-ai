@@ -1,0 +1,452 @@
+{
+  "description": "Fictional isolated media evaluation. These rules do not modify ServiceNow approvals. Expected observations are semantic; inspect raw/checked evidence and preserve failures.",
+  "rules": [
+    {
+      "rule_id": "OUTSIDE-ASSETS",
+      "title": "Permission for outside photos, video, and audio",
+      "text": "Apply when the draft or production notes propose using a photo, video, or audio asset from outside the team. Flag it when the supplied notes do not document permission or a license. Quote the asset reference and ask the editor to verify permission. Staff-created footage alone does not trigger this check. Missing documentation does not establish that permission was denied.",
+      "priority": "high",
+      "applicability": {
+        "formats": [
+          "article",
+          "script",
+          "caption"
+        ],
+        "content_kinds": [
+          "news",
+          "opinion",
+          "sponsored"
+        ],
+        "conditions": "",
+        "human_checks": []
+      }
+    },
+    {
+      "rule_id": "RULE-5da0ddc3-a3d4-4e99-b4f1-863fcacb7416",
+      "title": "Paid relationships are visible (AI-18 demo)",
+      "text": "Check whether the public text clearly identifies the paid relationship described in the supplied brief or context. Flag a missing or conflicting disclosure. If the relationship is unclear, ask the editor to confirm it.",
+      "priority": "high",
+      "applicability": {
+        "formats": [
+          "article",
+          "script",
+          "caption"
+        ],
+        "content_kinds": [
+          "sponsored"
+        ],
+        "conditions": "",
+        "human_checks": [
+          "Confirm the actual sponsor arrangement and the publication's required wording."
+        ]
+      }
+    },
+    {
+      "rule_id": "RULE-9689bc97-4416-47a3-8925-c575941d5f5e",
+      "title": "Support important news claims (AI-23 demo)",
+      "text": "Compare important dates, times, capacity and admission claims in news articles with the supplied material. Show which claims have support, which conflict and which need confirmation. An absent price in a source needs confirmation.",
+      "priority": "standard",
+      "applicability": {
+        "formats": [
+          "article"
+        ],
+        "content_kinds": [
+          "news"
+        ],
+        "conditions": "",
+        "human_checks": []
+      }
+    },
+    {
+      "rule_id": "RULE-a736efaa-0428-4d1a-870e-927c1a873511",
+      "title": "Preserve proposed status in headlines (AI-23 demo)",
+      "text": "For news about a proposed launch, keep the proposal status clear in both headline and body until the story records approval. Ask the editor to change wording that presents a pending decision as settled.",
+      "priority": "high",
+      "applicability": {
+        "formats": [
+          "article"
+        ],
+        "content_kinds": [
+          "news"
+        ],
+        "conditions": "When the story has not yet reported approval for the launch.",
+        "human_checks": [
+          "Confirm whether the story reports the launch has been approved before allowing a firm headline."
+        ]
+      }
+    },
+    {
+      "rule_id": "RULE-d32bea71-f56d-4a9c-996e-e30aac2b71cb",
+      "title": "Outside-media permission (AI-23 demo)",
+      "text": "When production notes identify an outside photograph, clip, or audio recording and no licence or written release was supplied, ask the editor to confirm permission. Use Needs confirmation when the permission record is missing.",
+      "priority": "high",
+      "applicability": {
+        "formats": [
+          "script"
+        ],
+        "content_kinds": [
+          "news",
+          "opinion",
+          "sponsored"
+        ],
+        "conditions": "When production notes identify a photograph, clip, or audio recording from outside the team and no licence or written release is supplied.",
+        "human_checks": [
+          "Confirm the actual permission or licence with the editor."
+        ]
+      }
+    }
+  ],
+  "taxonomy": {
+    "sections": [
+      {
+        "id": "technology",
+        "label": "Technology"
+      },
+      {
+        "id": "local-news",
+        "label": "Local news"
+      },
+      {
+        "id": "arts-culture",
+        "label": "Arts and culture"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ],
+    "tags": [
+      {
+        "id": "ai",
+        "label": "AI"
+      },
+      {
+        "id": "product-releases",
+        "label": "Product releases"
+      },
+      {
+        "id": "research",
+        "label": "Research"
+      },
+      {
+        "id": "community-events",
+        "label": "Community events"
+      },
+      {
+        "id": "film",
+        "label": "Film"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      },
+      {
+        "id": "environment",
+        "label": "Environment"
+      },
+      {
+        "id": "volunteering",
+        "label": "Volunteering"
+      },
+      {
+        "id": "local-government",
+        "label": "Local government"
+      },
+      {
+        "id": "education",
+        "label": "Education"
+      },
+      {
+        "id": "libraries",
+        "label": "Libraries"
+      },
+      {
+        "id": "video",
+        "label": "Video"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "missing-photo",
+      "draft": {
+        "version": 1,
+        "notes": "The opening image came from Sable Street Images. We haven't received written permission yet.",
+        "source_urls": [],
+        "content_format": "script",
+        "content_kind": "news",
+        "title": "Behind the scenes at Cedar Frame's sound workshop",
+        "text": "VOICEOVER: The Cedar Frame crew records footsteps for a short film.\n\nSHOT LIST: Open with the street photograph credited to Sable Street Images. Cut to the team recording sound in the studio."
+      },
+      "expected": {
+        "OUTSIDE-ASSETS": "not_assessable",
+        "RULE-d32bea71-f56d-4a9c-996e-e30aac2b71cb": "not_assessable"
+      },
+      "useful": "Ask for permission for the specific Sable Street photograph.",
+      "selection": "comparison case; baseline inspected before tuning"
+    },
+    {
+      "id": "staff-script",
+      "draft": {
+        "version": 1,
+        "notes": "All footage and recordings were created by the team; no outside assets are proposed.",
+        "source_urls": [],
+        "content_format": "script",
+        "content_kind": "news",
+        "title": "Cedar Frame records a door creak",
+        "text": "VOICEOVER: The Cedar Frame crew records a door creak for a short film.\n\nSHOT LIST: Use footage created by our staff in our studio."
+      },
+      "expected": {
+        "OUTSIDE-ASSETS": [
+          "not_applicable",
+          "no_potential_conflict_observed"
+        ],
+        "RULE-d32bea71-f56d-4a9c-996e-e30aac2b71cb": "not_applicable"
+      },
+      "useful": "No outside-rights concern.",
+      "selection": "comparison case; baseline inspected before tuning"
+    },
+    {
+      "id": "denied-clip",
+      "draft": {
+        "version": 1,
+        "notes": "Copper Kite Films explicitly refused permission to use its aerial clip. The proposed edit still includes it.",
+        "source_urls": [],
+        "content_format": "script",
+        "content_kind": "news",
+        "title": "Cedar Frame previews its sound stage",
+        "text": "SHOT LIST: Open with the aerial clip credited to Copper Kite Films. Cut to our studio."
+      },
+      "expected": {
+        "OUTSIDE-ASSETS": "potential_conflict"
+      },
+      "useful": "A confirmed refusal is a conflict for the broad rights rule; the narrower missing-record rule may still ask confirmation.",
+      "selection": "comparison case; baseline inspected before tuning"
+    },
+    {
+      "id": "paid-caption",
+      "draft": {
+        "version": 1,
+        "notes": "Lantern Coffee paid for this teaser. The final caption must visibly disclose the paid relationship.",
+        "source_urls": [],
+        "content_format": "caption",
+        "content_kind": "sponsored",
+        "title": "Harbor Film Night teaser",
+        "text": "A new film night is coming to Harbor Hall this Saturday. Save the date."
+      },
+      "expected": {
+        "RULE-5da0ddc3-a3d4-4e99-b4f1-863fcacb7416": "potential_conflict"
+      },
+      "useful": "Ask for a visible paid-relationship disclosure.",
+      "selection": "comparison case; baseline inspected before tuning"
+    },
+    {
+      "id": "disclosed-caption",
+      "draft": {
+        "version": 1,
+        "notes": "Lantern Coffee paid for this teaser.",
+        "source_urls": [],
+        "content_format": "caption",
+        "content_kind": "sponsored",
+        "title": "Harbor Film Night paid teaser",
+        "text": "Paid partnership with Lantern Coffee. A new film night is coming to Harbor Hall this Saturday."
+      },
+      "expected": {
+        "RULE-5da0ddc3-a3d4-4e99-b4f1-863fcacb7416": "no_potential_conflict_observed"
+      },
+      "useful": "No missing-disclosure warning.",
+      "selection": "comparison case; baseline inspected before tuning"
+    },
+    {
+      "id": "licensed-audio-holdout",
+      "selection": "held out; not used for prompt tuning",
+      "draft": {
+        "version": 1,
+        "content_format": "caption",
+        "content_kind": "news",
+        "source_urls": [],
+        "title": "A lantern maker at work",
+        "text": "A lantern maker folds paper around a bamboo frame.",
+        "notes": "The background recording is supplied by Orchard Tone Audio. The signed release permits this caption and its soundtrack; licence document OT-44 is recorded in the production log."
+      },
+      "expected": {
+        "OUTSIDE-ASSETS": "no_potential_conflict_observed"
+      },
+      "useful": "Do not request a missing permission record when the supplied notes explicitly document it; do not claim to independently authenticate it."
+    },
+    {
+      "id": "unknown-caption-photo-holdout",
+      "selection": "held out; not used for prompt tuning",
+      "draft": {
+        "version": 1,
+        "content_format": "caption",
+        "content_kind": "opinion",
+        "source_urls": [],
+        "title": "A quieter train platform",
+        "text": "In my opinion, quieter announcements make the platform easier to navigate.",
+        "notes": "Use the platform photograph credited to Glass Heron Studio. Its licensing details are not in our production log."
+      },
+      "expected": {
+        "OUTSIDE-ASSETS": "not_assessable"
+      },
+      "useful": "Ask for the specific photo permission in a different format/kind without calling unknown rights a proven conflict."
+    },
+    {
+      "id": "article-sources",
+      "selection": "integrated article; expectations predeclared in expected-results.md",
+      "draft": {
+        "id": "4d67aa5583605f106fffc629feaad393",
+        "story_id": "8d67aa5583605f106fffc629feaad392",
+        "version": 1,
+        "title": "Owner validation: Halyard listening room",
+        "text": "Halyard Desk is planning a public listening room for its community radio archive. The project is still a proposal and has no launch approval.\n\nThe listening room is proposed to open on 16 January at 11 a.m.\n\nThe proposed room has 40 seats. Entry will cost three dollars.",
+        "notes": "",
+        "saved_at": "2026-11-13 15:18:35",
+        "content_format": "article",
+        "content_kind": "news",
+        "source_urls": [
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/missing-listening-room.txt"
+        ]
+      },
+      "expected": {
+        "RULE-9689bc97-4416-47a3-8925-c575941d5f5e": "potential_conflict"
+      },
+      "expected_claims": [
+        {
+          "includes": "11 a.m.",
+          "status": "contradicted"
+        },
+        {
+          "includes": "40 seats",
+          "status": "supported"
+        },
+        {
+          "includes": "three dollars",
+          "status": "insufficient"
+        }
+      ],
+      "useful": "Separate conflict, support and missing information; use the brief, not the unrelated PDF."
+    },
+    {
+      "id": "article-revision",
+      "selection": "integrated revision; expectations predeclared in expected-results.md",
+      "draft": {
+        "id": "09e72e1583605f106fffc629feaad363",
+        "story_id": "8d67aa5583605f106fffc629feaad392",
+        "version": 2,
+        "title": "Owner validation: Halyard proposes a listening room",
+        "text": "Halyard Desk is planning a public listening room for its community radio archive. The project is still a proposal and has no launch approval.\n\nThe listening room is proposed to open on 16 January at noon.\n\nThe proposed room has 40 seats. Admission details are pending.",
+        "notes": "",
+        "saved_at": "2026-11-13 15:20:47",
+        "content_format": "article",
+        "content_kind": "news",
+        "source_urls": [
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/missing-listening-room.txt"
+        ]
+      },
+      "baseline": {
+        "id": "4d67aa5583605f106fffc629feaad393",
+        "story_id": "8d67aa5583605f106fffc629feaad392",
+        "version": 1,
+        "title": "Owner validation: Halyard listening room",
+        "text": "Halyard Desk is planning a public listening room for its community radio archive. The project is still a proposal and has no launch approval.\n\nThe listening room is proposed to open on 16 January at 11 a.m.\n\nThe proposed room has 40 seats. Entry will cost three dollars.",
+        "notes": "",
+        "saved_at": "2026-11-13 15:18:35",
+        "content_format": "article",
+        "content_kind": "news",
+        "source_urls": [
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/missing-listening-room.txt"
+        ]
+      },
+      "expected": {
+        "RULE-9689bc97-4416-47a3-8925-c575941d5f5e": "no_potential_conflict_observed"
+      },
+      "expected_claims": [
+        {
+          "includes": "noon",
+          "status": "supported"
+        },
+        {
+          "includes": "40 seats",
+          "status": "supported"
+        },
+        {
+          "includes": "pending",
+          "status": "supported"
+        }
+      ],
+      "useful": "Explain the three actual edits; preserve supported facts and uncertainty."
+    },
+    {
+      "id": "unrelated-event-holdout",
+      "selection": "held out; not used for prompt tuning",
+      "draft": {
+        "version": 1,
+        "content_format": "article",
+        "content_kind": "news",
+        "source_urls": [
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt",
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/missing-listening-room.txt"
+        ],
+        "title": "Orchard Screen plans a new auditorium",
+        "text": "Orchard Screen is planning a new auditorium for its outdoor cinema.\n\nThe new auditorium will have 40 seats.",
+        "notes": "The linked Halyard brief describes a different organisation and project. There is no Orchard Screen capacity document."
+      },
+      "expected": {
+        "RULE-9689bc97-4416-47a3-8925-c575941d5f5e": "not_assessable"
+      },
+      "expected_claims": [
+        {
+          "includes": "40 seats",
+          "status": "insufficient"
+        }
+      ],
+      "useful": "The Halyard brief cannot establish the capacity of a different project."
+    }
+  ],
+  "rubric_note": "The original strict pilot expected not_applicable for staff-only material; no_potential_conflict_observed is also a no-warning outcome. The original pilot expected not_assessable under the narrow missing-record rule for an explicitly denied clip; that expectation was too prescriptive. Score the broad rule’s established-conflict outcome and retain all raw statuses. Original expectations and mismatches remain saved locally.",
+  "sources": [
+    {
+      "source_id": "source-1",
+      "url": "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt",
+      "status": "read",
+      "passages": [
+        {
+          "passage_id": "passage-1",
+          "text": "Fictional Suiko AI acceptance source. This project and publisher are invented.\n\nHalyard Desk proposed listening room — project brief\n\nThe listening room is proposed to open on 16 January at noon\nThe proposed room has 40 seats.\nAdmission details are pending.\nThe project is still a proposal and has no launch approval."
+        }
+      ]
+    },
+    {
+      "source_id": "source-2",
+      "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "status": "read",
+      "passages": [
+        {
+          "passage_id": "passage-1",
+          "text": "Dummy PDF file"
+        }
+      ]
+    },
+    {
+      "source_id": "source-3",
+      "url": "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/missing-listening-room.txt",
+      "status": "unavailable",
+      "passages": []
+    }
+  ],
+  "source_provenance": {
+    "kind": "previously retrieved public passages, frozen for controlled comparison; this runner performs no new retrieval",
+    "review": "7728e21983605f106fffc629feaad3bd"
+  },
+  "source_rule_ids": [
+    "RULE-9689bc97-4416-47a3-8925-c575941d5f5e"
+  ]
+}
