@@ -65,6 +65,105 @@ test('opening Suiko resumes the signed-in editor’s last story and keeps model 
   await waitFor(() => assert.equal(model.closest('details').open, true));
 });
 
+test('review history selects the latest saved review without offering a blank review', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const previous = { ...river, id: 'r0', version: 1 };
+  const current = { ...river, id: 'r2', version: 2 };
+  const olderReview = { ...completed(previous), id: 'older-review' };
+  const earlierCurrentReview = { ...completed(current), id: 'earlier-current-review', saved_at: '2026-11-13 01:40:00' };
+  const latestReview = { ...completed(current), id: 'latest-review' };
+  olderReview.result = { ...olderReview.result, overview: 'The earlier review.' };
+  earlierCurrentReview.result = { ...earlierCurrentReview.result, overview: 'An earlier review of the current version.' };
+  latestReview.result = { ...latestReview.result, overview: 'The latest review.' };
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, previous], runs: [latestReview, earlierCurrentReview, olderReview],
+  }) : state());
+  render(<App />);
+  await screen.findByText('The latest review.');
+  const picker = screen.getByLabelText('Review history');
+  assert.equal(picker.value, 'latest-review');
+  assert.equal([...picker.options].some(option => option.value === ''), false);
+  fireEvent.change(picker, { target: { value: 'earlier-current-review' } });
+  await screen.findByText('An earlier review of the current version.');
+  fireEvent.change(picker, { target: { value: 'older-review' } });
+  await screen.findByText('The earlier review.');
+});
+
+test('refresh selects a newly available current-version review and preserves unsaved text', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const current = { ...river, id: 'r2', version: 2 };
+  let reviewedElsewhere = false;
+  const latestReview = { ...completed(current), id: 'new-review' };
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, river], runs: reviewedElsewhere ? [latestReview, completed()] : [completed()],
+  }) : state());
+  render(<App />);
+  await screen.findByRole('heading', { name: river.title, level: 1 });
+  assert.equal(screen.getByLabelText('Review history').value, '');
+  fireEvent.change(screen.getByLabelText('Story text'), { target: { value: 'Keep my unsaved rewrite.' } });
+  reviewedElsewhere = true;
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh story' }));
+  await waitFor(() => assert.equal(screen.getByLabelText('Review history').value, 'new-review'));
+  screen.getByText('A local volunteer cleanup is planned.');
+  assert.equal(screen.queryByRole('option', { name: /hasn’t been reviewed/ }), null);
+  assert.equal(screen.getByLabelText('Story text').value, 'Keep my unsaved rewrite.');
+});
+
+test('refresh preserves an explicitly selected older review while a newer result arrives', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const current = { ...river, id: 'r2', version: 2 };
+  const older = completed();
+  const latest = { ...completed(current), id: 'new-review', result: { ...completed(current).result, overview: 'The new result.' } };
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, river], runs: [latest, older],
+  }) : state());
+  render(<App />);
+  await screen.findByText('The new result.');
+  fireEvent.change(screen.getByLabelText('Review history'), { target: { value: older.id } });
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh story' }));
+  await waitFor(() => assert.equal(screen.getByRole('button', { name: 'Refresh story' }).disabled, false));
+  assert.equal(screen.getByLabelText('Review history').value, older.id);
+  screen.getByText('A local volunteer cleanup is planned.');
+});
+
+test('an unreviewed latest version is identified without pretending an older review covers it', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const current = { ...river, id: 'r2', version: 2 };
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, river], runs: [completed()],
+  }) : state());
+  render(<App />);
+  await screen.findByRole('heading', { name: river.title, level: 1 });
+  const picker = screen.getByLabelText('Review history');
+  assert.equal(picker.value, '');
+  const placeholder = within(picker).getByRole('option', { name: 'Version 2 hasn’t been reviewed' });
+  assert.equal(placeholder.disabled, true);
+  assert.equal(screen.queryByText('A local volunteer cleanup is planned.') === null, true);
+  fireEvent.change(picker, { target: { value: 'review-one' } });
+  await screen.findByText('A local volunteer cleanup is planned.');
+  screen.getByText('This review is for an earlier version. Publishing details can only be saved from a review of the current version.');
+});
+
+test('saved versions and the review show format and type changes even when the words are unchanged', async () => {
+  window.history.replaceState(null, '', '?story=river');
+  const previous = { ...river, content_format: 'caption', content_kind: 'sponsored' };
+  const current = { ...river, id: 'r2', version: 2, content_format: 'script', content_kind: 'news' };
+  const review = completed(current);
+  review.request.input.baseline_revision = { ...previous, revision_id: previous.id, segments: [] };
+  review.request.input.candidate_revision = { ...current, revision_id: current.id, segments: [] };
+  review.request.literal_edits = { changes: [], limited: false };
+  review.result.assessment.coverage.revision_comparison = 'complete';
+  mock.method(reviewService, 'state', async id => id ? state(current, {
+    revisions: [current, previous], runs: [review],
+  }) : state());
+  render(<App />);
+  await screen.findByText('The saved text is unchanged.');
+  screen.getByText('Format changed: Caption → Script.');
+  screen.getByText('Type of story changed: Sponsored → News.');
+  screen.getByText('Format: Caption · Type of story: Sponsored');
+  screen.getByText('Format: Script · Type of story: News');
+});
+
 test('a draft survives navigation to Stories; opening another story requires confirmation', async () => {
   window.history.replaceState(null, '', '?story=river');
   render(<App />);

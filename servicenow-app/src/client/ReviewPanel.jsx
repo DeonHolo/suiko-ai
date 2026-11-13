@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { localDateTime } from './presentation';
+import { formats, kinds, localDateTime } from './presentation';
 import { OriginalPolicy } from './PolicySetup';
 import Sources, { hasSourceGaps } from './Sources';
 import ClaimChecks from './ClaimChecks';
@@ -144,11 +144,17 @@ export function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManag
   });
   const hasDiagnostics = result.checks?.issues?.length || result.checks?.notes?.length;
   const sourceGaps = hasSourceGaps(run);
+  const baseline = run.request.input.baseline_revision;
+  const candidate = run.request.input.candidate_revision;
+  const settingChanges = baseline ? [
+    { field: 'content_format', label: 'Format', values: formats },
+    { field: 'content_kind', label: 'Type of story', values: kinds },
+  ].filter(({ field }) => baseline[field] !== candidate[field]) : [];
   const missingSections = [];
   if (result.assessment.coverage.revision_comparison === 'incomplete') missingSections.push('revision comparison');
   if (result.assessment.coverage.metadata_suggestions === 'incomplete') missingSections.push('publishing suggestions');
   return <>
-    {!latest && <p className="notice">You’re reading an older review. Choose the latest review to edit publishing details.</p>}
+    {!latest && <p className="notice">This review is for an earlier version. Publishing details can only be saved from a review of the current version.</p>}
     {run.rules_current === false && <p className="notice">Rules have changed. Review this version again to use today’s rules.</p>}
     {(result.assessment.status !== 'reviewed' || sourceGaps) && <section className="notice" role="status">
       <strong>{result.assessment.status === 'unable_to_assess' ? 'Suiko couldn’t finish these checks.' : 'Some checks need a closer look.'}</strong>
@@ -190,6 +196,8 @@ export function ReviewResult({ run, taxonomy, latest, busy, onMetadata, canManag
     <ReviewChecks result={result} run={run} />
     <Sources sources={run.request.sources} />
     <section className="card"><h3>What changed</h3>
+      {settingChanges.map(({ field, label, values }) => <p key={field}>{`${label} changed: ${values[baseline[field]] || 'Not set'} → ${values[candidate[field]] || 'Not set'}.`}</p>)}
+      {!!settingChanges.length && <p className="hint">These choices affect which rules apply to this version.</p>}
       {!run.request.input.baseline_revision && <p>This is the first submitted version of this story.</p>}
       {run.request.input.baseline_revision && !result.assessment.changes.length && <p>{result.assessment.coverage.revision_comparison === 'incomplete'
         ? 'The revision comparison could not be fully checked. Open the saved edits below or retry.'

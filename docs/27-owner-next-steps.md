@@ -19,6 +19,23 @@ The strongest next step after the current UI fixes is **ordinary-account checks 
 
 These are proposed next actions. This document does not create new GitHub tickets or claim that these checks have been run.
 
+## Which skills fit the checks
+
+Use the skills already installed on Deon's machine. Teammates do not need to install them to follow the task steps.
+
+| Order | Skill | What to ask it to check |
+| --- | --- | --- |
+| 1. Ordinary accounts | `e2e-testing` | Follow the existing save → review → open evidence flow as Editor and Rules Editor. Include a direct unauthorized request: hiding a button alone does not prove access is protected. Record what works and what fails. |
+| 2. Known AI mistakes | `evaluation` | Write expected observations before calling Gemini. Compare the permission case and unrelated examples. Score useful concerns, missed concerns, needless warnings and matching evidence. Do not require identical wording or claim that confidence proves truth. |
+| 3. Media example pack | `evaluation` | Keep a small repeatable article, script, caption and revision pack, plus examples not used while tuning the prompt. Compare Flash-Lite and the optional Decision 1 source check using the same retrieved passages. Keep disagreements and misses in the report. |
+| 4. Interaction details | `accessibility-compliance-accessibility-audit` plus `e2e-testing` | Check keyboard access, visible focus, clear labels and useful messages, then the empty, loading, failed and partly completed states. Inspect narrow screens and long story/rule names. An automated scan does not replace the walkthrough. |
+| 5. Pending workflow screens | `e2e-testing` | Exercise the prepared Archive and Legal screens locally with example API responses. Label these as simulations. Repeat against real ServiceNow actions after the teammate's work is integrated. |
+| 6. Review and handoff | `code-review` | Compare the PR against both the agreed requirements and repository standards, then assess CodeRabbit's findings. After installation, repeat the relevant editor journey and record evidence. Code review cannot prove the deployed app works. |
+
+For a reproduced software bug, use `diagnosing-bugs` to investigate it, then add a focused regression check at the existing public interface. Use `tdd` for new behavior when the interface and test boundary have been agreed. We already have component tests, AI checks and a working browser; reuse those before adding another testing service.
+
+Start with the ordinary-account walkthrough. The review-history fixes are a separate focused check; they do not complete the account and access checks above.
+
 ## The handoff loop for each teammate PR
 
 1. Ask for the issue number, changed Studio app-file IDs, exported configuration/source, stable record IDs and expected/actual test evidence. A live Studio change also needs its export in the PR so a later install preserves it.

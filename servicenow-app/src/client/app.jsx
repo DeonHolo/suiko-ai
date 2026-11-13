@@ -203,7 +203,7 @@ export default function App() {
       applyStory({ ...data, story: { ...data.story, id: revision.story_id, title: revision.title },
         workflow: revision.id === current?.id ? data.workflow : null,
         revisions: [revision, ...data.revisions.filter(item => item.id !== revision.id)], runs: data.runs });
-      toast.success('Version ' + revision.version + ' saved');
+      toast.success(revision.id === current?.id ? 'No changes to save. You’re still on Version ' + revision.version + '.' : 'Version ' + revision.version + ' saved');
       lastStory(viewer, revision.story_id);
       if (revision.story_id !== storyId) navigate('story', revision.story_id);
       try { applyStory(await reviewService.state(revision.story_id)); }
@@ -244,7 +244,8 @@ export default function App() {
       return;
     }
     setData(next);
-    setRunId(previous => previous && next.runs.some(item => item.id === previous) ? previous : null);
+    setRunId(previous => next.runs.find(item => item.id === previous)?.id
+      || next.runs.find(item => item.revision_id === next.revisions[0]?.id)?.id || null);
   }
 
   function isActiveStory(id) {
@@ -351,6 +352,7 @@ export default function App() {
           {!!data.revisions.length && <details className="optional-field"><summary>Saved versions</summary>
             {data.revisions.map(revision => <details className="version" key={revision.id}>
               <summary>Version {revision.version} · {localDateTime(revision.saved_at)}</summary>
+              <p className="hint">Format: {formats[revision.content_format] || 'Not set'} · Type of story: {kinds[revision.content_kind] || 'Not set'}</p>
               <h3>{revision.title}</h3><div className="draft-copy">{revision.text}</div>
               {!!revision.source_urls?.length && <><h4>Source links</h4><div className="draft-copy">{revision.source_urls.join('\n')}</div></>}
               {revision.notes && <><h4>Notes</h4><div className="draft-copy">{revision.notes}</div></>}
@@ -360,7 +362,7 @@ export default function App() {
         <section className="review-panel" aria-label="AI review">
           {!!data.runs.length && <div className="review-toolbar">
             <label>Review history<select value={runId || ''} disabled={!!busy} onChange={event => setRunId(event.target.value || null)}>
-              <option value="">Choose a review</option>{data.runs.map(item => {
+              {!data.runs.some(item => item.revision_id === current?.id) && <option value="" disabled>Version {current?.version} hasn’t been reviewed</option>}{data.runs.map(item => {
                 const version = data.revisions.find(revision => revision.id === item.revision_id)?.version;
                 return <option key={item.id} value={item.id}>{[version ? 'Version ' + version : 'Earlier version', localDateTime(item.saved_at), reviewStatus(item)].filter(Boolean).join(' · ')}</option>;
               })}
