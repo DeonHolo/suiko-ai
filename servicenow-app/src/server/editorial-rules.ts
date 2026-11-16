@@ -60,6 +60,8 @@ export function listEditorialRules() {
       active: !!approved && rows.getValue('active') === '1', approved, draft,
       pending: !!draft && draft.id !== approved?.version_id,
       legacy_approval_missing: rows.getValue('managed') !== '1', updated_at: rows.getValue('sys_updated_on'),
+      archived: rows.getValue('archived') === '1',
+      can_archive: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
     });
   }
   return rules;

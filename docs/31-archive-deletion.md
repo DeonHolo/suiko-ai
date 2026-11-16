@@ -1,0 +1,29 @@
+# FE-02 archive, restore and guarded deletion
+
+Implementation record for [FE-02 (#2)](../TEAM-TASKS.md#fe-02-archive-restore-and-safe-deletion). Scope stays inside the existing `x_2236136_suiko_ai` app; the custom Archive screen, Rules screen and workspace client already prepared by Deon are unchanged. [Contract section](25-workspace-service-contract.md#fe-02-archive).
+
+## What was built
+
+- **Archive fields** on both `x_2236136_suiko_ai_story` and `x_2236136_suiko_ai_rule`: `archived`, `archived_at`, `archived_by`, plus the admin-controlled `disposable` and `protected_evidence` markers. The markers are not on any form; the tables' existing admin-only write ACLs keep them off ordinary editors. Ordinary records are not disposable by default.
+- **GET `/api/x_2236136_suiko_ai/v1/workbench/archive?kind=story|rule&cursor=...`** returns archived items with `id, title, modified, archived_at`, server-calculated `can_restore`/`can_delete`, and either a `retention_reason` or a `delete_summary`. Pages of 50 use a validated keyset cursor on `sys_updated_on` + `sys_id`, so page order stays stable while items restore.
+- **POST `workbench/archive`** takes `action` (`archive`/`restore`/`delete`), `kind`, `id` and `expected_modified`. Role, state and modification count are rechecked on every action; stale or repeated requests return 409 and change nothing (guarded `sys_mod_count` write plus post-write verification, the same pattern as rule approvals).
+- **Roles:** Editors archive/restore stories, the designated Rules Editor archives/restore rules, and permanent deletion is admin-only and only from Archive. No-role accounts get 403 without learning whether a record exists.
+- **Daily lists:** `GET workbench/state` omits archived stories, reports `story.archived`/`story.can_archive`, and enables `capabilities.archive: true`. The rules view reports `archived`/`can_archive` per rule; the workspace Rules screen hides archived ones.
+- **Guards:** archived stories reject new saved versions (`saveRevision`, 409) and new reviews (`reviewSavedVersion` checks the story before the provider is created, so no model call is made). Archived rules keep their earlier snapshots readable but are excluded from new review packs (`policy_pack.rules` and `source_rule_ids`).
+- **Restore of a rule returns it off**, so it stays out of reviews until an editor turns it on; the saved approval record is untouched.
+- **Deletion eligibility is computed on the server:** only admins, only already-archived items, and only records with no retained reviews. The protected capstone records from [the acceptance results](23-acceptance-results.md#saved-evidence) (stories `89688f45…d327`, `eaa8c785…d33e`, rule `c1484b45…d326`) are protected in code, so the marker never has to override anything. When deletion is blocked the item stays archived and the response explains why. Disposable demos are removable only while unused; demo marking never overrides retained evidence. Deletion removes the item and its saved versions/children together, so no drafts or reviews are orphaned, and native audit history is never touched.
+
+Changed app files: `src/server/archive.ts` (new), `src/server/archive-test.ts` (new), `src/server/workbench.ts`, `src/server/editorial-rules.ts`, `src/fluent/review.now.ts` (columns + two REST routes), `src/fluent/review-tests.now.ts`, `src/fluent/tests/archive-guard.script.js` (new). No record IDs of existing artifacts changed; the SDK build uses frozen keys.
+
+## Checks run so far
+
+- Workspace screen checks (`npm --prefix servicenow-app run test:ui`), including the prepared Archive screen behaviour.
+- Offline review checks (`npm --prefix ai-review test`) and the frozen-key app build (`npm --prefix servicenow-app run build -- --frozenKeys`).
+- New ATF suite section "Suiko FE-02: archive, restore and guarded deletion" runs the same regressions on the instance as four dedicated users: everyday editor (story round trip, stale/duplicate rejection, direct save/review guards, denied deletion), rules editor (rule archived and restored off, retained-review protection reported, archived rule excluded from new review packs), a no-role user (all archive reads/actions denied, including against protected records) and an admin (protected capstone story blocked from deletion and restored; disposable demo story and rule removed with all saved children; stale deletion rejected).
+
+## Still needed in the shared ServiceNow instance (dev309702)
+
+1. **Install the updated app and run the installed suite.** The four user steps above only produce real evidence once the updated package is deployed and the "Suiko AI: server review regressions" suite is executed on the PDI (the previous suite `caf4df418368db106fffc629feaad36b` passes on the pre-archive build). Record the new suite result ID here.
+2. **Direct HTTP checks through the real endpoint.** The ATF steps call the server handlers, which proves the internal role/state logic. The contract's done-when ("direct requests cannot delete retained evidence or bypass admin/Archive restrictions") should also be shown with real HTTP calls to `GET/POST /api/x_2236136_suiko_ai/v1/workbench/archive` as the dedicated editor, rules editor, no-role and admin accounts, including a stale `expected_modified` and a repeat delete against the protected story.
+3. **Protected capstone records.** The suite touches them, but confirm afterwards on the instance that stories `89688f45…d327`, `eaa8c785…d33e`, rule `c1484b45…d326` and reviews `1a684385…d3e3`, `1a880785…d3e1`, `c3a84b85…d338`, `c20d0b01…d359` are unchanged, still readable and absent from the archive lists.
+4. **Future work coordinated here:** when BE-01/BE-03 add human decisions and the shared history log, `retentionReason` in `src/server/archive.ts` must also block deletion for stories with retained human/legal decisions. FE-03 legal tasks should be added to the same check when they exist.

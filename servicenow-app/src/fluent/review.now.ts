@@ -4,6 +4,7 @@ import {
   BooleanColumn, GenericColumn, Form, default_view, RestApi, ApplicationMenu, Record,
 } from '@servicenow/sdk/core';
 import { getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive, configureProvider, getPolicies, savePolicy, suggestPolicyChecks } from '../server/workbench';
+import { getArchive, postArchive } from '../server/archive';
 
 export const editor = Role({
   $id: Now.ID['suiko-editor-role'], name: 'x_2236136_suiko_ai.editor',
@@ -19,7 +20,14 @@ const editorApi = Acl({
 
 export const x_2236136_suiko_ai_story = Table({
   name: 'x_2236136_suiko_ai_story', label: 'Suiko story', audit: true,
-  schema: { title: StringColumn({ label: 'Title', maxLength: 160, mandatory: true }) },
+  schema: {
+    title: StringColumn({ label: 'Title', maxLength: 160, mandatory: true }),
+    archived: BooleanColumn({ label: 'Archived', default: false }),
+    archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
+    archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
+    disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
+    protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
+  },
   allowWebServiceAccess: false,
 });
 export const x_2236136_suiko_ai_revision = Table({
@@ -70,6 +78,11 @@ export const x_2236136_suiko_ai_rule = Table({
     draft_version_id: StringColumn({ label: 'Current proposed version', maxLength: 32 }),
     approved_json: StringColumn({ label: 'Approved rule snapshot', maxLength: 16000 }),
     change_key: StringColumn({ label: 'Last settings action', maxLength: 80 }),
+    archived: BooleanColumn({ label: 'Archived', default: false }),
+    archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
+    archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
+    disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
+    protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
   },
   allowWebServiceAccess: false,
   index: [{ element: 'rule_id', unique: true }],
@@ -335,6 +348,8 @@ RestApi({
   routes: [
     { $id: Now.ID['suiko-state'], method: 'GET', path: '/state', version: 1, script: getState },
     { $id: Now.ID['suiko-save-revision'], method: 'POST', path: '/revisions', version: 1, script: saveRevision },
+    { $id: Now.ID['suiko-get-archive'], method: 'GET', path: '/archive', version: 1, script: getArchive },
+    { $id: Now.ID['suiko-post-archive'], method: 'POST', path: '/archive', version: 1, script: postArchive },
     { $id: Now.ID['suiko-run-review'], method: 'POST', path: '/reviews', version: 1, script: runReview },
     { $id: Now.ID['suiko-save-metadata'], method: 'POST', path: '/metadata', version: 1, script: saveMetadata },
     { $id: Now.ID['suiko-save-rule'], method: 'POST', path: '/rules', version: 1, script: saveRule },
