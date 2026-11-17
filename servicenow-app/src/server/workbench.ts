@@ -20,6 +20,11 @@ const tables = {
   revision: 'x_2236136_suiko_ai_revision',
   review: 'x_2236136_suiko_ai_review',
   config: 'x_2236136_suiko_ai_config',
+  legalTask: 'x_2236136_suiko_ai_legal_task',
+};
+const roles = {
+  editor: 'x_2236136_suiko_ai.editor',
+  legalReviewer: 'x_2236136_suiko_ai.legal_reviewer',
 };
 const parse = (text: string) => text ? JSON.parse(text) : null;
 const id = (record: GlideRecord) => String(record.getUniqueValue());
@@ -58,6 +63,84 @@ function latestRevision(storyId: string) {
   row.setLimit(1);
   row.query();
   return row.next() ? row : null;
+}
+
+function requireEditor() {
+  if (!gs.hasRole('admin') && !gs.hasRole(roles.editor)) {
+    throw new WorkbenchError('This action is available to Editors.', 403);
+  }
+}
+
+function requireLegalReviewer() {
+  if (!gs.hasRole('admin') && !gs.hasRole(roles.legalReviewer)) {
+    throw new WorkbenchError('This legal review is not available to your account.', 403);
+  }
+}
+
+function userDisplayName(userId: string) {
+  const user = new GlideRecord('sys_user');
+  return user.get(userId) ? user.getValue('name') || user.getValue('user_name') : '';
+}
+
+function legalReviewers() {
+  const users = [];
+  const seen = {};
+  const assignments = new GlideRecord('sys_user_has_role');
+  assignments.addQuery('role.name', roles.legalReviewer);
+  assignments.query();
+  while (assignments.next()) {
+    const userId = assignments.getValue('user');
+    if (seen[userId]) continue;
+    const user = new GlideRecord('sys_user');
+    if (user.get(userId) && user.getValue('active') !== 'false') {
+      seen[userId] = true;
+      users.push({ id: userId, name: user.getValue('name') || user.getValue('user_name') });
+    }
+  }
+  return users;
+}
+
+function legalReviewerExists(userId: string) {
+  return legalReviewers().some(user => user.id === userId);
+}
+
+function workflowView(story: GlideRecord, revision: GlideRecord | null) {
+  const currentRevisionId = story.getValue('current_revision') || (revision ? id(revision) : '');
+  const status = story.getValue('workflow_status') || (currentRevisionId ? 'needs_review' : '');
+  const isCurrent = !!revision && currentRevisionId === id(revision);
+  return {
+    status: isCurrent ? status : 'needs_review',
+    modified: story.getValue('sys_mod_count'),
+    current_revision_id: currentRevisionId,
+    actions: isCurrent && status === 'needs_review' ? ['send_to_legal'] : [],
+    reviewers: legalReviewers(),
+    history: [],
+  };
+}
+
+function legalTaskView(row: GlideRecord) {
+  const revision = record(tables.revision, row.getValue('revision'));
+  const status = row.getValue('status');
+  const assigned = row.getValue('assigned_reviewer') === String(gs.getUserID());
+  const canDecide = (assigned || gs.hasRole('admin')) && status === 'pending';
+  return {
+    id: id(row),
+    title: revision.getValue('title') || userDisplayName(row.getValue('story')),
+    modified: row.getValue('sys_mod_count'),
+    status,
+    reason: row.getValue('reason') || '',
+    requested_by: userDisplayName(row.getValue('requested_by')),
+    requested_at: row.getValue('requested_at'),
+    revision: revisionView(revision),
+    actions: canDecide ? ['clear', 'request_changes'] : [],
+    ...(status !== 'pending' ? {
+      decision: {
+        note: row.getValue('decision_note') || '',
+        actor: userDisplayName(row.getValue('decision_by')),
+        decided_at: row.getValue('decided_at'),
+      },
+    } : {}),
+  };
 }
 
 function revisionView(row: GlideRecord) {
@@ -168,8 +251,10 @@ export function getState(request, response) {
       while (review.next()) runs.push(runView(review, rules));
     }
     const config = providerConfig();
+    const selectedRevision = revisions.length ? record(tables.revision, revisions[0].id) : null;
     return {
-      stories, story, revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
+      stories, story, workflow: story ? workflowView(record(tables.story, story.id), selectedRevision) : null,
+      revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
       viewer_id: String(gs.getUserID()),
       capabilities: { source_reading: true },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
@@ -221,6 +306,8 @@ export function saveRevision(request, response) {
     revision.setValue('source_urls_json', JSON.stringify(source_urls));
     if (!revision.insert()) throw new WorkbenchError('This version was saved elsewhere. Reload the story.', 409);
     story.setValue('title', title);
+    story.setValue('current_revision', id(revision));
+    story.setValue('workflow_status', 'needs_review');
     story.update();
     return revisionView(revision);
   });
@@ -378,6 +465,136 @@ export function saveMetadata(request, response) {
       throw new WorkbenchError('Someone updated this review. Refresh before saving your metadata choice.', 409);
     }
     return runView(refreshed);
+  });
+}
+
+export function workflowAction(request, response) {
+  respond(response, () => {
+    requireEditor();
+    const input = request.body.data;
+    if (!input || input.action !== 'send_to_legal') {
+      throw new WorkbenchError('This workflow action is not available yet.', 400);
+    }
+    if (typeof input.revision_id !== 'string' || typeof input.reviewer_id !== 'string'
+      || typeof input.note !== 'string' || !input.note.trim()) {
+      throw new WorkbenchError('Choose a legal reviewer and explain what legal should check.');
+    }
+    const revision = record(tables.revision, input.revision_id);
+    const story = record(tables.story, revision.getValue('story'));
+    const latest = latestRevision(id(story));
+    if (!latest || id(latest) !== id(revision)) {
+      throw new WorkbenchError('Only the current version can be sent to legal. Reload the story first.', 409);
+    }
+    if (input.expected_modified === undefined
+      || String(input.expected_modified) !== String(story.getValue('sys_mod_count'))) {
+      throw new WorkbenchError('This story changed elsewhere. Reload it before sending it to legal.', 409);
+    }
+    if (!legalReviewerExists(input.reviewer_id)) {
+      throw new WorkbenchError('Choose an active legal reviewer.');
+    }
+    const existing = new GlideRecord(tables.legalTask);
+    existing.addQuery('revision', id(revision));
+    existing.addQuery('status', 'pending');
+    existing.setLimit(1);
+    existing.query();
+    if (existing.next()) return { workflow: workflowView(story, revision), task_id: id(existing) };
+
+    const task = new GlideRecord(tables.legalTask);
+    task.initialize();
+    task.setValue('story', id(story));
+    task.setValue('revision', id(revision));
+    task.setValue('assigned_reviewer', input.reviewer_id);
+    task.setValue('status', 'pending');
+    task.setValue('reason', input.note.trim());
+    task.setValue('requested_by', gs.getUserID());
+    task.setValue('requested_at', now());
+    if (!task.insert()) throw new WorkbenchError('The legal review could not be created. Try again.', 500);
+    story.setValue('current_revision', id(revision));
+    story.setValue('workflow_status', 'waiting_for_legal');
+    if (!story.update()) throw new WorkbenchError('The legal review was created but the story status could not be updated.', 500);
+    return { workflow: workflowView(story, revision), task_id: id(task) };
+  });
+}
+
+export function legalTasks(request, response) {
+  respond(response, () => {
+    requireLegalReviewer();
+    const taskId = String(request.queryParams.task || '');
+    if (taskId) {
+      const task = record(tables.legalTask, taskId);
+      if (!gs.hasRole('admin') && task.getValue('assigned_reviewer') !== String(gs.getUserID())) {
+        throw new WorkbenchError('This legal review could not be found.', 404);
+      }
+      return { task: legalTaskView(task) };
+    }
+    const rows = new GlideRecord(tables.legalTask);
+    if (!gs.hasRole('admin')) rows.addQuery('assigned_reviewer', gs.getUserID());
+    rows.orderByDesc('requested_at');
+    rows.setLimit(50);
+    rows.query();
+    const tasks = [];
+    while (rows.next()) {
+      const revision = record(tables.revision, rows.getValue('revision'));
+      tasks.push({
+        id: id(rows),
+        title: revision.getValue('title') || '',
+        version: Number(revision.getValue('version')),
+        status: rows.getValue('status'),
+        requested_at: rows.getValue('requested_at'),
+      });
+    }
+    return { tasks };
+  });
+}
+
+export function legalDecision(request, response) {
+  respond(response, () => {
+    requireLegalReviewer();
+    const input = request.body.data;
+    if (!input || !['clear', 'request_changes'].includes(input.action)
+      || typeof input.task_id !== 'string' || typeof input.revision_id !== 'string') {
+      throw new WorkbenchError('Choose a legal review and a valid decision.');
+    }
+    if (input.action === 'request_changes' && (typeof input.note !== 'string' || !input.note.trim())) {
+      throw new WorkbenchError('Explain what needs to change before requesting changes.');
+    }
+    const task = record(tables.legalTask, input.task_id);
+    if (!gs.hasRole('admin') && task.getValue('assigned_reviewer') !== String(gs.getUserID())) {
+      throw new WorkbenchError('This legal review could not be found.', 404);
+    }
+    if (task.getValue('revision') !== input.revision_id) {
+      throw new WorkbenchError('This decision does not match the submitted version.', 409);
+    }
+    if (task.getValue('status') !== 'pending') {
+      throw new WorkbenchError('This legal review already has a decision.', 409);
+    }
+    if (input.expected_modified === undefined
+      || String(input.expected_modified) !== String(task.getValue('sys_mod_count'))) {
+      throw new WorkbenchError('This legal review changed elsewhere. Reload it before deciding.', 409);
+    }
+    const status = input.action === 'clear' ? 'cleared' : 'changes_requested';
+    const update = new GlideRecord(tables.legalTask);
+    update.addQuery('sys_id', id(task));
+    update.addQuery('sys_mod_count', String(input.expected_modified));
+    update.query();
+    if (!update.next()) {
+      throw new WorkbenchError('This legal review changed elsewhere. Reload it before deciding.', 409);
+    }
+    update.setValue('status', status);
+    update.setValue('decision_note', String(input.note || '').trim());
+    update.setValue('decision_by', gs.getUserID());
+    update.setValue('decided_at', now());
+    if (!update.update()) {
+      throw new WorkbenchError('This legal review changed elsewhere. Reload it before deciding.', 409);
+    }
+    const refreshed = record(tables.legalTask, id(task));
+    const story = record(tables.story, refreshed.getValue('story'));
+    const revision = record(tables.revision, refreshed.getValue('revision'));
+    if (story.getValue('current_revision') === id(revision)) {
+      story.setValue('workflow_status', status === 'cleared' ? 'ready_for_sign_off' : 'changes_requested');
+      if (!story.update()) throw new WorkbenchError('The legal decision was saved but the story status could not be updated.', 500);
+    }
+    return { task: legalTaskView(refreshed) };
   });
 }
 

@@ -1,6 +1,6 @@
 import '@servicenow/sdk/global';
 import { Test, TestSuite } from '@servicenow/sdk/core';
-import { editor, rulesEditor } from './review.now';
+import { editor, legalReviewer, rulesEditor } from './review.now';
 
 const persistence = Test({
   $id: Now.ID['ai16-review-persistence-test'],
@@ -28,9 +28,26 @@ const approvedRules = Test({
   atf.server.runServerSideScript({ $id: Now.ID['ai18-editor-step'], script: Now.include('./tests/everyday-editor.script.js') });
 });
 
+const legalWorkflow = Test({
+  $id: Now.ID['be02-legal-workflow-test'],
+  name: 'Suiko BE-02: exact-revision legal workflow',
+  description: 'Routes a saved revision to an assigned legal reviewer, prevents duplicate pending tasks, and records clearance against the submitted copy.',
+  failOnServerError: true,
+}, atf => {
+  atf.server.createUser({
+    $id: Now.ID['be02-legal-workflow-user'],
+    firstName: 'Suiko', lastName: 'Legal Workflow Test',
+    roles: [editor, legalReviewer],
+  });
+  atf.server.runServerSideScript({
+    $id: Now.ID['be02-legal-workflow-step'],
+    script: Now.include('./tests/legal-workflow.script.js'),
+  });
+});
+
 TestSuite({
   $id: Now.ID['ai-review-server-regression-suite'],
   name: 'Suiko AI: server review regressions',
   description: 'Server-only checks using fictional inputs and injected provider replies.',
-  tests: [persistence, approvedRules],
+  tests: [persistence, approvedRules, legalWorkflow],
 });

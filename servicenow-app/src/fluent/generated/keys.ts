@@ -59,6 +59,18 @@ declare global {
                         id: 'd76de6a35f8641de94b755667db607a3'
                         deleted: true
                     }
+                    'be02-legal-workflow-step': {
+                        table: 'sys_atf_step'
+                        id: '48a7fca4b1f346548893cc2dde07a321'
+                    }
+                    'be02-legal-workflow-test': {
+                        table: 'sys_atf_test'
+                        id: '72c490995ac04698a726dcd67ccb54bb'
+                    }
+                    'be02-legal-workflow-user': {
+                        table: 'sys_atf_step'
+                        id: '065a5c18dfae4fd8a204dd8ff503d27b'
+                    }
                     bom_json: {
                         table: 'sys_module'
                         id: '2b56dd9171ea4623ae91d4506313e30c'
@@ -66,22 +78,27 @@ declare global {
                     'diff@9.0.0/index.js': {
                         table: 'sys_module'
                         id: '80b5e6021f7d459a8c86d0cccaeacc11'
+                        deleted: false
                     }
                     'diff@9.0.0/package.json': {
                         table: 'sys_module'
                         id: '7f6958deaccc4422bbcc9fcff113fb44'
+                        deleted: false
                     }
                     'jsonc-parser@3.3.1/index.js': {
                         table: 'sys_module'
                         id: '5b7a401956b74c05a95a6bbdb11774e9'
+                        deleted: false
                     }
                     'jsonc-parser@3.3.1/package.json': {
                         table: 'sys_module'
                         id: '5913dee7fb954d4ba81b46fd7465c97a'
+                        deleted: false
                     }
                     package_json: {
                         table: 'sys_module'
                         id: '4b029030497f4938b7668d5af419e7c2'
+                        deleted: false
                     }
                     'policy-version-create': {
                         table: 'sys_security_acl'
@@ -179,6 +196,10 @@ declare global {
                         table: 'sys_module'
                         id: 'af425b11a8684d52a856ad9307581b27'
                     }
+                    'src_server_legal-workflow-test_ts': {
+                        table: 'sys_module'
+                        id: '6580c32b75fc44129f1c7d39905af622'
+                    }
                     'src_server_policy-records_ts': {
                         table: 'sys_module'
                         id: 'd54e3130f3db4c9f92c877eaa39b1071'
@@ -218,6 +239,26 @@ declare global {
                     'suiko-approve-rule': {
                         table: 'sys_ws_operation'
                         id: '75195d7e45934cb2b84a108cd5be622e'
+                    }
+                    'suiko-legal-api': {
+                        table: 'sys_ws_definition'
+                        id: 'fd65b63001964bf4930b37a64800c100'
+                    }
+                    'suiko-legal-api-access': {
+                        table: 'sys_security_acl'
+                        id: '4cb214ff8ffa44a28355f41390ba4f7b'
+                    }
+                    'suiko-legal-api-v1': {
+                        table: 'sys_ws_version'
+                        id: 'af3e8d0016ab4450862d91bce6613034'
+                    }
+                    'suiko-legal-decision': {
+                        table: 'sys_ws_operation'
+                        id: 'f80ea82e69f047a8a73fb0e4d58bb1bf'
+                    }
+                    'suiko-legal-tasks': {
+                        table: 'sys_ws_operation'
+                        id: '50a4b4a52149434fba19868cdae8bdca'
                     }
                     'suiko-list-policies': {
                         table: 'sys_ws_operation'
@@ -271,6 +312,10 @@ declare global {
                         table: 'sys_ws_definition'
                         id: 'd23d81dc2bee4bd498f7a14dfec6ad3f'
                     }
+                    'suiko-workflow-action': {
+                        table: 'sys_ws_operation'
+                        id: '89abb2b5b6c1402caf85a3ddfce0fc57'
+                    }
                     'x_2236136_suiko_ai_config-create': {
                         table: 'sys_security_acl'
                         id: '7e5ccb6766c04d6ab73cd0d769c70dfa'
@@ -286,6 +331,22 @@ declare global {
                     'x_2236136_suiko_ai_config-write': {
                         table: 'sys_security_acl'
                         id: '31a7cfd9003d4f23812e466afbb05eb1'
+                    }
+                    'x_2236136_suiko_ai_legal_task-create': {
+                        table: 'sys_security_acl'
+                        id: '357cb95843ec468ab844c472bbd8982a'
+                    }
+                    'x_2236136_suiko_ai_legal_task-delete': {
+                        table: 'sys_security_acl'
+                        id: 'e1a7ca41408746df8e81f096760991f0'
+                    }
+                    'x_2236136_suiko_ai_legal_task-read': {
+                        table: 'sys_security_acl'
+                        id: '4f19609d13ca41a1a57e828680ad09d3'
+                    }
+                    'x_2236136_suiko_ai_legal_task-write': {
+                        table: 'sys_security_acl'
+                        id: '874c4d90ac974a40abf6ee44dfe62ee7'
                     }
                     'x_2236136_suiko_ai_review-create': {
                         table: 'sys_security_acl'
@@ -353,6 +414,14 @@ declare global {
                     }
                 }
                 composite: [
+                    {
+                        table: 'sys_atf_test_suite_test'
+                        id: '00fc71abb2d34830a6f6a97570b4c24c'
+                        key: {
+                            test_suite: '47a536e4837d4aee8793a15628adeffd'
+                            test: '72c490995ac04698a726dcd67ccb54bb'
+                        }
+                    },
                     {
                         table: 'sys_documentation'
                         id: '01e69d3b18d642038014807e35292fbb'
@@ -481,6 +550,29 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_form'
+                        id: '0b4ee0e88df241dea3efc58555836740'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            view: {
+                                id: 'Default view'
+                                key: {
+                                    name: 'NULL'
+                                }
+                            }
+                            sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '0bfe1a09ff4a4ae58c7cc82536ec5607'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'decision_by'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_ui_element'
                         id: '0c732a7c4b0c41a89ddb687718499152'
                         key: {
@@ -523,6 +615,14 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_rule'
                             element: 'priority'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '107adebb7d9d4df58c86dc02df4b573e'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'decided_at'
                         }
                     },
                     {
@@ -659,6 +759,14 @@ declare global {
                     },
                     {
                         table: 'sys_variable_value'
+                        id: '1ee33b5aee08462990628180873fd5a3'
+                        key: {
+                            document_key: '48a7fca4b1f346548893cc2dde07a321'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
                         id: '1fcf0347b55a4be4bbede7ebe6b51b0f'
                         key: {
                             document_key: '5b05a09e6e7e484292ab8a03212e066b'
@@ -670,6 +778,19 @@ declare global {
                         id: '20ba2d593e9c4d719cb8bdd3e8185943'
                         key: {
                             sys_security_acl: '7ee10878d3e542d8839c20ee62d6603f'
+                            sys_user_role: {
+                                id: 'c1bf336a905849689b79cae5fc8d997f'
+                                key: {
+                                    name: 'admin'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        table: 'sys_security_acl_role'
+                        id: '21209d9697f44de4a4433e2c4bb96820'
+                        key: {
+                            sys_security_acl: 'e1a7ca41408746df8e81f096760991f0'
                             sys_user_role: {
                                 id: 'c1bf336a905849689b79cae5fc8d997f'
                                 key: {
@@ -746,11 +867,33 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_security_acl_role'
+                        id: '25edbde0818741b7ab9f824777135ffb'
+                        key: {
+                            sys_security_acl: '874c4d90ac974a40abf6ee44dfe62ee7'
+                            sys_user_role: {
+                                id: 'c4a9ff1de6bc40959ff99bc8761e81c2'
+                                key: {
+                                    name: 'x_2236136_suiko_ai.legal_reviewer'
+                                }
+                            }
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '26e6041de31644539c1e910ecf3b2b4c'
                         key: {
                             document_key: 'bbc9c869f7c44830b275738f335ec84d'
                             variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '271365404b1e48609dd91bdbe9e8aa32'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'NULL'
+                            language: 'en'
                         }
                     },
                     {
@@ -772,6 +915,15 @@ declare global {
                                     name: 'admin'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '2d23635f3f3446568b8625f4cf6a98cc'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                            language: 'en'
                         }
                     },
                     {
@@ -937,11 +1089,41 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_element'
+                        id: '36bf8212fdca4448b0ad95881b83a87a'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'decision_by'
+                            position: '8'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '36c2d518ad0c4ca9bc5a2a3e4445db26'
                         key: {
                             document_key: '5b05a09e6e7e484292ab8a03212e066b'
                             variable: '6f69fc4aff6433008d3f5d9ad53bf18c'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '3796cfc70740449ca8a58ee1d593c518'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'requested_at'
                         }
                     },
                     {
@@ -1111,6 +1293,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '42cab74427a54f9ca56f568849850d7a'
+                        key: {
+                            document_key: '48a7fca4b1f346548893cc2dde07a321'
+                            variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
                         table: 'sys_ui_element'
                         id: '432227d9371f49518dc1bc661e5eb4da'
                         key: {
@@ -1130,6 +1320,14 @@ declare global {
                             }
                             element: 'content_kind'
                             position: '8'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '43b1692bc4f54ab6ae60cfa1935018bd'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: '1778a7480f20101091d0f00c97767e03'
                         }
                     },
                     {
@@ -1160,6 +1358,14 @@ declare global {
                         id: '440638f669074b1b8681c7fa90695a0e'
                         key: {
                             name: 'x_2236136_suiko_ai_story'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '444f001ced4443259c9f52cd17b8a6ba'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: '8c07aba5ff6033008d3f5d9ad53bf13b'
                         }
                     },
                     {
@@ -1208,6 +1414,28 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_element'
+                        id: '49ec6304674442de85d5230d7851acd6'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'assigned_reviewer'
+                            position: '2'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '49fe8864caad4292b522edc7c322548e'
                         key: {
@@ -1228,6 +1456,35 @@ declare global {
                         id: '4a500458f87540888cee03acef3a6871'
                         key: {
                             name: 'x_2236136_suiko_ai_rule_version'
+                        }
+                    },
+                    {
+                        table: 'ua_table_licensing_config'
+                        id: '4b929ecc09074536a3d0edf9e9346741'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: '4bab42ff1de240fb93b51a9884c9794e'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'decision_note'
+                            position: '7'
                         }
                     },
                     {
@@ -1313,6 +1570,39 @@ declare global {
                             name: 'x_2236136_suiko_ai_revision'
                             element: 'source_urls_json'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_form_section'
+                        id: '50beb7ba48bb4e96bbd0b176c0e118db'
+                        key: {
+                            sys_ui_form: {
+                                id: '0b4ee0e88df241dea3efc58555836740'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
                         }
                     },
                     {
@@ -1410,11 +1700,29 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: '5a65cf435e0a420a9e0a373d7bfff29f'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'decided_at'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '5af10c490c9b4cd28370fc244ef0c982'
                         key: {
                             name: 'x_2236136_suiko_ai_policy_version'
                             element: 'body'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '5b2b84deadbe4404b0c29e7cf928aee5'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'story'
+                            language: 'en'
                         }
                     },
                     {
@@ -1473,6 +1781,17 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice'
+                        id: '5f0a75b4eeaf4c619f5e40570aae29b5'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'status'
+                            value: 'pending'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '60a947b0b02d45ab89809d120a8ca213'
                         key: {
@@ -1497,6 +1816,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '6190978bc25844bcbf43dc6f9600fbb9'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'current_revision'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '61a8163b20104f8798a8827dbf04c75d'
                         key: {
@@ -1506,11 +1833,72 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice'
+                        id: '61b42d95e70d4c558d5e1478c93a1456'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'status'
+                            value: 'cleared'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '61d9f761644643b4b72d86c3d3462141'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'requested_at'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_security_acl_role'
+                        id: '61f983441b4d49e790bdc010e9292d6c'
+                        key: {
+                            sys_security_acl: '4f19609d13ca41a1a57e828680ad09d3'
+                            sys_user_role: {
+                                id: 'c4a9ff1de6bc40959ff99bc8761e81c2'
+                                key: {
+                                    name: 'x_2236136_suiko_ai.legal_reviewer'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '62138f8f5677482fa37e5ea6466772ba'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: '1985e0ceff2433008d3f5d9ad53bf1ba'
+                        }
+                    },
+                    {
+                        table: 'sys_choice'
+                        id: '6236a26012634d90bab7864f27bccdab'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                            value: 'waiting_for_legal'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '628e8d4d455940a88a81611879b35159'
                         key: {
                             document_key: '634e46f9335d4661b18ba51e9038e5d0'
                             variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '632a41840da641d4866e78eb6cd6a95b'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'decision_note'
+                            language: 'en'
                         }
                     },
                     {
@@ -1527,6 +1915,21 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_revision'
                             element: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_section'
+                        id: '64b155a73cff4d189b030d65afe85a48'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            caption: 'Legal review'
+                            view: {
+                                id: 'Default view'
+                                key: {
+                                    name: 'NULL'
+                                }
+                            }
+                            sys_domain: 'global'
                         }
                     },
                     {
@@ -1584,6 +1987,22 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_db_object'
+                        id: '68744a6304234a1eb2fd9aecee0a7a72'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '68cb273b00444b6f9e2009bd20bf6b74'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'assigned_reviewer'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '69422a11aee04479b42cbb5d3b4d427b'
                         key: {
@@ -1600,6 +2019,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '69fde0ef04e54ae0bac39b01298e7157'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'status'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '6ba575ac2ba047f19ced603ebe0ff455'
                         key: {
@@ -1610,10 +2037,40 @@ declare global {
                     },
                     {
                         table: 'sys_dictionary'
+                        id: '6cca55b49e084d9487c0e2b9ed4f7d14'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'reason'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
                         id: '6e73d03c95a04551a71ba4a21d326e70'
                         key: {
                             name: 'x_2236136_suiko_ai_rule_version'
                             element: 'version_key'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: '6e7657ad04ab44c09b6ff9bdcaa12cb8'
+                        key: {
+                            sys_ui_section: {
+                                id: '4292850d4a92410593cb0de2727fc4b5'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_story'
+                                    caption: 'Details'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'workflow_status'
+                            position: '2'
                         }
                     },
                     {
@@ -1656,6 +2113,17 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_rule'
                             element: 'managed'
+                        }
+                    },
+                    {
+                        table: 'sys_choice'
+                        id: '74d48cf52b584c96b4d7e416dc478637'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                            value: 'ready_for_sign_off'
+                            language: 'en'
+                            dependent_value: 'NULL'
                         }
                     },
                     {
@@ -1762,6 +2230,27 @@ declare global {
                     },
                     {
                         table: 'sys_variable_value'
+                        id: '7bc56de97f054c07a51f773ce47752bd'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: 'b27b2b29ff6033008d3f5d9ad53bf164'
+                        }
+                    },
+                    {
+                        table: 'sys_security_acl_role'
+                        id: '7c2311f552654d8094116114647e158d'
+                        key: {
+                            sys_security_acl: '357cb95843ec468ab844c472bbd8982a'
+                            sys_user_role: {
+                                id: '5bc3bac8ed5a4b7e90f8d45d70667473'
+                                key: {
+                                    name: 'x_2236136_suiko_ai.editor'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
                         id: '7c2ce48d57a74debb42db9b44699bd84'
                         key: {
                             document_key: 'dad2f839ba42417aba6f1b8840993d67'
@@ -1845,6 +2334,28 @@ declare global {
                                     sys_domain: 'global'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: '7dcddee8d27e4b3d8aba2863eef551b1'
+                        key: {
+                            sys_ui_section: {
+                                id: '4292850d4a92410593cb0de2727fc4b5'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_story'
+                                    caption: 'Details'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'current_revision'
+                            position: '1'
                         }
                     },
                     {
@@ -1957,6 +2468,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_index'
+                        id: '8ad5fcafd07745539b19f6f2150c27b6'
+                        key: {
+                            logical_table_name: 'x_2236136_suiko_ai_legal_task'
+                            col_name_string: 'revision'
+                        }
+                    },
+                    {
                         table: 'sys_ui_element'
                         id: '8bb4159319f447c78fb5f9ab484349f1'
                         key: {
@@ -2048,6 +2567,15 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: '91c0797e05794e9795e75ad465ac4347'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'requested_by'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_index'
                         id: '95317d4e51034aa8b0102e8a3ec1632a'
                         key: {
@@ -2120,6 +2648,28 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_element'
+                        id: '999cd34111e4474b80cae2ff2122b99c'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'status'
+                            position: '3'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '99b1742574574353807d3133cd8f5b04'
                         key: {
@@ -2147,6 +2697,15 @@ declare global {
                                 }
                             }
                             sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '9d2a8ccec7c745ebab0b538e10420fea'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'status'
+                            language: 'en'
                         }
                     },
                     {
@@ -2369,6 +2928,28 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_element'
+                        id: 'ac8cedd00772491393ec21dd2a4274b0'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'decided_at'
+                            position: '9'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: 'acc88a8a85d64d84aed8ae465958e524'
                         key: {
@@ -2393,11 +2974,30 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice'
+                        id: 'aefa62dc919341579fb5aacf65e0a8e4'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                            value: 'changes_requested'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: 'af17c2059da04c41a806c2e2d6de1589'
                         key: {
                             document_key: '496fe3120915413797d169dd7d12e29f'
                             variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'af7bed45f02340f0bbbf37388458c64a'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'revision'
                         }
                     },
                     {
@@ -2548,6 +3148,31 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice_set'
+                        id: 'b9b58ce3d3a84f6bbc864b8085e69a34'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'ba137d776be54b8f930ee20fab35e9a5'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'reason'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_choice_set'
+                        id: 'ba907bc39866450b95aa3ca4f2188f0a'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'status'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: 'ba9af77fee304adab4cd58e134bd5bfe'
                         key: {
@@ -2571,6 +3196,28 @@ declare global {
                                     name: 'admin'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: 'bb8e5ebc6494489f8e065306e4164b47'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'revision'
+                            position: '1'
                         }
                     },
                     {
@@ -2637,6 +3284,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: 'c2a541f422ad4538ba9ca4af4bc6ec5d'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: 'c3415fe89adf4b7fa5f6fc2c7189d1d5'
                         key: {
@@ -2668,6 +3323,13 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_user_role'
+                        id: 'c4a9ff1de6bc40959ff99bc8761e81c2'
+                        key: {
+                            name: 'x_2236136_suiko_ai.legal_reviewer'
+                        }
+                    },
+                    {
                         table: 'sys_db_object'
                         id: 'c51f32c236ca4ff594b9afbe30460c19'
                         key: {
@@ -2685,6 +3347,28 @@ declare global {
                                     name: 'admin'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: 'c65535fac1754fa5849dd9ba6eb29c3e'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'requested_at'
+                            position: '6'
                         }
                     },
                     {
@@ -2723,6 +3407,15 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_review'
                             element: 'revision_diff_json'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'c6eec8b1a86544ac94d48317a336182e'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'current_revision'
+                            language: 'en'
                         }
                     },
                     {
@@ -2788,6 +3481,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: 'cdae08d7b9f74a299ac96ce2340005ad'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: '98c44875ffa033008d3f5d9ad53bf1fa'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: 'cf79de7e7925425da04168818884bebd'
                         key: {
@@ -2830,6 +3531,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: 'd02bf2352f394c408422c0a77654fe51'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: '6f69fc4aff6433008d3f5d9ad53bf18c'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: 'd0b0fe16244749a89efc9971e7de9831'
                         key: {
@@ -2859,6 +3568,14 @@ declare global {
                             name: 'x_2236136_suiko_ai_story'
                             element: 'title'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'd5cca693aace405f8cb79fb1631d63d0'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'assigned_reviewer'
                         }
                     },
                     {
@@ -2912,6 +3629,28 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_element'
+                        id: 'd6ba86a56c5f4b73b2c4b50ef0e94450'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'requested_by'
+                            position: '5'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: 'd763b9387ffb4d4b8ca9aececae7712c'
                         key: {
@@ -2927,6 +3666,19 @@ declare global {
                             name: 'x_2236136_suiko_ai_review'
                             element: 'response_json'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_security_acl_role'
+                        id: 'd84d122f7af342618c984d3172ea3ef6'
+                        key: {
+                            sys_security_acl: '4cb214ff8ffa44a28355f41390ba4f7b'
+                            sys_user_role: {
+                                id: 'c4a9ff1de6bc40959ff99bc8761e81c2'
+                                key: {
+                                    name: 'x_2236136_suiko_ai.legal_reviewer'
+                                }
+                            }
                         }
                     },
                     {
@@ -3012,6 +3764,74 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice'
+                        id: 'e0c92cca57984ad1b76d71860f1294a0'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'status'
+                            value: 'changes_requested'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_choice'
+                        id: 'e341102326694e0dad94756fb417fadd'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                            value: 'signed_off'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'e395a30c6d0947469a3329ec9cd30cd9'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'decision_note'
+                        }
+                    },
+                    {
+                        table: 'sys_index'
+                        id: 'e4e9ac0d9c174cfa97f371eeac7a39a0'
+                        key: {
+                            logical_table_name: 'x_2236136_suiko_ai_legal_task'
+                            col_name_string: 'assigned_reviewer'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: 'e631b8cb5f1d48afba4955010e3947b3'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'reason'
+                            position: '4'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'e63e89599c9e4aea8c80120f90191003'
+                        key: {
+                            document_key: '065a5c18dfae4fd8a204dd8ff503d27b'
+                            variable: 'ff06ab840f20101091d0f00c97767e6d'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: 'e8a21be31a894b638ce3cb47dc149b3d'
                         key: {
@@ -3080,6 +3900,14 @@ declare global {
                     },
                     {
                         table: 'sys_dictionary'
+                        id: 'f2966e43e6e8452fa14b16fdb044e24c'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'story'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
                         id: 'f37073c8293245749b26b0b615ce28c1'
                         key: {
                             name: 'x_2236136_suiko_ai_config'
@@ -3099,6 +3927,45 @@ declare global {
                         id: 'f3fb4131b0ae40d6a4f06b7d4808e316'
                         key: {
                             name: 'x_2236136_suiko_ai_rule'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'f456abbf6d0845b9abda130c33a6725d'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'revision'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_element'
+                        id: 'f474e77bfb274e3a8f9b65fcb8164678'
+                        key: {
+                            sys_ui_section: {
+                                id: '64b155a73cff4d189b030d65afe85a48'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_legal_task'
+                                    caption: 'Legal review'
+                                    view: {
+                                        id: 'Default view'
+                                        key: {
+                                            name: 'NULL'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                }
+                            }
+                            element: 'story'
+                            position: '0'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'f56589c4d02d445fb3a294e7590a2c8f'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'decision_by'
                         }
                     },
                     {
@@ -3133,6 +4000,14 @@ declare global {
                             name: 'x_2236136_suiko_ai_rule_version'
                             element: 'version_key'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'f8abf211eab1485a9adcb520efca1e7b'
+                        key: {
+                            name: 'x_2236136_suiko_ai_legal_task'
+                            element: 'requested_by'
                         }
                     },
                     {
@@ -3173,6 +4048,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: 'fa9a888d5d7c48d39bd456d1dd176c7a'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                        }
+                    },
+                    {
                         table: 'ua_table_licensing_config'
                         id: 'fae505064738436ab2872e891bf74e9c'
                         key: {
@@ -3185,6 +4068,17 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_policy_version'
                             element: 'request_key'
+                        }
+                    },
+                    {
+                        table: 'sys_choice'
+                        id: 'fd17f82879184d3797b77428296745bc'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_status'
+                            value: 'needs_review'
+                            language: 'en'
+                            dependent_value: 'NULL'
                         }
                     },
                 ]
