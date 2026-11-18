@@ -3,6 +3,7 @@ import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolic
 import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
 import { readSavedSources } from './read-sources.ts';
+import reviewData from './generated/review-data.js';
 
 function expect(value, message) {
   if (!value) throw new Error(message);
@@ -169,6 +170,8 @@ export function runPolicySetupRegression() {
 
 export function runClaimEvidenceRegression() {
   expect(gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated rules-editor test user.');
+  const required = reviewData.providerSchema.properties.claim_checks.items.properties.sources.items.required;
+  expect(required.includes('subject_scope') && required.includes('stance'), 'The installed Gemini schema must require both passage judgments.');
   const sourceId = 'ATF-source-' + gs.generateGUID();
   const secondSourceId = 'ATF-second-source-' + gs.generateGUID();
   const headlineId = 'ATF-headline-' + gs.generateGUID();
@@ -204,7 +207,8 @@ export function runClaimEvidenceRegression() {
   const ref = (segment_id, quote) => ({ revision_id: 'draft-1', segment_id, quote });
   const check = (claim, status, quote) => ({
     rule_id: sourceId, claim: ref('body-1', claim), status,
-    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote }],
+    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote, subject_scope: 'same_subject',
+      stance: status === 'contradicted' ? 'contradicts' : 'supports' }],
     context: [], reason: 'Compare the event brief.', action: 'Confirm the details with the editor.',
   });
   const seats = seating.map(claim => check(claim, 'supported', claim));
@@ -261,6 +265,12 @@ export function runClaimEvidenceRegression() {
   expect(mixed.request.decision_check_requested === false && !mixed.result.decision_check, 'A legacy request enabled Decision 1 in the editor flow.');
   expect(mixed.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'An empty concern list let the flagged headline into the description.');
   expect(mixed.result.checks.issues.some(issue => issue.code === 'CONTRADICTORY_RULE_STATUS'), 'The headline rule cleared a retained finding.');
+  const differentSubject = { ...conflict, sources: [{ ...conflict.sources[0], subject_scope: 'different_subject' }] };
+  const unrelated = run([seats[0], differentSubject], false, 'potential_conflict');
+  expect(sourceRule(unrelated).status === 'not_assessable' && unrelated.result.claim_checks[0].status === 'supported'
+    && unrelated.result.claim_checks[1].status === 'insufficient'
+    && unrelated.result.claim_checks[1].sources[0].quote === actualTime,
+    'A conflict attributed to another subject survived or lost its saved passage.');
   const omitted = run([seats[0]], true, 'no_potential_conflict_observed');
   expect(sourceRule(omitted).status === 'not_assessable' && omitted.result.findings.some(finding => finding.rule_id === sourceId), 'A supported claim hid an unmatched concern.');
   const gap = run([seats[0]], false, 'not_assessable');
@@ -279,6 +289,11 @@ export function runClaimEvidenceRegression() {
     && badQuote.result.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'), 'A bad quote erased valid support or cleared the rule.');
   expect(badQuote.result.checks.overview_available && badQuote.result.assessment.status === 'partial', 'The partial review lost its useful overview.');
   const history = action(getState, {}, { story: saved.body.story_id });
+  const reopenedUnrelated = history.body.runs.find(review => review.id === unrelated.id);
+  expect(reopenedUnrelated && sourceRule(reopenedUnrelated).status === 'not_assessable'
+    && reopenedUnrelated.result.claim_checks[1].status === 'insufficient'
+    && reopenedUnrelated.result.claim_checks[1].sources[0].quote === actualTime,
+    'The unrelated judgment or its saved passage changed on reopening.');
   const reopened = history.body.runs.find(review => review.id === mixed.id);
   expect(reopened.request.sources[1].http_status === 404 && reopened.request.input.source_material[0].final_url === openedUrl
     && reopened.request.decision_check_requested === false && !reopened.result.decision_check, 'Saved retrieval or the retired experiment request state did not reopen.');
