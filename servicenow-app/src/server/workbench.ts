@@ -249,7 +249,15 @@ export function executeGemini(message, model, task, savedMessage, onFallback = n
 
 const legalReviewEnabled = () => gs.getProperty('x_2236136_suiko_ai.legal_review_enabled', 'false') === 'true';
 
-export function getState(request, response, includeWorkflow = legalReviewEnabled()) {
+export function getState(request, response) {
+  return readState(request, response, legalReviewEnabled());
+}
+
+export function readStateForLegalTest(request, response) {
+  return readState(request, response, true);
+}
+
+function readState(request, response, includeWorkflow) {
   respond(response, () => {
     requireEditor();
     const rules = rulesView();
@@ -282,7 +290,6 @@ export function getState(request, response, includeWorkflow = legalReviewEnabled
       while (review.next()) runs.push(runView(review, rules));
     }
     const config = providerConfig();
-    // The server suite can exercise legal state before the feature is exposed.
     const workflow = includeWorkflow && story
       ? workflowView(record(tables.story, story.id), revisions.length ? record(tables.revision, revisions[0].id) : null)
       : null;

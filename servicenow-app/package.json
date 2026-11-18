@@ -9,6 +9,7 @@
     "scripts": {
         "prebuild": "node scripts/prepare-review.mjs",
         "build": "now-sdk build",
+        "postbuild": "node scripts/check-workbench-package.mjs",
         "check": "npm --prefix ../ai-review test",
         "test:ui": "node --import tsx --import ./test/setup.mjs --test test/*.test.jsx",
         "transform": "now-sdk transform",
