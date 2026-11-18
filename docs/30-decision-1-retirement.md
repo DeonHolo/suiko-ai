@@ -43,3 +43,5 @@ Model judgment remains imperfect: this fresh run classified the other project's 
 Raw expectations, actual JSON, complete saved state, browser snapshots/screenshots, preservation fingerprints, installation evidence and server-suite results are in the ignored local folder `ai-review/output/source-review-2026-11-14/`. Expectations were saved before the live Gemini call. The PR records the same installed result for review.
 
 This focused check used admin in the browser and ordinary roles in the server suite. A fresh ordinary-account browser walkthrough of this revision, the complete transport/role matrix, assistive-technology audit and real teammate workflow integrations remain separate work. Earlier UI/account results and model failures remain in [the owner validation report](29-owner-validation.md).
+
+The 18 November follow-up replayed Orchard and tested whether the main review could distinguish a different subject from a genuine conflict. [Expected and actual claim results](33-source-claim-checks.md)

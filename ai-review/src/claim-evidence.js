@@ -86,25 +86,11 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
       check.action = 'Compare the saved passages and confirm this claim before using it.';
     }
     const key = JSON.stringify([item.rule_id, item.claim.segment_id, item.claim.quote]);
-    const previous = seen.get(key);
-    if (!previous) {
-      seen.set(key, { check, rawStatus: item.status, path, sourceGap });
-    } else if (previous.rawStatus !== item.status) {
-      if (previous.conflicted) continue;
-      previous.conflicted = true;
-      previous.sourceGap = undefined;
-      previous.check.status = 'insufficient';
-      previous.check.reason = 'Gemini gave different answers for this claim.';
-      previous.check.action = 'Compare the saved passages or retry this version.';
-      incomplete.add(item.rule_id);
-      report('CONFLICTING_CLAIM_CHECKS', path, 'Gemini returned conflicting answers for the same claim.');
-    } else if (!previous.conflicted && previous.check.status !== item.status && check.status === item.status) {
-      // Identical verdicts can cite different subjects. Keep the grounded copy and the first claim ID.
-      check.id = previous.check.id;
-      seen.set(key, { check, rawStatus: item.status, path, sourceGap });
-    }
+    if (!seen.has(key)) seen.set(key, []);
+    seen.get(key).push({ check, rawStatus: item.status, path, sourceGap });
   }
-  for (const { check, path, sourceGap } of seen.values()) {
+  for (const entries of seen.values()) {
+    const { check, path, sourceGap } = entries.length === 1 ? entries[0] : reconcileDuplicateClaims(entries);
     if (sourceGap) {
       incomplete.add(check.rule_id);
       report(sourceGap, path, check.reason, { rule_id: check.rule_id });
@@ -112,6 +98,50 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
     checks.push(check);
   }
   return { checks, incomplete };
+}
+
+function uniqueCitations(references) {
+  const byPassage = new Map();
+  for (const ref of references) {
+    if (!ref) continue;
+    const key = JSON.stringify([ref.source_id, ref.passage_id, ref.quote, ref.subject_scope, ref.stance]);
+    if (!byPassage.has(key)) byPassage.set(key, ref);
+  }
+  return [...byPassage.values()];
+}
+
+function reconcileDuplicateClaims(entries) {
+  const first = entries[0];
+  const grounded = entries.find(entry => entry.check.status === entry.rawStatus) || first;
+  const check = { ...grounded.check, id: first.check.id };
+  const citations = uniqueCitations(entries.flatMap(entry => [...entry.check.sources, ...(entry.check.other_cited_sources || [])]));
+  const sameSubject = citations.filter(ref => ref.subject_scope === 'same_subject');
+  const opposing = sameSubject.find(ref => ref.stance === 'contradicts');
+  let sourceGap = grounded.sourceGap;
+  if (entries.some(entry => entry.rawStatus !== first.rawStatus)) {
+    check.status = 'insufficient';
+    check.reason = 'Gemini gave different answers for this claim.';
+    check.action = 'Compare the saved passages or retry this version.';
+    sourceGap = 'CONFLICTING_CLAIM_CHECKS';
+  } else if (first.rawStatus === 'supported' && opposing) {
+    check.status = 'insufficient';
+    check.reason = 'A cited passage about this subject conflicts with the draft.';
+    check.action = 'Compare the accounts and confirm which fact belongs in the draft.';
+    sourceGap = 'SOURCE_STANCE_UNCONFIRMED';
+  }
+  if (sourceGap === 'CONFLICTING_CLAIM_CHECKS' || (sourceGap === 'SOURCE_STANCE_UNCONFIRMED' && opposing)) {
+    // Show both sides even when the provider put each citation in a separate copy of the claim.
+    const firstByVerdict = new Map();
+    for (const entry of entries) {
+      if (entry.check.sources.length && !firstByVerdict.has(entry.rawStatus)) firstByVerdict.set(entry.rawStatus, entry.check.sources[0]);
+    }
+    check.sources = uniqueCitations([opposing, sameSubject.find(ref => ref.stance === 'supports'), ...firstByVerdict.values(), ...citations]).slice(0, 3);
+  }
+  const primaryCount = check.sources.length;
+  const extra = uniqueCitations([...check.sources, ...citations]).slice(primaryCount, primaryCount + 3);
+  if (extra.length) check.other_cited_sources = extra;
+  else delete check.other_cited_sources;
+  return { check, path: grounded.path, sourceGap };
 }
 
 export function claimRuleOutcome(item, checks, incomplete, gapEvidence = []) {

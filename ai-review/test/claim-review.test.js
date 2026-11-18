@@ -142,6 +142,27 @@ test('a strong verdict needs a quoted passage taking that position about the sam
   }
 });
 
+test('duplicate copies preserve opposite same-subject citations even when both claim support', () => {
+  for (const label of ['supported', 'contradicted']) {
+    for (const reversed of [false, true]) {
+      const { request, reply } = sample();
+      const supporting = reply.claim_checks[1];
+      Object.assign(supporting.sources[0], { subject_scope: 'same_subject', stance: 'supports' });
+      const otherCount = 'The screening room has 60 seats.';
+      const other = { source_id: 'source-2', url: 'https://example.org/second', status: 'read',
+        passages: [{ passage_id: 'passage-1', text: otherCount }] };
+      request.source_material.push(other);
+      request.candidate_revision.source_urls.push(other.url);
+      const opposed = { ...supporting, status: label, sources: [{ ...source(otherCount), source_id: other.source_id,
+        subject_scope: 'same_subject', stance: 'contradicts' }] };
+      reply.claim_checks = reversed ? [opposed, supporting] : [supporting, opposed];
+      const result = checkWorkbenchResult(request, reply, validators, { requireSourceScope: true });
+      assert.equal(result.claim_checks[0].status, 'insufficient');
+      assert.deepEqual(new Set(result.claim_checks[0].sources.map(ref => ref.quote)), new Set([seats, otherCount]));
+    }
+  }
+});
+
 test('one rule can show a supported count, conflicting time and missing price in the same saved paragraph', async () => {
   const { request, reply } = sample();
   const checked = await review(request, reply);
