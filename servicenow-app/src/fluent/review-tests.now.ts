@@ -30,18 +30,21 @@ const approvedRules = Test({
 const archive = Test({
   $id: Now.ID['fe02-archive-guard-test'],
   name: 'Suiko FE-02: archive, restore and guarded deletion',
-  description: 'Runs the archive actions as dedicated editor, rules editor, no-role and admin users. No model calls or changes to shared evidence.',
+  description: 'Checks admin behavior as the suite runner, then uses dedicated Editor, Rules Editor and outsider fixtures. No changes to shared evidence.',
   failOnServerError: true,
 }, atf => {
+  // ATF cannot grant admin to a temporary user. Run this step before impersonation.
+  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-admin-step'], script: `
+    var archive = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/archive-test.ts');
+    stepResult.setOutputMessage(archive.runArchiveAdminRegression());
+    return true;
+  ` });
   atf.server.createUser({ $id: Now.ID['fe02-archive-editor-user'], firstName: 'Suiko', lastName: 'Archive Editor', roles: [editor] });
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-story-step'], script: Now.include('./tests/archive-guard.script.js') });
   atf.server.createUser({ $id: Now.ID['fe02-archive-rules-user'], firstName: 'Suiko', lastName: 'Archive Rules', roles: [rulesEditor] });
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-rule-step'], script: Now.include('./tests/archive-guard.script.js') });
   atf.server.createUser({ $id: Now.ID['fe02-archive-outsider-user'], firstName: 'Suiko', lastName: 'Archive Outsider', roles: [] });
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-outsider-step'], script: Now.include('./tests/archive-guard.script.js') });
-  // The ATF step accepts a role record ID. This is the PDI's built-in admin role.
-  atf.server.createUser({ $id: Now.ID['fe02-archive-admin-user'], firstName: 'Suiko', lastName: 'Archive Admin', roles: ['2831a114c611228501d4ea6c309d626d'] });
-  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-admin-step'], script: Now.include('./tests/archive-guard.script.js') });
 });
 
 TestSuite({
