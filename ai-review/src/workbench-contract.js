@@ -12,6 +12,7 @@ export function workbenchSchemas(assessment) {
           source_id: { type: 'string', pattern: '^source-[1-5]$' }, passage_id: { type: 'string', pattern: '^passage-[1-9]$' },
           quote: { type: 'string', minLength: 1, maxLength: 700 },
           subject_scope: { type: 'string', enum: ['same_subject', 'different_subject', 'unclear'] },
+          stance: { type: 'string', enum: ['supports', 'contradicts', 'does_not_resolve'] },
         },
       } },
       context: { type: 'array', maxItems: 2, items: evidence },
@@ -31,7 +32,9 @@ export function workbenchSchemas(assessment) {
       overview: { type: 'string', minLength: 1, maxLength: 1500 },
       overview_evidence: { type: 'array', maxItems: 6, items: { $ref: '#/$defs/evidence' } },
       assessment: nested,
-      claim_checks: { type: 'array', maxItems: 24, items: { ...claim, properties: { ...claim.properties, id: { type: 'string' } } } },
+      claim_checks: { type: 'array', maxItems: 24, items: { ...claim, properties: {
+        ...claim.properties, id: { type: 'string' }, other_cited_sources: claim.properties.sources,
+      } } },
       findings: {
         type: 'array', maxItems: 24,
         items: {

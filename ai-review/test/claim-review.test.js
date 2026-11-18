@@ -87,6 +87,7 @@ test('a relevant citation survives an unrelated one, and a team note can still s
   request.candidate_revision.source_urls.push(other.url);
   for (const check of reply.claim_checks.slice(0, 2)) {
     check.sources[0].subject_scope = 'same_subject';
+    check.sources[0].stance = check.status === 'contradicted' ? 'contradicts' : 'supports';
     check.sources.unshift({ source_id: other.source_id, passage_id: 'passage-1',
       quote: other.passages[0].text, subject_scope: 'different_subject' });
   }
@@ -96,8 +97,49 @@ test('a relevant citation survives an unrelated one, and a team note can still s
   const result = checkWorkbenchResult(request, reply, validators, { requireSourceScope: true });
   assert.deepEqual(result.claim_checks.map(check => check.status), ['contradicted', 'supported', 'supported']);
   assert.deepEqual(result.claim_checks.map(check => check.sources.map(s => s.source_id)), [['source-1'], ['source-1'], []]);
+  assert.equal(result.claim_checks[0].other_cited_sources[0].quote, other.passages[0].text);
   assert.equal(result.claim_checks[2].context[0].quote, note.text);
   assert.equal(result.assessment.policy_assessments[0].status, 'potential_conflict');
+});
+
+test('duplicate verdicts keep the substantiated copy in either order, and competing verdicts stay unresolved', () => {
+  for (const unrelatedFirst of [true, false]) {
+    const { request, reply } = sample();
+    const relevant = reply.claim_checks[0];
+    relevant.sources[0].subject_scope = 'same_subject';
+    relevant.sources[0].stance = 'contradicts';
+    const unrelated = { ...relevant, reason: 'This passage describes another screening.',
+      sources: [{ ...relevant.sources[0], quote: seats, subject_scope: 'different_subject' }] };
+    reply.claim_checks = unrelatedFirst ? [unrelated, relevant] : [relevant, unrelated];
+    const options = { requireSourceScope: true };
+    const result = checkWorkbenchResult(request, reply, validators, options);
+    assert.equal(result.claim_checks.length, 1);
+    assert.equal(result.claim_checks[0].id, 'claim-1');
+    assert.equal(result.claim_checks[0].status, 'contradicted');
+    assert.equal(result.claim_checks[0].sources[0].quote, newerTime);
+    assert.equal(result.claim_checks[0].reason, relevant.reason);
+    assert.equal(result.checks.issues.some(issue => issue.code === 'SOURCE_SUBJECT_UNCONFIRMED'), false);
+    reply.claim_checks.push({ ...unrelated, status: 'supported' }, relevant);
+    assert.equal(checkWorkbenchResult(request, reply, validators, options).claim_checks[0].status, 'insufficient');
+  }
+});
+
+test('a strong verdict needs a quoted passage taking that position about the same fact and subject', () => {
+  for (const [verdict, stance] of [['contradicted', 'supports'], ['contradicted', 'does_not_resolve'],
+    ['supported', 'contradicts'], ['supported', 'does_not_resolve'], ['supported', undefined]]) {
+    const { request, reply } = sample();
+    const check = reply.claim_checks[1];
+    check.status = verdict;
+    check.sources[0].subject_scope = 'same_subject';
+    if (stance) check.sources[0].stance = stance;
+    check.sources.push({ ...source(newerTime), subject_scope: 'different_subject', stance: 'contradicts' });
+    reply.claim_checks = [check];
+    const result = checkWorkbenchResult(request, reply, validators, { requireSourceScope: true });
+    assert.equal(result.claim_checks[0].status, 'insufficient');
+    assert.equal(result.claim_checks[0].sources.length, 2);
+    assert.ok(result.checks.issues.some(issue => issue.code === 'SOURCE_STANCE_UNCONFIRMED'));
+    assert.equal(result.assessment.policy_assessments[0].status, 'not_assessable');
+  }
 });
 
 test('one rule can show a supported count, conflicting time and missing price in the same saved paragraph', async () => {

@@ -90,6 +90,7 @@ const checkMessages = {
   INVALID_CONTEXT_REFERENCE: 'The review pointed to a note that couldn’t be matched. Check your saved notes yourself or retry.',
   MISSING_SOURCE_EVIDENCE: 'This claim check is missing a matching source passage. The claim is still shown for you to inspect.',
   SOURCE_SUBJECT_UNCONFIRMED: 'Check that the cited source covers the same project or event as the draft.',
+  SOURCE_STANCE_UNCONFIRMED: 'Compare the draft fact with what the source says about that subject.',
 };
 
 function ReviewChecks({ result, run }) {

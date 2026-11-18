@@ -1,4 +1,21 @@
-export function collectClaimChecks(request, raw, { report, references, shaped, scopes, requireSourceScope }) {
+// A passage can name the right subject and still leave the claim unanswered.
+function evidenceForVerdict(sources, status, requireStance) {
+  const related = sources.filter(ref => ref.subject_scope === 'same_subject');
+  if (!related.length) return { code: 'SOURCE_SUBJECT_UNCONFIRMED', reason: 'The cited passages could not be tied to the subject of this claim.',
+    action: 'Find a passage about the same project or event and compare it with the draft.' };
+  if (!requireStance && !related.some(ref => ref.stance !== undefined)) return { decisive: related };
+  const stance = status === 'contradicted' ? 'contradicts' : 'supports';
+  const decisive = related.filter(ref => ref.stance === stance);
+  if (status === 'supported' && related.some(ref => ref.stance === 'contradicts')) {
+    return { code: 'SOURCE_STANCE_UNCONFIRMED', reason: 'A cited passage about this subject conflicts with the draft.',
+      action: 'Compare the accounts and confirm which fact belongs in the draft.' };
+  }
+  if (decisive.length) return { decisive };
+  return { code: 'SOURCE_STANCE_UNCONFIRMED', reason: 'The cited passages about this subject do not establish the proposed judgment.',
+    action: 'Compare the draft fact with a passage that directly addresses it.' };
+}
+
+export function collectClaimChecks(request, raw, { report, references, shaped, scopes, requireSourceScope, requireSourceStance }) {
   const checks = [];
   const incomplete = new Set();
   const expected = new Set(request.source_rule_ids || []);
@@ -18,18 +35,6 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
     if (!shaped('validateWorkbenchClaim', item, path, 'This source check')
         || !references([item.claim], request.candidate_revision.revision_id, `${path}/claim`, true, true)) {
       incomplete.add(item.rule_id);
-      continue;
-    }
-    const key = JSON.stringify([item.rule_id, item.claim.segment_id, item.claim.quote]);
-    const duplicate = seen.get(key);
-    if (duplicate) {
-      if (duplicate.status !== item.status) {
-        incomplete.add(item.rule_id);
-        duplicate.status = 'insufficient';
-        duplicate.reason = 'Gemini gave different answers for this claim.';
-        duplicate.action = 'Compare the saved passages or retry this version.';
-        report('CONFLICTING_CLAIM_CHECKS', path, 'Gemini returned conflicting answers for the same claim.');
-      }
       continue;
     }
     const sources = [];
@@ -56,6 +61,7 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
       return true;
     });
     const check = { ...item, id: `claim-${index + 1}`, sources, context };
+    let sourceGap;
     if (['supported', 'contradicted'].includes(check.status)
         && ((!sources.length && !context.length) || sources.length !== item.sources.length || context.length !== item.context.length)) {
       incomplete.add(item.rule_id);
@@ -65,21 +71,44 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
       report('MISSING_SOURCE_EVIDENCE', path, 'The source judgment needs matching evidence. The claim remains visible.');
     } else if (['supported', 'contradicted'].includes(check.status) && sources.length
         && (requireSourceScope || sources.some(ref => ref.subject_scope !== undefined))) {
-      const related = sources.filter(ref => ref.subject_scope === 'same_subject');
-      if (related.length) {
-        check.sources = related;
+      const comparison = evidenceForVerdict(sources, check.status, requireSourceStance);
+      if (comparison.decisive) {
+        check.sources = comparison.decisive;
+        if (check.sources.length !== sources.length) check.other_cited_sources = sources.filter(ref => !check.sources.includes(ref));
       } else {
-        incomplete.add(item.rule_id);
+        sourceGap = comparison.code;
         check.status = 'insufficient';
-        check.reason = 'The cited passages could not be tied to the subject of this claim.';
-        check.action = 'Find a passage about the same project or event and compare it with the draft.';
-        report('SOURCE_SUBJECT_UNCONFIRMED', path, check.reason, { rule_id: item.rule_id });
+        check.reason = comparison.reason;
+        check.action = comparison.action;
       }
     }
     if (!check.action.trim() && ['insufficient', 'contradicted'].includes(check.status)) {
       check.action = 'Compare the saved passages and confirm this claim before using it.';
     }
-    seen.set(key, check);
+    const key = JSON.stringify([item.rule_id, item.claim.segment_id, item.claim.quote]);
+    const previous = seen.get(key);
+    if (!previous) {
+      seen.set(key, { check, rawStatus: item.status, path, sourceGap });
+    } else if (previous.rawStatus !== item.status) {
+      if (previous.conflicted) continue;
+      previous.conflicted = true;
+      previous.sourceGap = undefined;
+      previous.check.status = 'insufficient';
+      previous.check.reason = 'Gemini gave different answers for this claim.';
+      previous.check.action = 'Compare the saved passages or retry this version.';
+      incomplete.add(item.rule_id);
+      report('CONFLICTING_CLAIM_CHECKS', path, 'Gemini returned conflicting answers for the same claim.');
+    } else if (!previous.conflicted && previous.check.status !== item.status && check.status === item.status) {
+      // Identical verdicts can cite different subjects. Keep the grounded copy and the first claim ID.
+      check.id = previous.check.id;
+      seen.set(key, { check, rawStatus: item.status, path, sourceGap });
+    }
+  }
+  for (const { check, path, sourceGap } of seen.values()) {
+    if (sourceGap) {
+      incomplete.add(check.rule_id);
+      report(sourceGap, path, check.reason, { rule_id: check.rule_id });
+    }
     checks.push(check);
   }
   return { checks, incomplete };

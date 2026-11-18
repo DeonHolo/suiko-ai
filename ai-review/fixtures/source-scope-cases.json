@@ -52,5 +52,21 @@
     "body": "Nettle Players is staging Lantern Map at Rill Hall on Thursday.\n\nThat performance starts at 6 p.m.",
     "sources": [["rillgazette.example", "Rill Gazette arts desk. Thursday's Lantern Map performance by Nettle Players at Rill Hall starts at 8 p.m."]],
     "segment": "body-2", "quantity": "6", "expected": "contradicted", "source": "source-1", "sourceQuantity": "8"
+  },
+  {
+    "id": "09", "description": "An agreeing time for the named meeting and a different time for another meeting",
+    "title": "Fallow reading circle hosts a night at Alder Mill",
+    "body": "The Fallow reading circle meets at Alder Mill on Wednesday.\n\nThe meeting starts at 7 p.m.",
+    "sources": [["fallow.example", "Fallow reading circle calendar. Our Wednesday meeting at Alder Mill starts at 7 p.m."],
+                ["aldermill.example", "Alder Mill calendar. Wednesday's Pebble Choir rehearsal starts at 8 p.m."]],
+    "segment": "body-2", "quantity": "7", "expected": "supported", "source": "source-1", "sourceQuantity": "7"
+  },
+  {
+    "id": "10", "description": "A relevant passage gives only a date and another project's passage gives a capacity",
+    "title": "Snowbank Arts opens Lake Loom Studio",
+    "body": "Snowbank Arts is opening Lake Loom Studio.\n\nThe studio seats 32.",
+    "sources": [["snowbank.example", "Snowbank Arts opening notice. Lake Loom Studio opens on 4 June."],
+                ["cedarloft.example", "Cedar Loft Studio facility sheet. The seating capacity of Cedar Loft Studio is 48."]],
+    "segment": "body-2", "quantity": "32", "expected": "insufficient"
   }
 ]

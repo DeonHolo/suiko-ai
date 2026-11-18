@@ -23,10 +23,13 @@ export default function ClaimChecks({ run }) {
         <p>{check.reason}</p>
         {check.action && <p><strong>Next step</strong> {check.action}</p>}
         {rule?.title && <p className="hint">{rule.title}</p>}
-        {check.sources.map((reference, index) => {
+        {[...check.sources, ...(check.other_cited_sources || [])].map((reference, index) => {
           const source = run.request.sources.find(item => item.source_id === reference.source_id);
-          return <details key={index} className="evidence" open>
-            <summary>Source passage{source?.title ? ' · ' + source.title : ''}</summary>
+          const label = reference.subject_scope === 'different_subject' ? 'Passage about another subject'
+            : reference.subject_scope === 'unclear' ? 'Passage with an unclear subject'
+            : index >= check.sources.length ? 'Additional cited passage' : 'Source passage';
+          return <details key={index} className="evidence" open={index < check.sources.length}>
+            <summary>{label}{source?.title ? ' · ' + source.title : ''}</summary>
             <blockquote>{reference.quote}</blockquote>
             {source?.status === 'partial' && <p className="hint">This source was only partly read.</p>}
           </details>;

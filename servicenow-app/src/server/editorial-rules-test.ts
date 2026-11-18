@@ -204,7 +204,8 @@ export function runClaimEvidenceRegression() {
   const ref = (segment_id, quote) => ({ revision_id: 'draft-1', segment_id, quote });
   const check = (claim, status, quote) => ({
     rule_id: sourceId, claim: ref('body-1', claim), status,
-    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote, subject_scope: 'same_subject' }],
+    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote, subject_scope: 'same_subject',
+      stance: status === 'contradicted' ? 'contradicts' : 'supports' }],
     context: [], reason: 'Compare the event brief.', action: 'Confirm the details with the editor.',
   });
   const seats = seating.map(claim => check(claim, 'supported', claim));
@@ -285,6 +286,11 @@ export function runClaimEvidenceRegression() {
     && badQuote.result.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'), 'A bad quote erased valid support or cleared the rule.');
   expect(badQuote.result.checks.overview_available && badQuote.result.assessment.status === 'partial', 'The partial review lost its useful overview.');
   const history = action(getState, {}, { story: saved.body.story_id });
+  const reopenedUnrelated = history.body.runs.find(review => review.id === unrelated.id);
+  expect(reopenedUnrelated && sourceRule(reopenedUnrelated).status === 'not_assessable'
+    && reopenedUnrelated.result.claim_checks[1].status === 'insufficient'
+    && reopenedUnrelated.result.claim_checks[1].sources[0].quote === actualTime,
+    'The unrelated judgment or its saved passage changed on reopening.');
   const reopened = history.body.runs.find(review => review.id === mixed.id);
   expect(reopened.request.sources[1].http_status === 404 && reopened.request.input.source_material[0].final_url === openedUrl
     && reopened.request.decision_check_requested === false && !reopened.result.decision_check, 'Saved retrieval or the retired experiment request state did not reopen.');

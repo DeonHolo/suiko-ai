@@ -9,6 +9,7 @@ import Rules from '../src/client/Rules.jsx';
 import Stories from '../src/client/Stories.jsx';
 import { ReviewResult } from '../src/client/ReviewPanel.jsx';
 import Sources from '../src/client/Sources.jsx';
+import ClaimChecks from '../src/client/ClaimChecks.jsx';
 import { localDateTime } from '../src/client/presentation.js';
 import { lastStory } from '../src/client/routes.js';
 import { reviewService, workspaceService } from '../src/client/services/ReviewService.js';
@@ -306,6 +307,19 @@ test('source-enabled review offers one review action without a second-check requ
   fireEvent.click(action);
   await waitFor(() => assert.equal(review.mock.callCount(), 1));
   assert.deepEqual(review.mock.calls[0].arguments, [sourced.id]);
+});
+
+test('a mixed-source claim keeps the other subject’s cited passage available separately', () => {
+  const run = completed();
+  run.result.claim_checks = [{ id: 'claim-1', rule_id: 'SOURCES', status: 'supported',
+    claim: { quote: 'Reed Theatre seats 46.' }, reason: 'The Reed fact sheet confirms 46 seats.', action: '', context: [],
+    sources: [{ source_id: 'source-2', subject_scope: 'same_subject', quote: 'Reed Theatre has 46 seats.' }],
+    other_cited_sources: [{ source_id: 'source-1', subject_scope: 'different_subject', quote: 'Flint Theatre has 88 seats.' }] }];
+  render(<ClaimChecks run={run} />);
+  assert.equal(screen.getByText('Source passage').closest('details').open, true);
+  const other = screen.getByText('Passage about another subject').closest('details');
+  assert.equal(other.open, false);
+  assert.ok(within(other).getByText('Flint Theatre has 88 seats.'));
 });
 
 test('retrieved source text has clear status, timestamp and inspectable saved passages', () => {
