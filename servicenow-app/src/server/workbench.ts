@@ -174,7 +174,10 @@ export function getState(request, response) {
     return {
       stories, story, revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
       viewer_id: String(gs.getUserID()),
-      capabilities: { source_reading: true },
+      capabilities: {
+        source_reading: true,
+        archive: gs.getProperty('x_2236136_suiko_ai.archive_enabled', 'false') === 'true',
+      },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },
     };
