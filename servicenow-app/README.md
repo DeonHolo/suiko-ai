@@ -87,6 +87,9 @@ API Explorer or an authenticated session, verify `GET workbench/stories` with
 title and status filters. Verify the second page with the returned cursor, and
 confirm a non-Editor cannot read the endpoint. Run the **Suiko FE-01 / BE-01**
 and **Suiko BE-02** ATF tests with their dedicated test accounts.
+After enabling Inbox, open the custom Stories screen as the Editor. Search by a
+partial title, exercise the five status filters, load page two and open one of
+its stories. Compare with the REST results after reinstallation.
 
 The workspace uses `x_2236136_suiko_ai.inbox_enabled` and
 `x_2236136_suiko_ai.workflow_enabled` to advertise the new capabilities.
@@ -99,3 +102,7 @@ written to the app's decision table. The guarded story update changes the status
 and accepts the decision together. History follows the chain of accepted
 decisions and joins it with events from the legal task table. The same history
 reader can be used for BE-03's combined access checks.
+Editors who can read a story see its shared legal outcomes and their revisions.
+Legal routing reasons and decision notes are shown to the requesting Editor,
+the assigned legal reviewer where authorized, and administrators. The Legal
+endpoint and native legal copy retain their separate assignment checks.

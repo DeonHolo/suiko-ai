@@ -148,6 +148,9 @@ export function hasEditorDecision(story: GlideRecord, decisionId: string) {
 
 export function workflowHistory(story: GlideRecord, displayName: (userId: string) => string) {
   const history = decisionEntries(story);
+  const viewer = String(gs.getUserID());
+  const admin = gs.hasRole('admin');
+  const legal = gs.hasRole('x_2236136_suiko_ai.legal_reviewer');
   const task = new GlideRecord(legalTaskTable);
   task.addQuery('story', story.getUniqueValue());
   task.query();
@@ -158,10 +161,11 @@ export function workflowHistory(story: GlideRecord, displayName: (userId: string
     const version = Number(revision.getValue('version'));
     const taskId = String(task.getUniqueValue());
     const requestedBy = task.getValue('requested_by');
+    const seesNotes = admin || requestedBy === viewer || (legal && task.getValue('assigned_reviewer') === viewer);
     history.push({
       id: taskId + '-route', revision_id: revisionId, version, action: 'send_to_legal',
       label: 'Sent to legal', actor_id: requestedBy, actor: displayName(requestedBy),
-      decided_at: task.getValue('requested_at'), note: task.getValue('reason') || '',
+      decided_at: task.getValue('requested_at'), note: seesNotes ? task.getValue('reason') || '' : '',
     });
     const decidedBy = task.getValue('decision_by');
     if (!decidedBy) continue;
@@ -171,7 +175,7 @@ export function workflowHistory(story: GlideRecord, displayName: (userId: string
       action: cleared ? 'legal_clear' : 'legal_request_changes',
       label: cleared ? 'Cleared by legal' : 'Changes requested by legal',
       actor_id: decidedBy, actor: displayName(decidedBy),
-      decided_at: task.getValue('decided_at'), note: task.getValue('decision_note') || '',
+      decided_at: task.getValue('decided_at'), note: seesNotes ? task.getValue('decision_note') || '' : '',
     });
   }
   return history.sort((a, b) => String(b.decided_at || '').localeCompare(String(a.decided_at || '')) || b.id.localeCompare(a.id));
@@ -189,16 +193,18 @@ export function backfillCurrentRevisions() {
     const latest = stories.getValue('workflow_change_key') ? currentRevision(stories) : highestRevision(storyId);
     if (!latest) { result.no_revision++; continue; }
     const revisionId = String(latest.getUniqueValue());
+    const title = latest.getValue('title') || '';
     const task = legalTaskForRevision(revisionId);
     const status = workflowStatus(stories, revisionId, task?.getValue('status'));
     const legalRequired = needsLegalClearance(stories) ? '1' : '0';
     if (stories.getValue('current_revision') === revisionId
       && stories.getValue('workflow_status') === status
+      && stories.getValue('title') === title
       && (stories.getValue('legal_clearance_required') || '0') === legalRequired) { result.already_current++; continue; }
     const refreshed = guardedStoryUpdate(stories, {
-      current_revision: revisionId, workflow_status: status, legal_clearance_required: legalRequired,
+      current_revision: revisionId, title, workflow_status: status, legal_clearance_required: legalRequired,
     }, true);
-    if (refreshed?.getValue('current_revision') === revisionId && refreshed.getValue('workflow_status') === status
+    if (refreshed?.getValue('current_revision') === revisionId && refreshed.getValue('workflow_status') === status && refreshed.getValue('title') === title
       && (refreshed.getValue('legal_clearance_required') || '0') === legalRequired) result.updated++;
     else result.conflicts++;
   }

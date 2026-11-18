@@ -144,11 +144,21 @@ export function verifyLegalChangesRequested(storyId: string) {
   const after = state(storyId);
   expect(after.workflow.status === 'changes_requested' && after.workflow.current_revision_id === after.revisions[0].id,
     'The current revision did not reflect the legal changes request.');
+  expect(after.workflow.history.some(entry => entry.revision_id === after.revisions[0].id
+    && entry.action === 'legal_request_changes' && entry.note === 'Confirm the new clip.'), 'The requesting Editor did not receive the legal instructions.');
   const archived = action(postArchive, { action: 'archive', kind: 'story', id: storyId, expected_modified: after.story.modified });
   expect(archived.status === 200 && archived.body.item.retention_reason.includes('Retained legal review history'),
     'The archive omitted retained legal evidence.');
   const restored = action(postArchive, { action: 'restore', kind: 'story', id: storyId, expected_modified: archived.body.item.modified });
   expect(restored.status === 200 && state(storyId).workflow.status === 'changes_requested', 'Restore lost the recorded legal decision.');
+}
+
+export function verifyOtherEditorHistory(storyId: string) {
+  expect(gs.hasRole(editor) && !gs.hasRole(legal) && !gs.hasRole('admin'), 'Use an unrelated regular Editor.');
+  const current = state(storyId);
+  const legalEvents = current.workflow.history.filter(entry => ['send_to_legal', 'legal_clear', 'legal_request_changes'].includes(entry.action));
+  expect(legalEvents.length >= 4 && legalEvents.every(entry => entry.actor_id !== String(gs.getUserID()) && entry.note === ''),
+    'The shared timeline disclosed another editor’s legal notes.');
 }
 
 export function routeCurrentLegalClearanceFixture(storyId: string, assignedId: string) {

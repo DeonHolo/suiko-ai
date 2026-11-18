@@ -790,11 +790,11 @@ export function legalDecision(request, response) {
 function synchronizeLegalStatus(storyId: string, revisionId: string, status: string) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const current = record(tables.story, storyId);
-    if (current.getValue('current_revision') !== revisionId || storyArchived(current)) return;
+    if (current.getValue('current_revision') !== revisionId) return;
     const stored = current.getValue('workflow_status');
     // A later editor decision may already have used the authoritative legal result.
     if (stored === status || stored === 'signed_off' || stored === 'changes_requested') return;
-    if (guardedStoryUpdate(current, { workflow_status: status })) return;
+    if (guardedStoryUpdate(current, { workflow_status: status }, true)) return;
   }
   throw new WorkbenchError('The legal decision was recorded. Refresh the open story to see it.', 409);
 }

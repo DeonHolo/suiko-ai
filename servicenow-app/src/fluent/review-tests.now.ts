@@ -90,6 +90,11 @@ const legalWorkflow = Test({
     require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression(String(steps('a4629dd519dc427e8d24767579635c42').record_id), true);
     return true;
   })();` });
+  atf.server.createUser({ $id: Now.ID['be02-history-reader'], firstName: 'Suiko', lastName: 'Other Editor', roles: [editor], impersonate: true });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-history-fields'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyOtherEditorHistory(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id));
+    return true;
+  })();` });
   atf.server.impersonate({ $id: Now.ID['be02-final-editor-check'], user: sender.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-current-status'], script: `(function () {
     require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyLegalChangesRequested(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id));
