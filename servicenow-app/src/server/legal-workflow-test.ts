@@ -122,6 +122,9 @@ export function runFreshLegalRoutingRegression(storyId: string, assignedId: stri
   const latest = afterOlder.revisions[0];
   expect(latest.version === 2 && afterOlder.workflow.current_revision_id === latest.id
     && afterOlder.workflow.status === 'needs_review', 'The old clearance changed the newer story status.');
+  expect(action(workflowAction, { action: 'sign_off', revision_id: latest.id,
+    expected_modified: afterOlder.workflow.modified }).status === 409,
+    'Older clearance incorrectly allowed sign-off of the new version.');
   const sent = action(workflowAction, { action: 'send_to_legal', revision_id: latest.id,
     reviewer_id: assignedId, note: reason, expected_modified: afterOlder.workflow.modified });
   expect(sent.status === 200 && sent.body.workflow.status === 'waiting_for_legal', 'The newer version could not obtain its own task.');
@@ -171,4 +174,8 @@ export function verifyCurrentLegalClearance(storyId: string) {
   const repeat = action(workflowAction, {action:'send_to_legal',revision_id:current.revisions[0].id,
     reviewer_id:current.workflow.reviewers[0].id,note:reason,expected_modified:current.workflow.modified});
   expect(repeat.status === 409, 'The already decided version was sent to legal again.');
+  const signed = action(workflowAction, { action: 'sign_off', revision_id: current.revisions[0].id,
+    expected_modified: current.workflow.modified });
+  expect(signed.status === 200 && signed.body.workflow.status === 'signed_off',
+    'Clearance of the current revision did not permit final editor sign-off.');
 }
