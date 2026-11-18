@@ -55,9 +55,13 @@ export function testEditorWorkflow() {
   expect(after.history.length === 1 && after.history[0].revision_id === first.body.id
     && after.history[0].actor_id === String(gs.getUserID()) && after.history[0].note === decision.note
     && after.history[0].version === 1 && after.history[0].decided_at, 'Decision history omitted the saved version or actor.');
-  expect(call(workflowAction, decision).status === 409
-    && call(workflowAction, { ...decision, expected_modified: after.modified }).status === 409
-    && workflow(storyId).history.length === 1, 'A repeated changes request created duplicate history.');
+  const reread = workflow(storyId);
+  expect(reread.history.length === 1 && reread.history[0].id === after.history[0].id,
+    'The regular Editor reopened ' + reread.history.length + ' decisions; expected the one accepted decision.');
+  const staleChange = call(workflowAction, decision);
+  const repeatChange = call(workflowAction, { ...decision, expected_modified: after.modified });
+  expect(staleChange.status === 409 && repeatChange.status === 409 && workflow(storyId).history.length === 1,
+    'A repeated changes request was not rejected. HTTP ' + staleChange.status + ' and ' + repeatChange.status + '.');
 
   const same = call(saveRevision, { ...story, request_key: requestKey(), story_id: storyId, expected_revision_id: first.body.id });
   expect(same.status === 200 && same.body.id === first.body.id && workflow(storyId).modified === after.modified,

@@ -4,7 +4,7 @@ import { WorkbenchError } from './workbench-error.ts';
 import { listStories } from './story-inbox.ts';
 import {
   currentRevision, editorActions, guardedStoryUpdate, hasEditorDecision, highestRevision, legalTaskForRevision,
-  needsLegalClearance, prepareEditorDecision, readableRecord, requireEditor, workflowHistory, workflowStatus,
+  needsLegalClearance, prepareEditorDecision, readableRecord, readableStory, requireEditor, workflowHistory, workflowStatus,
 } from './story-workflow.ts';
 import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSavedRuleActive, starterTemplates, supportedChecks } from './editorial-rules.ts';
 import { policyState, readPolicyVersion, savePolicyVersion } from './policy-records.ts';
@@ -274,7 +274,7 @@ function readState(request, response, features) {
     const revisions = [];
     const runs = [];
     if (storyId) {
-      parent = readableRecord(tables.story, storyId);
+      parent = readableStory(storyId);
       current = currentRevision(parent);
       story = { id: id(parent), title: parent.getValue('title'), modified: parent.getValue('sys_mod_count'),
         archived: parent.getValue('archived') === '1', can_archive: canArchiveStories() };
@@ -322,7 +322,7 @@ export function saveRevision(request, response) {
     }
     const existing = find(tables.revision, 'request_key', input.request_key);
     if (existing) {
-      const parent = readableRecord(tables.story, existing.getValue('story'));
+      const parent = readableStory(existing.getValue('story'));
       const current = currentRevision(parent);
       if (!current || Number(existing.getValue('version')) > Number(current.getValue('version'))) publishRevision(id(parent), existing);
       return revisionView(readableRecord(tables.revision, id(existing)));
@@ -332,7 +332,7 @@ export function saveRevision(request, response) {
     let story;
     let latest = null;
     if (input.story_id) {
-      story = readableRecord(tables.story, input.story_id);
+      story = readableStory(input.story_id);
       assertStoryNotArchived(story);
       latest = currentRevision(story);
       if ((latest ? id(latest) : null) !== (input.expected_revision_id || null)) {
@@ -397,7 +397,7 @@ function publishRevision(storyId: string, revision: GlideRecord) {
   // A retry repairs an interrupted publish. Competing changes cannot move
   // the pointer back to an older version or reset an already published one.
   for (let attempt = 0; attempt < 3; attempt++) {
-    const story = readableRecord(tables.story, storyId);
+    const story = readableStory(storyId);
     if (story.getValue('current_revision') === id(revision)) return;
     const current = currentRevision(story);
     if (current && Number(current.getValue('version')) > Number(revision.getValue('version'))) return;
@@ -492,7 +492,7 @@ export function reviewSavedVersion(request, response, createProvider, readSource
     const duplicate = find(tables.review, 'request_key', body.request_key);
     if (duplicate) return runView(duplicate);
     const revision = readableRecord(tables.revision, body.revision_id);
-    const parent = readableRecord(tables.story, revision.getValue('story'));
+    const parent = readableStory(revision.getValue('story'));
     const current = currentRevision(parent);
     if (!current || Number(revision.getValue('version')) > Number(current.getValue('version'))) {
       throw new WorkbenchError('Wait for this version to finish saving before reviewing it.', 409);
@@ -558,7 +558,7 @@ export function saveMetadata(request, response) {
     const run = record(tables.review, input.review_id);
     if (run.getValue('state') !== 'complete') throw new WorkbenchError('Choose a completed review before saving metadata.');
     const revision = record(tables.revision, run.getValue('revision'));
-    const current = currentRevision(readableRecord(tables.story, revision.getValue('story')));
+    const current = currentRevision(readableStory(revision.getValue('story')));
     if (!current || id(current) !== id(revision)) {
       throw new WorkbenchError('A newer draft exists. Open that version before saving metadata.', 409);
     }
@@ -616,7 +616,7 @@ export function workflowActionForTest(request, response, features = { editor: tr
       throw new WorkbenchError('Choose a legal reviewer.');
     }
     const revision = readableRecord(tables.revision, input.revision_id);
-    const story = readableRecord(tables.story, revision.getValue('story'));
+    const story = readableStory(revision.getValue('story'));
     requireActiveStory(story);
     const latest = currentRevision(story);
     const stale = () => new WorkbenchError('This story changed elsewhere. Reload its current version before deciding.', 409);
@@ -644,18 +644,18 @@ export function workflowActionForTest(request, response, features = { editor: tr
       try {
         routed = createTask(reserved, revision, input.reviewer_id, note);
       } catch (error) {
-        const current = readableRecord(tables.story, id(story));
+        const current = readableStory(id(story));
         if (current.getValue('workflow_change_key') === reserved.getValue('workflow_change_key')
           && !legalTaskForRevision(id(revision))) {
           guardedStoryUpdate(current, { workflow_status: status }, true);
         }
         throw error;
       }
-      const current = readableRecord(tables.story, id(story));
+      const current = readableStory(id(story));
       if (current.getValue('legal_clearance_required') !== '1') {
         guardedStoryUpdate(current, { legal_clearance_required: '1' }, true);
       }
-      const refreshed = readableRecord(tables.story, id(story));
+      const refreshed = readableStory(id(story));
       return { workflow: workflowView(refreshed, currentRevision(refreshed), features), task_id: id(routed) };
     }
 
@@ -673,7 +673,7 @@ export function workflowActionForTest(request, response, features = { editor: tr
       editor_decision_head: decisionId,
     });
     if (updated) return { workflow: workflowView(updated, revision, features) };
-    const refreshed = readableRecord(tables.story, id(story));
+    const refreshed = readableStory(id(story));
     if (!hasEditorDecision(refreshed, decisionId)) throw stale();
     return { workflow: workflowView(refreshed, currentRevision(refreshed), features) };
   });
