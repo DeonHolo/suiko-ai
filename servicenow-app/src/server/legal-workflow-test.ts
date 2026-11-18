@@ -1,5 +1,5 @@
 import { GlideRecordSecure, gs } from '@servicenow/glide';
-import { getState, legalDecision, legalTasks, saveRevision, workflowAction } from './workbench.ts';
+import { getState, legalDecision, legalTasks, readStateForLegalTest, saveRevision, workflowAction } from './workbench.ts';
 import { postArchive } from './archive.ts';
 
 function expect(value, message) {
@@ -24,7 +24,7 @@ const notes = 'Confirm the clip permission before sign-off.';
 const reason = 'Confirm the fictional clip permission.';
 
 function state(storyId) {
-  const result = action((request, response) => getState(request, response, true), null, { story: storyId });
+  const result = action(readStateForLegalTest, null, { story: storyId });
   expect(result.status === 200 && !!result.body.workflow, 'The fixture workspace state was not returned.');
   return result.body;
 }
