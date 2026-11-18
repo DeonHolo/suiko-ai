@@ -34,6 +34,7 @@ export const x_2236136_suiko_ai_story = Table({
   schema: {
     title: StringColumn({ label: 'Title', maxLength: 160, mandatory: true }),
     current_revision: ReferenceColumn({ label: 'Current revision', referenceTable: 'x_2236136_suiko_ai_revision' }),
+    legal_change_key: StringColumn({ label: 'Legal workflow write identity', maxLength: 32 }),
     workflow_status: ChoiceColumn({
       label: 'Workflow status', choices: {
         needs_review: 'Needs review',
@@ -66,8 +67,13 @@ export const x_2236136_suiko_ai_revision = Table({
 export const x_2236136_suiko_ai_legal_task = Table({
   name: 'x_2236136_suiko_ai_legal_task', label: 'Suiko legal review', audit: true,
   schema: {
-    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true }),
-    revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true }),
+    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true, cascadeRule: 'restrict' }),
+    revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true, cascadeRule: 'restrict', readOnly: true }),
+    pending_key: StringColumn({ label: 'Pending revision identity', maxLength: 32 }),
+    decision_key: StringColumn({ label: 'Legal decision write identity', maxLength: 32 }),
+    submitted_title: StringColumn({ label: 'Submitted title', maxLength: 160, readOnly: true }),
+    submitted_text: StringColumn({ label: 'Submitted story text', maxLength: 12000, readOnly: true }),
+    submitted_notes: StringColumn({ label: 'Submitted notes', maxLength: 4000, readOnly: true }),
     assigned_reviewer: ReferenceColumn({ label: 'Assigned reviewer', referenceTable: 'sys_user', mandatory: true }),
     status: ChoiceColumn({
       label: 'Status', choices: {
@@ -84,7 +90,7 @@ export const x_2236136_suiko_ai_legal_task = Table({
     decided_at: DateTimeColumn({ label: 'Decided at' }),
   },
   allowWebServiceAccess: false,
-  index: [{ element: 'revision', unique: false }, { element: 'assigned_reviewer', unique: false }],
+  index: [{ element: 'revision', unique: false }, { element: 'assigned_reviewer', unique: false }, { element: 'pending_key', unique: true }],
 });
 export const x_2236136_suiko_ai_review = Table({
   name: 'x_2236136_suiko_ai_review', label: 'Suiko AI review', audit: true,
@@ -221,18 +227,19 @@ Acl({
   $id: Now.ID['x_2236136_suiko_ai_legal_task-read'], type: 'record',
   table: 'x_2236136_suiko_ai_legal_task', operation: 'read',
   roles: [legalReviewer], adminOverrides: true,
+  script: 'answer = current.getValue("assigned_reviewer") === String(gs.getUserID());',
 });
 
 Acl({
   $id: Now.ID['x_2236136_suiko_ai_legal_task-create'], type: 'record',
   table: 'x_2236136_suiko_ai_legal_task', operation: 'create',
-  roles: [editor], adminOverrides: true,
+  roles: ['admin'], adminOverrides: true,
 });
 
 Acl({
   $id: Now.ID['x_2236136_suiko_ai_legal_task-write'], type: 'record',
   table: 'x_2236136_suiko_ai_legal_task', operation: 'write',
-  roles: [legalReviewer], adminOverrides: true,
+  roles: ['admin'], adminOverrides: true,
 });
 
 Acl({
@@ -246,6 +253,9 @@ Form({
   sections: [{ caption: 'Legal review', content: [{ layout: 'one-column', elements: [
     { type: 'table_field', field: 'story' },
     { type: 'table_field', field: 'revision' },
+    { type: 'table_field', field: 'submitted_title' },
+    { type: 'table_field', field: 'submitted_text' },
+    { type: 'table_field', field: 'submitted_notes' },
     { type: 'table_field', field: 'assigned_reviewer' },
     { type: 'table_field', field: 'status' },
     { type: 'table_field', field: 'reason' },
