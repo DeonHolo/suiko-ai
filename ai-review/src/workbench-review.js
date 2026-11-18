@@ -22,7 +22,7 @@ export async function reviewWorkbench(request, provider, validators) {
   return checkWorkbenchResult(snapshot, parseProviderJson(await provider.generate(snapshot)), validators);
 }
 
-export function checkWorkbenchResult(request, raw, validators, { requireOverviewEvidence = false, revisionDiff } = {}) {
+export function checkWorkbenchResult(request, raw, validators, { requireOverviewEvidence = false, requireSourceScope = false, revisionDiff } = {}) {
   validateReviewInput(request, validators.validateRequest);
   if (revisionDiff === undefined) revisionDiff = literalChanges(request.baseline_revision, request.candidate_revision);
   if (!validators.validateWorkbenchShell(raw)) {
@@ -85,7 +85,7 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   const scopes = Object.fromEntries(request.policy_pack.rules.filter(rule => rule.applicability)
     .map(rule => [rule.rule_id, ruleApplicability(rule.applicability, request.candidate_revision)]));
   const sourceRuleIds = request.source_rule_ids || [];
-  const { checks: claimChecks, incomplete: incompleteClaims } = collectClaimChecks(request, raw.claim_checks, { report, references, shaped, scopes });
+  const { checks: claimChecks, incomplete: incompleteClaims } = collectClaimChecks(request, raw.claim_checks, { report, references, shaped, scopes, requireSourceScope });
   const findings = [];
   const rawFindings = list(raw.findings, 24, '/findings');
   if (!Array.isArray(raw.findings) || raw.findings.length > 24) expected.forEach(id => uncertainRules.add(id));

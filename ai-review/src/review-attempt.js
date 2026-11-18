@@ -13,7 +13,7 @@ export function persistReviewAttempt(run, input, generate, validators, finish = 
     const unchecked = JSON.stringify(reply);
     run.setValue('response_json', unchecked.length <= 199000 ? unchecked
       : JSON.stringify({ unverified_excerpt: unchecked.slice(0, 12000), truncated: true }));
-    const checked = JSON.stringify(finish(checkWorkbenchResult(input, reply, validators, { requireOverviewEvidence: true, revisionDiff })));
+    const checked = JSON.stringify(finish(checkWorkbenchResult(input, reply, validators, { requireOverviewEvidence: true, requireSourceScope: true, revisionDiff })));
     if (checked.length > 199000) throw new ReviewValidationError('SAVED_RESULT_LIMIT', 'The review exceeded the saved-result limit. Your saved version is available for a retry.');
     run.setValue('response_json', checked);
     run.setValue('error_json', '');

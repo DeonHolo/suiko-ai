@@ -2,19 +2,20 @@ export function workbenchSchemas(assessment) {
   const evidence = { $ref: '#/$defs/evidence' };
   const claim = {
     type: 'object', additionalProperties: false,
-    required: ['rule_id', 'status', 'claim', 'sources', 'context', 'reason', 'action'],
+    required: ['rule_id', 'claim', 'sources', 'context', 'status', 'reason', 'action'],
     properties: {
       rule_id: { type: 'string', minLength: 1, maxLength: 80 },
-      status: { type: 'string', enum: ['supported', 'contradicted', 'insufficient', 'not_applicable'] },
       claim: evidence,
       sources: { type: 'array', maxItems: 3, items: {
         type: 'object', additionalProperties: false, required: ['source_id', 'passage_id', 'quote'],
         properties: {
           source_id: { type: 'string', pattern: '^source-[1-5]$' }, passage_id: { type: 'string', pattern: '^passage-[1-9]$' },
           quote: { type: 'string', minLength: 1, maxLength: 700 },
+          subject_scope: { type: 'string', enum: ['same_subject', 'different_subject', 'unclear'] },
         },
       } },
       context: { type: 'array', maxItems: 2, items: evidence },
+      status: { type: 'string', enum: ['supported', 'contradicted', 'insufficient', 'not_applicable'] },
       reason: { type: 'string', minLength: 1, maxLength: 600 },
       action: { type: 'string', maxLength: 500 },
     },

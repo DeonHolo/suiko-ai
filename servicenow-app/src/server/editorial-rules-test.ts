@@ -204,7 +204,7 @@ export function runClaimEvidenceRegression() {
   const ref = (segment_id, quote) => ({ revision_id: 'draft-1', segment_id, quote });
   const check = (claim, status, quote) => ({
     rule_id: sourceId, claim: ref('body-1', claim), status,
-    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote }],
+    sources: [{ source_id: 'source-1', passage_id: 'passage-1', quote, subject_scope: 'same_subject' }],
     context: [], reason: 'Compare the event brief.', action: 'Confirm the details with the editor.',
   });
   const seats = seating.map(claim => check(claim, 'supported', claim));
@@ -261,6 +261,12 @@ export function runClaimEvidenceRegression() {
   expect(mixed.request.decision_check_requested === false && !mixed.result.decision_check, 'A legacy request enabled Decision 1 in the editor flow.');
   expect(mixed.result.assessment.metadata_suggestions.short_description.suggested_text === null, 'An empty concern list let the flagged headline into the description.');
   expect(mixed.result.checks.issues.some(issue => issue.code === 'CONTRADICTORY_RULE_STATUS'), 'The headline rule cleared a retained finding.');
+  const differentSubject = { ...conflict, sources: [{ ...conflict.sources[0], subject_scope: 'different_subject' }] };
+  const unrelated = run([seats[0], differentSubject], false, 'potential_conflict');
+  expect(sourceRule(unrelated).status === 'not_assessable' && unrelated.result.claim_checks[0].status === 'supported'
+    && unrelated.result.claim_checks[1].status === 'insufficient'
+    && unrelated.result.claim_checks[1].sources[0].quote === actualTime,
+    'A conflict attributed to another subject survived or lost its saved passage.');
   const omitted = run([seats[0]], true, 'no_potential_conflict_observed');
   expect(sourceRule(omitted).status === 'not_assessable' && omitted.result.findings.some(finding => finding.rule_id === sourceId), 'A supported claim hid an unmatched concern.');
   const gap = run([seats[0]], false, 'not_assessable');

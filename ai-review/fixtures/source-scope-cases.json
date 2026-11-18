@@ -1,0 +1,56 @@
+[
+  {
+    "id": "01", "description": "Saved Orchard Screen claim with the retrieved Halyard Desk brief",
+    "segment": "body-2", "quantity": "40", "expected": "insufficient"
+  },
+  {
+    "id": "02", "description": "Same organizer and number, different concert",
+    "title": "Merrow Ensemble prepares Glass Tide",
+    "body": "Merrow Ensemble is staging its Glass Tide concert.\n\nThe hall for that concert has 84 seats.",
+    "sources": [["merrow.example", "Merrow Ensemble program. For the Copper Rain concert the hall has 84 seats."]],
+    "segment": "body-2", "quantity": "84", "expected": "insufficient"
+  },
+  {
+    "id": "03", "description": "Same owner, different facility and different number",
+    "title": "Tern Cooperative opens Foxglove Hall",
+    "body": "Tern Cooperative opened Foxglove Hall.\n\nIts seating capacity is 52.",
+    "sources": [["tern.example", "Tern Cooperative properties register. Juniper Hall has a seating capacity of 76."]],
+    "segment": "body-2", "quantity": "52", "expected": "insufficient"
+  },
+  {
+    "id": "04", "description": "Different counts for the same named facility",
+    "title": "Mallow Studio opens its Ash Gallery",
+    "body": "Mallow Studio opened its Ash Gallery.\n\nThe gallery has 55 seats.",
+    "sources": [["mallow.example", "Mallow Studio venue register. The seating capacity of our Ash Gallery is 72."]],
+    "segment": "body-2", "quantity": "55", "expected": "contradicted", "source": "source-1", "sourceQuantity": "72"
+  },
+  {
+    "id": "05", "description": "An independent publisher confirms the same named facility",
+    "title": "Larkspur Trust opens Birch Pavilion",
+    "body": "Larkspur Trust opened Birch Pavilion.\n\nThe pavilion has 63 seats.",
+    "sources": [["westhaven.example", "Westhaven Municipal Office venue register. Birch Pavilion, operated by Larkspur Trust, has 63 seats."]],
+    "segment": "body-2", "quantity": "63", "expected": "supported", "source": "source-1", "sourceQuantity": "63"
+  },
+  {
+    "id": "06", "description": "An irrelevant passage comes before a relevant one",
+    "title": "Umbra Arts opens its Reed Theatre",
+    "body": "Umbra Arts opened Reed Theatre.\n\nThe theatre seats 46.",
+    "sources": [["umbra.example", "Umbra Arts venue handbook. The seating capacity of Flint Theatre is 88."],
+                ["reed.example", "Reed Theatre fact sheet. Our theatre, operated by Umbra Arts, has 46 seats."]],
+    "segment": "body-2", "quantity": "46", "expected": "supported", "source": "source-2", "sourceQuantity": "46"
+  },
+  {
+    "id": "07", "description": "The same class has multiple sessions",
+    "title": "Paper Ferry announces its Saturday printmaking class",
+    "body": "Paper Ferry offers a printmaking class each Friday and Saturday.\n\nThe Saturday class starts at 10 a.m.",
+    "sources": [["paperferry.example", "Paper Ferry weekly programme. The Friday printmaking class starts at 9 a.m."]],
+    "segment": "body-2", "quantity": "10", "expected": "insufficient"
+  },
+  {
+    "id": "08", "description": "Independent listing gives a conflicting time for the exact performance",
+    "title": "Nettle Players stages Lantern Map on Thursday",
+    "body": "Nettle Players is staging Lantern Map at Rill Hall on Thursday.\n\nThat performance starts at 6 p.m.",
+    "sources": [["rillgazette.example", "Rill Gazette arts desk. Thursday's Lantern Map performance by Nettle Players at Rill Hall starts at 8 p.m."]],
+    "segment": "body-2", "quantity": "6", "expected": "contradicted", "source": "source-1", "sourceQuantity": "8"
+  }
+]

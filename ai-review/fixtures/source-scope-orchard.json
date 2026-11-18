@@ -1,0 +1,218 @@
+{
+  "schema_version": "0.5.0",
+  "capabilities": {
+    "source_reading": true,
+    "rights_verification": false
+  },
+  "request_id": "61f00634-eb76-4fd2-b37c-30f06583d0b2",
+  "content_id": "013ea6d183a05f106fffc629feaad37e",
+  "language": "en",
+  "baseline_revision": null,
+  "candidate_revision": {
+    "revision_id": "draft-1",
+    "segments": [
+      {
+        "segment_id": "title",
+        "field": "title",
+        "text": "Owner validation: Orchard Screen plans an auditorium"
+      },
+      {
+        "segment_id": "body-1",
+        "field": "body",
+        "text": "Orchard Screen is planning a new auditorium for its outdoor cinema."
+      },
+      {
+        "segment_id": "body-2",
+        "field": "body",
+        "text": "The new auditorium will have 40 seats."
+      },
+      {
+        "segment_id": "production_notes-1",
+        "field": "production_notes",
+        "text": "The linked Halyard brief describes a different organisation and project. There is no Orchard Screen capacity document."
+      },
+      {
+        "segment_id": "source_notes-1",
+        "field": "source_notes",
+        "text": "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt"
+      }
+    ],
+    "content_format": "article",
+    "content_kind": "news",
+    "source_urls": [
+      "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt"
+    ]
+  },
+  "policy_pack": {
+    "pack_id": "suiko-editorial-rules",
+    "version": "3.1.3.1",
+    "approval_reference": "Saved editor approvals; exact versions recorded with this attempt",
+    "rules": [
+      {
+        "rule_id": "OUTSIDE-ASSETS",
+        "title": "Permission for outside photos, video, and audio",
+        "text": "Apply when the draft or production notes propose using a photo, video, or audio asset from outside the team. Flag it when the supplied notes do not document permission or a license. Quote the asset reference and ask the editor to verify permission. Staff-created footage alone does not trigger this check. Missing documentation does not establish that permission was denied.",
+        "priority": "high",
+        "applicability": {
+          "formats": [
+            "article",
+            "script",
+            "caption"
+          ],
+          "content_kinds": [
+            "news",
+            "opinion",
+            "sponsored"
+          ],
+          "conditions": "",
+          "human_checks": []
+        }
+      },
+      {
+        "rule_id": "RULE-9689bc97-4416-47a3-8925-c575941d5f5e",
+        "title": "Support important news claims (AI-23 demo)",
+        "text": "Compare important dates, times, capacity and admission claims in news articles with the supplied material. Show which claims have support, which conflict and which need confirmation. An absent price in a source needs confirmation.",
+        "priority": "standard",
+        "applicability": {
+          "formats": [
+            "article"
+          ],
+          "content_kinds": [
+            "news"
+          ],
+          "conditions": "",
+          "human_checks": []
+        }
+      },
+      {
+        "rule_id": "RULE-a736efaa-0428-4d1a-870e-927c1a873511",
+        "title": "Preserve proposed status in headlines (AI-23 demo)",
+        "text": "For news about a proposed launch, keep the proposal status clear in both headline and body until the story records approval. Ask the editor to change wording that presents a pending decision as settled.",
+        "priority": "high",
+        "applicability": {
+          "formats": [
+            "article"
+          ],
+          "content_kinds": [
+            "news"
+          ],
+          "conditions": "When the story has not yet reported approval for the launch.",
+          "human_checks": [
+            "Confirm whether the story reports the launch has been approved before allowing a firm headline."
+          ]
+        }
+      },
+      {
+        "rule_id": "RULE-d32bea71-f56d-4a9c-996e-e30aac2b71cb",
+        "title": "Outside-media permission (AI-23 demo)",
+        "text": "When production notes identify an outside photograph, clip, or audio recording and no licence or written release was supplied, ask the editor to confirm permission. Use Needs confirmation when the permission record is missing.",
+        "priority": "high",
+        "applicability": {
+          "formats": [
+            "script"
+          ],
+          "content_kinds": [
+            "news",
+            "opinion",
+            "sponsored"
+          ],
+          "conditions": "When production notes identify a photograph, clip, or audio recording from outside the team and no licence or written release is supplied.",
+          "human_checks": [
+            "Confirm the actual permission or licence with the editor."
+          ]
+        }
+      }
+    ]
+  },
+  "taxonomy": {
+    "sections": [
+      {
+        "id": "technology",
+        "label": "Technology"
+      },
+      {
+        "id": "local-news",
+        "label": "Local news"
+      },
+      {
+        "id": "arts-culture",
+        "label": "Arts and culture"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      }
+    ],
+    "tags": [
+      {
+        "id": "ai",
+        "label": "AI"
+      },
+      {
+        "id": "product-releases",
+        "label": "Product releases"
+      },
+      {
+        "id": "research",
+        "label": "Research"
+      },
+      {
+        "id": "community-events",
+        "label": "Community events"
+      },
+      {
+        "id": "film",
+        "label": "Film"
+      },
+      {
+        "id": "sports",
+        "label": "Sports"
+      },
+      {
+        "id": "environment",
+        "label": "Environment"
+      },
+      {
+        "id": "volunteering",
+        "label": "Volunteering"
+      },
+      {
+        "id": "local-government",
+        "label": "Local government"
+      },
+      {
+        "id": "education",
+        "label": "Education"
+      },
+      {
+        "id": "libraries",
+        "label": "Libraries"
+      },
+      {
+        "id": "video",
+        "label": "Video"
+      }
+    ]
+  },
+  "current_metadata": {
+    "section_id": null,
+    "tag_ids": [],
+    "short_description": ""
+  },
+  "source_rule_ids": [
+    "RULE-9689bc97-4416-47a3-8925-c575941d5f5e"
+  ],
+  "source_material": [
+    {
+      "source_id": "source-1",
+      "url": "https://raw.githubusercontent.com/DeonHolo/suiko-ai/codex/ai-23-acceptance/ai-review/fixtures/public/listening-room-brief.txt",
+      "status": "read",
+      "passages": [
+        {
+          "passage_id": "passage-1",
+          "text": "Fictional Suiko AI acceptance source. This project and publisher are invented.\n\nHalyard Desk proposed listening room — project brief\n\nThe listening room is proposed to open on 16 January at noon\nThe proposed room has 40 seats.\nAdmission details are pending.\nThe project is still a proposal and has no launch approval."
+        }
+      ]
+    }
+  ]
+}

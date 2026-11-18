@@ -89,6 +89,7 @@ const checkMessages = {
   CONFLICTING_CLAIM_CHECKS: 'Suiko gave different answers about the same claim. Compare the claim with its source before deciding.',
   INVALID_CONTEXT_REFERENCE: 'The review pointed to a note that couldn’t be matched. Check your saved notes yourself or retry.',
   MISSING_SOURCE_EVIDENCE: 'This claim check is missing a matching source passage. The claim is still shown for you to inspect.',
+  SOURCE_SUBJECT_UNCONFIRMED: 'Check that the cited source covers the same project or event as the draft.',
 };
 
 function ReviewChecks({ result, run }) {

@@ -1,4 +1,4 @@
-export function collectClaimChecks(request, raw, { report, references, shaped, scopes }) {
+export function collectClaimChecks(request, raw, { report, references, shaped, scopes, requireSourceScope }) {
   const checks = [];
   const incomplete = new Set();
   const expected = new Set(request.source_rule_ids || []);
@@ -63,6 +63,18 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
       check.reason = 'The saved material does not include all the evidence Gemini used for this judgment.';
       check.action = 'Open the source or paste the relevant excerpt.';
       report('MISSING_SOURCE_EVIDENCE', path, 'The source judgment needs matching evidence. The claim remains visible.');
+    } else if (['supported', 'contradicted'].includes(check.status) && sources.length
+        && (requireSourceScope || sources.some(ref => ref.subject_scope !== undefined))) {
+      const related = sources.filter(ref => ref.subject_scope === 'same_subject');
+      if (related.length) {
+        check.sources = related;
+      } else {
+        incomplete.add(item.rule_id);
+        check.status = 'insufficient';
+        check.reason = 'The cited passages could not be tied to the subject of this claim.';
+        check.action = 'Find a passage about the same project or event and compare it with the draft.';
+        report('SOURCE_SUBJECT_UNCONFIRMED', path, check.reason, { rule_id: item.rule_id });
+      }
     }
     if (!check.action.trim() && ['insufficient', 'contradicted'].includes(check.status)) {
       check.action = 'Compare the saved passages and confirm this claim before using it.';

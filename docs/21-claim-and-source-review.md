@@ -2,7 +2,7 @@
 
 When an approved rule asks for source material, Suiko checks important claims in the saved story. Open **Claim and source checks** to compare the draft quote with a retrieved passage, read the suggested next step, and see which claims need confirmation. Editor notes appear as **Editor-supplied review context**.
 
-Choose **Get a second check on sources** before starting a review to get an additional judgment on claims with retrieved passages. Open its result to see the confidence for each answer. If the two models disagree, the card shows that disagreement alongside the source. The editor chooses what to do with the information. Editor notes are now labelled **Notes supplied by your team**.
+Choose **Review this version** to run the main review. **Source text retrieved** means the link supplied text that you can open under **View saved passages**. A passage about another event can leave a claim at **Needs confirmation** even when the numbers match. **Potential conflict** means a passage gives an incompatible fact about the same subject. Your notes appear under **Notes supplied by your team**. Older reviews can show a second judgment from the retired Decision 1 experiment. [Decision history](30-decision-1-retirement.md)
 
 ## Live Makers’ Night example
 
