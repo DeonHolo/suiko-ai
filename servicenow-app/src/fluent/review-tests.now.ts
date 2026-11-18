@@ -34,11 +34,11 @@ const archive = Test({
   failOnServerError: true,
 }, atf => {
   // ATF cannot grant admin to a temporary user. Run this step before impersonation.
-  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-admin-step'], script: `
+  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-admin-step'], script: `(function () {
     var archive = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/archive-test.ts');
     stepResult.setOutputMessage(archive.runArchiveAdminRegression());
     return true;
-  ` });
+  })();` });
   atf.server.createUser({ $id: Now.ID['fe02-archive-editor-user'], firstName: 'Suiko', lastName: 'Archive Editor', roles: [editor] });
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-story-step'], script: Now.include('./tests/archive-guard.script.js') });
   atf.server.createUser({ $id: Now.ID['fe02-archive-rules-user'], firstName: 'Suiko', lastName: 'Archive Rules', roles: [rulesEditor] });
