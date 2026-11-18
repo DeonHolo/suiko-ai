@@ -1,4 +1,4 @@
-import { GlideRecordSecure, gs } from '@servicenow/glide';
+import { GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
 import { getState, legalDecision, legalTasks, readStateForLegalTest, saveRevision, workflowAction } from './workbench.ts';
 import { postArchive } from './archive.ts';
 
@@ -100,10 +100,18 @@ export function runAssignedLegalRegression(taskId: string, newer: boolean) {
   if (newer) expect(action(legalDecision, { ...decide, note: '' }).status === 400, 'A changes request was accepted without a note.');
   const result = action(legalDecision, decide);
   const status = newer ? 'changes_requested' : 'cleared';
-  expect(result.status === 200 && result.body.task.status === status && result.body.task.actions.length === 0 && native.get(taskId)
-    && native.getValue('decision_by') === String(gs.getUserID()) && !!native.getValue('decided_at')
-    && (native.getValue('decision_note') || '') === decide.note && native.getValue('revision') === task.revision.id,
-  'The decision did not preserve the submitted revision, actor, time and note.');
+  expect(result.status === 200, 'The decision failed with HTTP ' + result.status + ': ' + (result.body?.message || 'no message'));
+  const reopened = action(legalTasks, null, { task: taskId });
+  const saved = reopened.body?.task;
+  expect(reopened.status === 200 && saved?.status === status && saved.actions.length === 0
+    && saved.revision.id === task.revision.id && saved.decision?.note === decide.note && !!saved.decision?.decided_at,
+  'Reopening the task did not show its saved decision, exact revision, note and time.');
+  // The native view is checked above. Read storage separately so field-level
+  // restrictions on the native form do not prevent asserting the actor's ID.
+  const audit = new GlideRecord(taskTable);
+  expect(audit.get(taskId), 'The decided task was missing from the legal audit.');
+  expect(String(audit.getValue('decision_by')) === String(gs.getUserID()), 'The audit did not identify the signed-in reviewer.');
+  expect(String(audit.getValue('revision')) === task.revision.id, 'The audit did not retain the submitted revision.');
   expect(action(legalDecision, { ...decide, expected_modified: result.body.task.modified }).status === 409, 'The task accepted a second decision.');
   return task.revision.story_id;
 }
