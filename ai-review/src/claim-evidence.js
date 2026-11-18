@@ -38,12 +38,13 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
       continue;
     }
     const sources = [];
+    const issues = [];
+    const noteIssue = (...args) => issues.push(args);
     for (const [sourceIndex, reference] of item.sources.entries()) {
       const source = request.source_material.find(source => source.source_id === reference.source_id);
       const passage = source?.passages.find(passage => passage.passage_id === reference.passage_id);
       if (!reference.quote.trim() || !passage?.text.includes(reference.quote)) {
-        incomplete.add(item.rule_id);
-        report('SOURCE_QUOTE_MISMATCH', `${path}/sources/${sourceIndex}`, 'A quoted source passage could not be matched to the saved text.', {
+        noteIssue('SOURCE_QUOTE_MISMATCH', `${path}/sources/${sourceIndex}`, 'A quoted source passage could not be matched to the saved text.', {
           quote: reference.quote, ...(passage ? { source: passage.text } : {}), rule_id: item.rule_id,
         });
       } else {
@@ -51,11 +52,10 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
       }
     }
     const context = item.context.filter((reference, contextIndex) => {
-      const valid = references([reference], request.candidate_revision.revision_id, `${path}/context/${contextIndex}`, true);
+      const valid = references([reference], request.candidate_revision.revision_id, `${path}/context/${contextIndex}`, true, false, noteIssue);
       const segment = request.candidate_revision.segments.find(segment => segment.segment_id === reference.segment_id);
       if (!valid || segment?.field !== 'production_notes') {
-        incomplete.add(item.rule_id);
-        if (valid) report('INVALID_CONTEXT_REFERENCE', path, 'Only supplied review context can be used as a context passage.');
+        if (valid) noteIssue('INVALID_CONTEXT_REFERENCE', path, 'Only supplied review context can be used as a context passage.');
         return false;
       }
       return true;
@@ -64,11 +64,10 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
     let sourceGap;
     if (['supported', 'contradicted'].includes(check.status)
         && ((!sources.length && !context.length) || sources.length !== item.sources.length || context.length !== item.context.length)) {
-      incomplete.add(item.rule_id);
       check.status = 'insufficient';
       check.reason = 'The saved material does not include all the evidence Gemini used for this judgment.';
       check.action = 'Open the source or paste the relevant excerpt.';
-      report('MISSING_SOURCE_EVIDENCE', path, 'The source judgment needs matching evidence. The claim remains visible.');
+      noteIssue('MISSING_SOURCE_EVIDENCE', path, 'The source judgment needs matching evidence. The claim remains visible.');
     } else if (['supported', 'contradicted'].includes(check.status) && sources.length
         && (requireSourceScope || sources.some(ref => ref.subject_scope !== undefined))) {
       const comparison = evidenceForVerdict(sources, check.status, requireSourceStance);
@@ -87,10 +86,12 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
     }
     const key = JSON.stringify([item.rule_id, item.claim.segment_id, item.claim.quote]);
     if (!seen.has(key)) seen.set(key, []);
-    seen.get(key).push({ check, rawStatus: item.status, path, sourceGap });
+    seen.get(key).push({ check, rawStatus: item.status, path, sourceGap, issues });
   }
   for (const entries of seen.values()) {
-    const { check, path, sourceGap } = entries.length === 1 ? entries[0] : reconcileDuplicateClaims(entries);
+    const { check, path, sourceGap, issues } = entries.length === 1 ? entries[0] : reconcileDuplicateClaims(entries);
+    if (issues.length) incomplete.add(check.rule_id);
+    for (const issue of issues) report(...issue);
     if (sourceGap) {
       incomplete.add(check.rule_id);
       report(sourceGap, path, check.reason, { rule_id: check.rule_id });
@@ -112,7 +113,8 @@ function uniqueCitations(references) {
 
 function reconcileDuplicateClaims(entries) {
   const first = entries[0];
-  const grounded = entries.find(entry => entry.check.status === entry.rawStatus) || first;
+  const grounded = entries.find(entry => entry.check.status === entry.rawStatus && !entry.issues.length)
+    || entries.find(entry => entry.check.status === entry.rawStatus) || first;
   const check = { ...grounded.check, id: first.check.id };
   const citations = uniqueCitations(entries.flatMap(entry => [...entry.check.sources, ...(entry.check.other_cited_sources || [])]));
   const sameSubject = citations.filter(ref => ref.subject_scope === 'same_subject');
@@ -141,7 +143,7 @@ function reconcileDuplicateClaims(entries) {
   const extra = uniqueCitations([...check.sources, ...citations]).slice(primaryCount, primaryCount + 3);
   if (extra.length) check.other_cited_sources = extra;
   else delete check.other_cited_sources;
-  return { check, path: grounded.path, sourceGap };
+  return { check, path: grounded.path, sourceGap, issues: grounded.issues };
 }
 
 export function claimRuleOutcome(item, checks, incomplete, gapEvidence = []) {

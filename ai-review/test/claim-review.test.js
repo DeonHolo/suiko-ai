@@ -163,6 +163,25 @@ test('duplicate copies preserve opposite same-subject citations even when both c
   }
 });
 
+test('a discarded duplicate with a bad quote cannot make a grounded claim or rule incomplete', () => {
+  for (const reversed of [false, true]) {
+    const { request, reply } = sample();
+    const valid = reply.claim_checks[1];
+    Object.assign(valid.sources[0], { subject_scope: 'same_subject', stance: 'supports' });
+    const bad = { ...valid, sources: [{ ...valid.sources[0], quote: 'The screening room has 125 seats.' }] };
+    reply.claim_checks = reversed ? [bad, valid] : [valid, bad];
+    const strict = { requireSourceScope: true };
+    const checked = checkWorkbenchResult(request, reply, validators, strict);
+    assert.equal(checked.claim_checks[0].status, 'supported');
+    assert.equal(checked.assessment.policy_assessments[0].status, 'no_potential_conflict_observed');
+    assert.equal(checked.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'), false);
+    reply.claim_checks = [bad];
+    const ungrounded = checkWorkbenchResult(request, reply, validators, strict);
+    assert.equal(ungrounded.claim_checks[0].status, 'insufficient');
+    assert.ok(ungrounded.checks.issues.some(issue => issue.code === 'SOURCE_QUOTE_MISMATCH'));
+  }
+});
+
 test('one rule can show a supported count, conflicting time and missing price in the same saved paragraph', async () => {
   const { request, reply } = sample();
   const checked = await review(request, reply);

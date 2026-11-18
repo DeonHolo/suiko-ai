@@ -3,6 +3,7 @@ import { saveRule, approveRule, setRuleActive, saveRevision, getState, savePolic
 import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { approvedRulesForReview } from './generated/editorial-rules.js';
 import { readSavedSources } from './read-sources.ts';
+import reviewData from './generated/review-data.js';
 
 function expect(value, message) {
   if (!value) throw new Error(message);
@@ -169,6 +170,8 @@ export function runPolicySetupRegression() {
 
 export function runClaimEvidenceRegression() {
   expect(gs.hasRole('x_2236136_suiko_ai.rules_editor') && !gs.hasRole('admin'), 'Use the dedicated rules-editor test user.');
+  const required = reviewData.providerSchema.properties.claim_checks.items.properties.sources.items.required;
+  expect(required.includes('subject_scope') && required.includes('stance'), 'The installed Gemini schema must require both passage judgments.');
   const sourceId = 'ATF-source-' + gs.generateGUID();
   const secondSourceId = 'ATF-second-source-' + gs.generateGUID();
   const headlineId = 'ATF-headline-' + gs.generateGUID();

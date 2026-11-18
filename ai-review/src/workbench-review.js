@@ -44,9 +44,9 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
   function report(code, path, message, details = {}) {
     issues.push({ code, path, message, ...details });
   }
-  function references(evidence, revisionId, path, required = false, publicOnly = false) {
+  function references(evidence, revisionId, path, required = false, publicOnly = false, reportIssue = report) {
     if (required && !evidence.length) {
-      report('MISSING_EVIDENCE', path, 'Gemini supplied no supporting passage for this observation.');
+      reportIssue('MISSING_EVIDENCE', path, 'Gemini supplied no supporting passage for this observation.');
       return false;
     }
     let valid = true;
@@ -55,14 +55,14 @@ export function checkWorkbenchResult(request, raw, validators, { requireOverview
         .find(item => item?.revision_id === reference.revision_id);
       const source = revision?.segments.find(item => item.segment_id === reference.segment_id);
       if (reference.revision_id !== revisionId || !reference.quote.trim() || !source?.text.includes(reference.quote)) {
-        report('QUOTE_MISMATCH', `${path}/${index}`, 'Gemini\'s quote does not match the identified saved passage.', {
+        reportIssue('QUOTE_MISMATCH', `${path}/${index}`, 'Gemini\'s quote does not match the identified saved passage.', {
           quote: reference.quote.slice(0, 1000),
           ...(source ? { source: source.text.slice(0, 1600) } : {}),
           revision_id: reference.revision_id, segment_id: reference.segment_id,
         });
         valid = false;
       } else if (publicOnly && !['title', 'body', 'caption'].includes(source.field)) {
-        report('INTERNAL_METADATA_SOURCE', `${path}/${index}`, 'A public metadata suggestion used internal context instead of story text.');
+        reportIssue('INTERNAL_METADATA_SOURCE', `${path}/${index}`, 'A public metadata suggestion used internal context instead of story text.');
         valid = false;
       }
     });
