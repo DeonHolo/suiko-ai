@@ -2,10 +2,10 @@ import '@servicenow/sdk/global';
 import {
   Acl, Role, Table, StringColumn, IntegerColumn, ReferenceColumn,
   BooleanColumn, GenericColumn, ChoiceColumn, DateTimeColumn, Form, default_view,
-  RestApi, ApplicationMenu, Record,
+  RestApi, ApplicationMenu, Record, List,
 } from '@servicenow/sdk/core';
 import {
-  getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive,
+  getState, getStories, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive,
   configureProvider, getPolicies, savePolicy, suggestPolicyChecks, workflowAction,
   legalTasks, legalDecision,
 } from '../server/workbench';
@@ -40,6 +40,9 @@ export const x_2236136_suiko_ai_story = Table({
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
+    legal_clearance_required: BooleanColumn({ label: 'Legal clearance required', default: false }),
+    workflow_change_key: StringColumn({ label: 'Workflow write identity', maxLength: 32 }),
+    editor_decisions_json: StringColumn({ label: 'Editor decision history', maxLength: 200000 }),
     current_revision: ReferenceColumn({ label: 'Current revision', referenceTable: 'x_2236136_suiko_ai_revision' }),
     workflow_status: ChoiceColumn({
       label: 'Workflow status', choices: {
@@ -438,11 +441,30 @@ Record({
   },
 });
 
+const storyInspection = Record({
+  $id: Now.ID['suiko-story-inspection-view'],
+  table: 'sys_ui_view',
+  data: { name: 'suiko_story_inspection', title: 'Story inspection' },
+});
+
+List({
+  $id: Now.ID['suiko-story-inspection-list'],
+  table: 'x_2236136_suiko_ai_story',
+  view: storyInspection,
+  columns: [
+    { element: 'title', position: 0 },
+    { element: 'current_revision', position: 1 },
+    { element: 'workflow_status', position: 2 },
+    { element: 'sys_updated_on', position: 3 },
+  ],
+});
+
 RestApi({
   $id: Now.ID['suiko-workbench-api'], name: 'Suiko review workbench', serviceId: 'workbench',
   consumes: 'application/json', produces: 'application/json', enforceAcl: [editorApi],
   versions: [{ $id: Now.ID['suiko-api-v1'], version: 1, isDefault: true }],
   routes: [
+    { $id: Now.ID['suiko-list-stories'], method: 'GET', path: '/stories', version: 1, script: getStories },
     { $id: Now.ID['suiko-state'], method: 'GET', path: '/state', version: 1, script: getState },
     { $id: Now.ID['suiko-save-revision'], method: 'POST', path: '/revisions', version: 1, script: saveRevision },
     { $id: Now.ID['suiko-get-archive'], method: 'GET', path: '/archive', version: 1, script: getArchive },

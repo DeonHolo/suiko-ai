@@ -132,9 +132,31 @@ const archive = Test({
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-outsider-step'], script: Now.include('./tests/archive-guard.script.js') });
 });
 
+const editorInbox = Test({
+  $id: Now.ID['editor-inbox-regression-test'],
+  name: 'Suiko FE-01 / BE-01: Inbox and editor decisions',
+  description: 'Checks both pages, version-bound decisions, and Editor access with fictional ATF fixtures.',
+  failOnServerError: true,
+}, atf => {
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-pagination-step'],
+    script: Now.include('./tests/story-inbox-pagination.script.js'),
+  });
+  atf.server.createUser({ $id: Now.ID['editor-inbox-editor-user'], firstName: 'Suiko', lastName: 'Inbox Editor', roles: [editor] });
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-editor-step'],
+    script: Now.include('./tests/story-editor-workflow.script.js'),
+  });
+  atf.server.createUser({ $id: Now.ID['editor-inbox-outsider-user'], firstName: 'Suiko', lastName: 'Inbox Outsider', roles: [] });
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-outsider-step'],
+    script: Now.include('./tests/story-editor-access.script.js'),
+  });
+});
+
 TestSuite({
   $id: Now.ID['ai-review-server-regression-suite'],
   name: 'Suiko AI: server review regressions',
   description: 'Server-only checks using fictional inputs and injected provider replies.',
-  tests: [persistence, approvedRules, archive, legalWorkflow],
+  tests: [persistence, approvedRules, archive, legalWorkflow, editorInbox],
 });
