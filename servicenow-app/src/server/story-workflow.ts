@@ -23,6 +23,15 @@ export function readableRecord(table: string, sysId: string) {
   return row;
 }
 
+export function readableStory(sysId: string) {
+  const permitted = readableRecord(storyTable, sysId);
+  // The Editor can read the story. The accepted-decision pointer targets an
+  // admin-only table, so load workflow internals after this access check.
+  const row = new GlideRecord(storyTable);
+  if (!row.get(String(permitted.getUniqueValue()))) throw new WorkbenchError('This saved story could not be found.', 404);
+  return row;
+}
+
 export function highestRevision(storyId: string) {
   const row = new GlideRecordSecure(revisionTable);
   row.addQuery('story', storyId);
