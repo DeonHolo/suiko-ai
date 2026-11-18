@@ -169,6 +169,30 @@ declare global {
                         id: '7f6958deaccc4422bbcc9fcff113fb44'
                         deleted: false
                     }
+                    'editor-inbox-regression-test': {
+                        table: 'sys_atf_test'
+                        id: 'b037f8bd5fd44b3486de6a5ca6ce7791'
+                    }
+                    'editor-inbox-pagination-step': {
+                        table: 'sys_atf_step'
+                        id: '586d4edb0d0d41f5a745ed95db358b9b'
+                    }
+                    'editor-inbox-editor-user': {
+                        table: 'sys_atf_step'
+                        id: 'c52ff39033014ca1b99b7e9615320ac7'
+                    }
+                    'editor-inbox-editor-step': {
+                        table: 'sys_atf_step'
+                        id: 'e974cb12ec5543049e11ef2ed9aa65bf'
+                    }
+                    'editor-inbox-outsider-user': {
+                        table: 'sys_atf_step'
+                        id: '03a0335a7a6843a196d7e45654e773cf'
+                    }
+                    'editor-inbox-outsider-step': {
+                        table: 'sys_atf_step'
+                        id: 'a9ec8421fd4040e180ee474b0347036d'
+                    }
                     'fe02-archive-admin-step': {
                         table: 'sys_atf_step'
                         id: '495b61f6e3794d1580467e3bed3fd2c5'
@@ -436,6 +460,18 @@ declare global {
                     'suiko-save-rule': {
                         table: 'sys_ws_operation'
                         id: '0f8f739a9ee44eb4852fea1008e86f1d'
+                    }
+                    'suiko-list-stories': {
+                        table: 'sys_ws_operation'
+                        id: '76ee04d24f0a41d3ab22cc2741ecb16d'
+                    }
+                    'suiko-story-inspection-view': {
+                        table: 'sys_ui_view'
+                        id: '2b18358de13a46ddbb574179b049d745'
+                    }
+                    'suiko-story-inspection-list': {
+                        table: 'sys_ui_list'
+                        id: '3584471476e44da5bbde62096f8b2b04'
                     }
                     'suiko-state': {
                         table: 'sys_ws_operation'
