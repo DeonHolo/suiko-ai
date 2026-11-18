@@ -691,6 +691,15 @@ declare global {
                     },
                     {
                         table: 'sys_documentation'
+                        id: '17db453e1e9e44b283e35c801a085a87'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'archive_change_key'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
                         id: '17e189729dca432aad9c4de3df67cb62'
                         key: {
                             name: 'x_2236136_suiko_ai_rule_version'
@@ -1416,6 +1425,14 @@ declare global {
                     },
                     {
                         table: 'sys_dictionary'
+                        id: '4a142fca71d04c809bb984d0a9bdaadf'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'archive_change_key'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
                         id: '4a48e35830b5463092b8ed1344eba36c'
                         key: {
                             name: 'x_2236136_suiko_ai_revision'
@@ -1865,6 +1882,15 @@ declare global {
                     },
                     {
                         table: 'sys_documentation'
+                        id: '6a275f6667914af69493bcdb6594e606'
+                        key: {
+                            name: 'x_2236136_suiko_ai_rule'
+                            element: 'archive_change_key'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
                         id: '6ba575ac2ba047f19ced603ebe0ff455'
                         key: {
                             name: 'x_2236136_suiko_ai_config'
@@ -2227,6 +2253,14 @@ declare global {
                                     name: 'admin'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '8737d2b371d24bf2b1e2b07a3ab50b30'
+                        key: {
+                            name: 'x_2236136_suiko_ai_rule'
+                            element: 'archive_change_key'
                         }
                     },
                     {

@@ -8,8 +8,6 @@ import { WorkbenchError } from './workbench-error.ts';
 const tables = {
   story: 'x_2236136_suiko_ai_story',
   rule: 'x_2236136_suiko_ai_rule',
-  revision: 'x_2236136_suiko_ai_revision',
-  rule_version: 'x_2236136_suiko_ai_rule_version',
   review: 'x_2236136_suiko_ai_review',
 };
 
@@ -37,7 +35,7 @@ function respond(response, action) {
   } catch (error) {
     response.setStatus(error instanceof WorkbenchError ? error.status : error instanceof ReviewValidationError ? 400 : 500);
     response.setBody({ message: error instanceof WorkbenchError || error instanceof ReviewValidationError
-      ? error.message : 'The archive could not finish this action. Nothing was removed.',
+      ? error.message : 'The archive could not finish this action. Refresh the archive and try again.',
       details: error instanceof WorkbenchError ? error.details : error instanceof ReviewValidationError ? error.issues : null });
   }
 }
@@ -60,19 +58,27 @@ function target(kind: string, sysId: unknown) {
   return row;
 }
 
-function countReviews(kind: string, row: GlideRecord) {
+function hasRetainedReview(kind: string, row: GlideRecord) {
   const reviews = new GlideRecord(tables.review);
   if (kind === 'story') reviews.addQuery('revision.story', id(row));
-  else reviews.addQuery('request_json', 'CONTAINS', id(row));
+  else {
+    const snapshot = reviews.addQuery('request_json', 'CONTAINS', id(row));
+    const ruleId = row.getValue('rule_id');
+    if (ruleId) snapshot.addOrCondition('request_json', 'CONTAINS', JSON.stringify(ruleId));
+  }
+  reviews.setLimit(1);
   reviews.query();
-  return Number(reviews.getRowCount());
+  return reviews.next();
 }
 
 function retentionReason(kind: string, row: GlideRecord) {
+  if (row.getValue('protected_evidence') === '1') {
+    return 'This item was marked as protected evidence.';
+  }
   if (protectedEvidence[kind].includes(id(row))) {
     return 'Protected capstone evidence from the acceptance report stays in this instance.';
   }
-  if (countReviews(kind, row) > 0) {
+  if (hasRetainedReview(kind, row)) {
     return kind === 'story'
       ? 'Retained AI review history depends on this story.'
       : 'Retained reviews used this rule, so its saved history stays readable.';
@@ -80,43 +86,23 @@ function retentionReason(kind: string, row: GlideRecord) {
   return null;
 }
 
-function childTable(kind: string) {
-  return kind === 'story' ? tables.revision : tables.rule_version;
-}
-
-function childField(kind: string) {
-  return kind === 'story' ? 'story' : 'parent_rule';
-}
-
-function countChildren(kind: string, row: GlideRecord) {
-  const children = new GlideRecord(childTable(kind));
-  children.addQuery(childField(kind), id(row));
-  children.query();
-  return Number(children.getRowCount());
-}
-
-function deletionSummary(kind: string, row: GlideRecord) {
-  const saved = countChildren(kind, row);
-  return kind === 'story'
-    ? 'Removes this story, ' + saved + ' saved ' + (saved === 1 ? 'version' : 'versions') + ' and no AI reviews.'
-    : 'Removes this rule and its ' + saved + ' saved ' + (saved === 1 ? 'version' : 'versions') + '.';
-}
+// Keep the destructive action closed until the installed app can prove that a
+// stale restore or refused child deletion leaves the entire record set intact.
+const deletionPending = 'Permanent deletion is unavailable while safe removal of saved versions is being verified.';
 
 function itemView(kind: string, row: GlideRecord) {
-  const reason = retentionReason(kind, row);
   return {
     id: id(row), title: row.getValue('title') || '', modified: String(row.getValue('sys_mod_count')),
     archived_at: row.getValue('archived_at') || '',
     can_restore: kind === 'story' ? canArchiveStories() : canArchiveRules(),
-    can_delete: gs.hasRole('admin') && !reason,
-    ...(reason ? { retention_reason: reason } : { delete_summary: deletionSummary(kind, row) }),
+    can_delete: false, retention_reason: retentionReason(kind, row) || deletionPending,
   };
 }
 
-const cursorPattern = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\|([a-f0-9]{32})$/;
+const cursorPattern = /^(story|rule)\|(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\|([a-f0-9]{32})$/;
 
-function cursorToken(row: GlideRecord) {
-  return row.getValue('sys_updated_on') + '|' + id(row);
+function cursorToken(kind: string, row: GlideRecord) {
+  return kind + '|' + row.getValue('sys_updated_on') + '|' + id(row);
 }
 
 const PAGE = 50;
@@ -127,55 +113,56 @@ export function getArchive(request, response) {
     kindTable(kind);
     requireArchiveRole(kind);
     const cursor = String(request.queryParams.cursor || '');
-    let after = '';
+    const rows = new GlideRecord(kindTable(kind));
     if (cursor) {
       const match = cursorPattern.exec(cursor);
-      if (!match) throw new WorkbenchError('This archive page could not be opened. Return to the first page.');
-      after = 'sys_updated_on<' + match[1] + '^ORsys_updated_on=' + match[1] + '^sys_id<' + match[2] + '^';
-    }
-    const rows = new GlideRecord(kindTable(kind));
-    // Keyset page order stays stable: strictly older rows, or the same timestamp
-    // with a smaller sys_id. The OR binds to the sys_updated_on conditions.
-    rows.addEncodedQuery('archived=true^' + after + 'archived=true');
-    // The repeated archived condition is intentional: it also applies after the
-    // cursor's OR group so every row on every page is archived.    rows.orderByDesc('sys_updated_on');
+      if (!match || match[1] !== kind || !new GlideDateTime(match[2]).isValid()) {
+        throw new WorkbenchError('This archive page could not be opened. Return to the first page.');
+      }
+      const [, , updated, rowId] = match;
+      // Both branches require archived=true. Only equal timestamps use the ID bound.
+      rows.addEncodedQuery('archived=true^sys_updated_on<' + updated
+        + '^NQarchived=true^sys_updated_on=' + updated + '^sys_id<' + rowId);
+    } else rows.addQuery('archived', true);
+    rows.orderByDesc('sys_updated_on');
     rows.orderByDesc('sys_id');
     rows.setLimit(PAGE + 1);
     rows.query();
     const items = [];
-    let more = false;
+    let lastReturned = null;
     while (rows.next()) {
-      if (items.length >= PAGE) { more = true; break; }
+      if (items.length === PAGE) return { kind, items, next_cursor: lastReturned };
       items.push(itemView(kind, rows));
+      lastReturned = cursorToken(kind, rows);
     }
-    return { kind, items, next_cursor: more ? cursorToken(rows) : null };
+    return { kind, items, next_cursor: null };
   });
+}
+
+function expectedCount(kind: string, row: GlideRecord, expectedModified: unknown) {
+  const count = Number(row.getValue('sys_mod_count'));
+  if ((typeof expectedModified !== 'string' && typeof expectedModified !== 'number')
+    || !/^\d+$/.test(String(expectedModified)) || !Number.isSafeInteger(count) || Number(expectedModified) !== count) {
+    throw new WorkbenchError('This ' + kind + ' changed elsewhere. Reopen the Archive before acting again.', 409);
+  }
+  return count;
 }
 
 function guardedWrite(kind: string, row: GlideRecord, expectedModified: unknown, changes: Record<string, unknown>) {
   const sysId = id(row);
-  const count = Number(row.getValue('sys_mod_count'));
-  if (!Number.isInteger(Number(expectedModified)) || Number(expectedModified) !== count) {
-    throw new WorkbenchError('This ' + kind + ' changed elsewhere. Reopen the Archive before acting again.', 409);
-  }
+  const count = expectedCount(kind, row, expectedModified);
+  const changeKey = String(gs.generateGUID());
   const update = new GlideRecord(kindTable(kind));
   update.addQuery('sys_id', sysId);
   update.addQuery('sys_mod_count', String(count));
   for (const [field, value] of Object.entries(changes)) update.setValue(field, value);
+  update.setValue('archive_change_key', changeKey);
   update.updateMultiple();
   const refreshed = target(kind, sysId);
-  if (Number(refreshed.getValue('sys_mod_count')) !== count + 1 || archived(refreshed) !== changes.archived) {
+  if (refreshed.getValue('archive_change_key') !== changeKey || archived(refreshed) !== changes.archived) {
     throw new WorkbenchError('This ' + kind + ' changed elsewhere. Reopen the Archive before acting again.', 409);
   }
   return refreshed;
-}
-
-function removeWithChildren(kind: string, row: GlideRecord) {
-  const children = new GlideRecord(childTable(kind));
-  children.addQuery(childField(kind), id(row));
-  children.query();
-  while (children.next()) children.deleteRecord();
-  row.deleteRecord();
 }
 
 export function postArchive(request, response) {
@@ -185,21 +172,22 @@ export function postArchive(request, response) {
     const action = String(body.action || '');
     const kind = String(body.kind || '');
     kindTable(kind);
-    const row = target(kind, body.id);
     if (action === 'delete') {
       if (!gs.hasRole('admin')) throw new WorkbenchError('Permanent deletion is an administrator action from the Archive.', 403);
+      const row = target(kind, body.id);
       if (!archived(row)) throw new WorkbenchError('Only archived items can be deleted. Archive this ' + kind + ' first.', 409);
+      expectedCount(kind, row, body.expected_modified);
       const reason = retentionReason(kind, row);
       if (reason) throw new WorkbenchError('This ' + kind + ' stays archived. ' + reason, 409);
-      guardedWrite(kind, row, body.expected_modified, { archived: true });
-      removeWithChildren(kind, target(kind, body.id));
-      return { deleted: true, id: String(body.id), kind };
+      throw new WorkbenchError(deletionPending, 503);
     }
     requireArchiveRole(kind);
+    const row = target(kind, body.id);
     if (action === 'archive') {
       if (archived(row)) throw new WorkbenchError('This ' + kind + ' is already archived. Reopen the Archive before acting again.', 409);
       const refreshed = guardedWrite(kind, row, body.expected_modified, {
         archived: true, archived_at: new GlideDateTime().getValue(), archived_by: String(gs.getUserID()),
+        ...(kind === 'rule' ? { active: false } : {}),
       });
       return { item: itemView(kind, refreshed) };
     }
@@ -225,5 +213,6 @@ export function assertStoryNotArchived(story: GlideRecord) {
 
 export function assertRevisionNotArchived(revision: GlideRecord) {
   const story = new GlideRecord(tables.story);
-  if (story.get(revision.getValue('story'))) assertStoryNotArchived(story);
+  if (!story.get(revision.getValue('story'))) throw new WorkbenchError('This saved version has no story.', 409);
+  assertStoryNotArchived(story);
 }

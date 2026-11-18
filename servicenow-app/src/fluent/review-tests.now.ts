@@ -30,7 +30,7 @@ const approvedRules = Test({
 const archive = Test({
   $id: Now.ID['fe02-archive-guard-test'],
   name: 'Suiko FE-02: archive, restore and guarded deletion',
-  description: 'Runs the archive actions as dedicated editor, rules editor, no-role and admin users; no model calls. ATF rolls back the fixture data and restores the protected capstone records.',
+  description: 'Runs the archive actions as dedicated editor, rules editor, no-role and admin users. No model calls or changes to shared evidence.',
   failOnServerError: true,
 }, atf => {
   atf.server.createUser({ $id: Now.ID['fe02-archive-editor-user'], firstName: 'Suiko', lastName: 'Archive Editor', roles: [editor] });
@@ -39,7 +39,8 @@ const archive = Test({
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-rule-step'], script: Now.include('./tests/archive-guard.script.js') });
   atf.server.createUser({ $id: Now.ID['fe02-archive-outsider-user'], firstName: 'Suiko', lastName: 'Archive Outsider', roles: [] });
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-outsider-step'], script: Now.include('./tests/archive-guard.script.js') });
-  atf.server.createUser({ $id: Now.ID['fe02-archive-admin-user'], firstName: 'Suiko', lastName: 'Archive Admin', roles: ['admin'] });
+  // The ATF step accepts a role record ID. This is the PDI's built-in admin role.
+  atf.server.createUser({ $id: Now.ID['fe02-archive-admin-user'], firstName: 'Suiko', lastName: 'Archive Admin', roles: ['2831a114c611228501d4ea6c309d626d'] });
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-admin-step'], script: Now.include('./tests/archive-guard.script.js') });
 });
 

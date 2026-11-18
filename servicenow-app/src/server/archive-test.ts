@@ -1,11 +1,11 @@
-import { GlideRecord, gs } from '@servicenow/glide';
+import { GlideDateTime, GlideRecord, gs } from '@servicenow/glide';
 import { saveRevision, getState, saveRule, approveRule, reviewSavedVersion } from './workbench.ts';
 import { getArchive, postArchive } from './archive.ts';
 import { readSavedSources } from './read-sources.ts';
 
 // FE-02 (#2) regressions: archive, restore and guarded deletion. The steps run as
-// dedicated non-admin users; ATF rolls back every fixture record and every change
-// to the protected capstone records. No Gemini calls or configuration changes.
+// dedicated users. ATF rolls back only fictional fixtures. No Gemini or edits
+// to shared acceptance records.
 
 const capstoneStory = '89688f4583e4db106fffc629feaad327';
 const capstoneRule = 'c1484b4583e4db106fffc629feaad326';
@@ -78,7 +78,7 @@ export function runArchiveStoryRegression() {
   page = action(getArchive, null, { kind: 'story', cursor: '' });
   let item = page.body.items.find(entry => entry.id === storyId);
   expect(!!item && item.archived_at && item.can_restore === true && item.can_delete === false, 'The archived story was not listed for the editor.');
-  expect(item.delete_summary.includes('no AI reviews'), 'The deletion summary did not describe the unused story.');
+  expect(item.retention_reason.includes('Permanent deletion is unavailable'), 'The held deletion path was not explained.');
   expect(action(getArchive, null, { kind: 'story', cursor: 'not-a-page' }).status === 400, 'An unreadable cursor was accepted.');
   const revisionId = storyState(storyId).revisions[0].id;
   let providerTouched = false;
@@ -108,7 +108,7 @@ export function runArchiveRuleRegression() {
   const identity = 'ATF-arch-rule-' + gs.generateGUID();
   const definition = {
     title: 'ATF archive rule fixture', text: 'Check the fictional archive fixture wording.', priority: 'standard',
-    formats: ['article'], content_kinds: ['news'], conditions: '', human_checks: [], origin: { kind: 'manual' },
+    formats: ['article'], content_kinds: ['news'], conditions: '', human_checks: [], origin: { kind: 'manual' }, requires_sources: true,
   };
   let rule = current(action(saveRule, { rule_id: identity, ...definition }), identity);
   rule = current(action(approveRule, approvalInput(rule)), identity);
@@ -133,7 +133,9 @@ export function runArchiveRuleRegression() {
   const before = action((request, response) => reviewSavedVersion(request, response, provider, read),
     { request_key: 'ATF-rule-rev-' + gs.generateGUID(), revision_id: revisionId });
   expect(before.status === 200 && before.body.state === 'complete', 'The review with the active rule failed: ' + JSON.stringify(before.body.error));
-  expect(inputs[0].policy_pack.rules.length === 1, 'The active rule was missing from the review pack.');
+  const ruleIds = input => input.policy_pack.rules.map(rule => rule.rule_id);
+  expect(ruleIds(inputs[0]).includes(identity), 'The active fixture rule was missing from the review pack.');
+  const otherRuleIds = ruleIds(inputs[0]).filter(ruleId => ruleId !== identity);
   const listed = rulesState().rules.find(entry => entry.rule_id === identity);
   expect(listed.archived === false && listed.can_archive === true, 'The rules view did not report archive eligibility.');
   let modified = listed.modified;
@@ -148,7 +150,11 @@ export function runArchiveRuleRegression() {
   const after = action((request, response) => reviewSavedVersion(request, response, provider, read),
     { request_key: 'ATF-rule-rev2-' + gs.generateGUID(), revision_id: revisionId });
   expect(after.status === 200 && after.body.state === 'complete', 'The review after archiving failed: ' + JSON.stringify(after.body.error));
-  expect(inputs[1].policy_pack.rules.length === 0 && inputs[1].source_rule_ids.length === 0, 'The archived rule stayed in the new review pack.');
+  expect(!ruleIds(inputs[1]).includes(identity) && otherRuleIds.every(ruleId => ruleIds(inputs[1]).includes(ruleId)),
+    'The archived fixture was retained or another active rule was removed.');
+  // A URL is not needed to determine which rules require sources.
+  expect(inputs[0].source_rule_ids.includes(identity) && !inputs[1].source_rule_ids.includes(identity),
+    'The archived rule was not removed from the source-rule selection.');
   const restored = action(postArchive, { action: 'restore', kind: 'rule', id: rule.id, expected_modified: rulesState().rules.find(entry => entry.rule_id === identity).modified });
   expect(restored.status === 200, 'The rule could not be restored: ' + JSON.stringify(restored.body));
   const afterRestore = rulesState().rules.find(entry => entry.rule_id === identity);
@@ -165,23 +171,15 @@ export function runArchiveOutsiderRegression() {
   expect(action(getArchive, null, { kind: 'rule', cursor: '' }).status === 403, 'An outsider opened the rule archive.');
   expect(action(postArchive, { action: 'archive', kind: 'story', id: capstoneStory, expected_modified: '0' }).status === 403, 'An outsider archived a story.');
   expect(action(postArchive, { action: 'delete', kind: 'rule', id: capstoneRule, expected_modified: '0' }).status === 403, 'An outsider requested deletion.');
+  const missing = gs.generateGUID();
+  expect(action(postArchive, { action: 'archive', kind: 'story', id: missing, expected_modified: '0' }).status === 403
+    && action(postArchive, { action: 'delete', kind: 'rule', id: missing, expected_modified: '0' }).status === 403,
+  'Denial depended on whether the selected record existed.');
   return 'Passed as a no-role user: archive reads and actions, including protected records, are denied.';
 }
 
 export function runArchiveAdminRegression() {
-  expect(gs.hasRole('admin') && !gs.hasRole('x_2236136_suiko_ai.rules_editor'), 'Use the dedicated admin test user without the rules-editor role.');
-  const capstone = storyState(capstoneStory);
-  expect(!!capstone.story, 'The protected capstone story is missing from this instance.');
-  const archived = action(postArchive, { action: 'archive', kind: 'story', id: capstoneStory, expected_modified: capstone.story.modified });
-  expect(archived.status === 200, 'The protected capstone story could not be archived: ' + JSON.stringify(archived.body));
-  const page = action(getArchive, null, { kind: 'story', cursor: '' });
-  const item = page.body.items.find(entry => entry.id === capstoneStory);
-  expect(item.retention_reason.includes('Protected capstone evidence'), 'The protected capstone story did not report its evidence protection.');
-  expect(item.can_delete === false, 'The protected capstone story was offered for deletion.');
-  const denied = action(postArchive, { action: 'delete', kind: 'story', id: capstoneStory, expected_modified: item.modified });
-  expect(denied.status === 409 && denied.body.message.includes('stays archived'), 'A direct admin deletion request was not blocked: ' + JSON.stringify(denied.body));
-  expect(action(postArchive, { action: 'restore', kind: 'story', id: capstoneStory, expected_modified: item.modified }).status === 200, 'The protected capstone story could not be restored.');
-
+  expect(gs.hasRole('admin'), 'Use the dedicated admin test user.');
   const demo = action(saveRevision, {
     request_key: 'ATF-demo-' + gs.generateGUID(), title: 'ATF disposable demo', text: 'Throwaway demo content for the archive suite.',
     notes: '', content_format: 'article', content_kind: 'news', source_urls: [],
@@ -192,16 +190,16 @@ export function runArchiveAdminRegression() {
   expect(marker.get(demoId), 'The disposable demo story disappeared.');
   marker.setValue('disposable', true);
   marker.update();
-  const demoState = storyState(demoId);
-  expect(action(postArchive, { action: 'archive', kind: 'story', id: demoId, expected_modified: demoState.story.modified }).status === 200, 'The disposable demo could not be archived.');
-  const removed = action(postArchive, { action: 'delete', kind: 'story', id: demoId, expected_modified: storyState(demoId).story.modified });
-  expect(removed.status === 200 && removed.body.deleted === true && removed.body.kind === 'story', 'The disposable demo was not deleted: ' + JSON.stringify(removed.body));
-  const check = new GlideRecord('x_2236136_suiko_ai_story');
-  expect(!check.get(demoId), 'The deleted demo story was still present.');
-  const revisions = new GlideRecord('x_2236136_suiko_ai_revision');
-  revisions.addQuery('story', demoId);
-  revisions.query();
-  expect(revisions.getRowCount() === 0, 'The deleted demo left orphaned saved versions.');
+  let archived = action(postArchive, { action: 'archive', kind: 'story', id: demoId, expected_modified: storyState(demoId).story.modified });
+  expect(archived.status === 200 && archived.body.item.can_delete === false, 'The disposable story was not safely archived.');
+  const held = action(postArchive, { action: 'delete', kind: 'story', id: demoId, expected_modified: archived.body.item.modified });
+  expect(held.status === 503 && storyState(demoId).revisions[0].id === demo.body.id, 'The held deletion path touched the saved version.');
+  expect(marker.get(demoId), 'The held demo story was removed.');
+  marker.setValue('protected_evidence', true);
+  expect(!!marker.update(), 'The fixture evidence marker could not be written.');
+  const markedStory = action(postArchive, { action: 'delete', kind: 'story', id: demoId, expected_modified: storyState(demoId).story.modified });
+  expect(markedStory.status === 409 && markedStory.body.message.includes('marked as protected evidence')
+    && storyState(demoId).story.archived, 'A marked disposable story did not stay archived.');
 
   const identity = 'ATF-demo-rule-' + gs.generateGUID();
   const rule = current(action(saveRule, {
@@ -210,18 +208,46 @@ export function runArchiveAdminRegression() {
   }), identity);
   const ruleRow = new GlideRecord('x_2236136_suiko_ai_rule');
   expect(ruleRow.get(rule.id), 'The disposable demo rule disappeared.');
-  ruleRow.setValue('disposable', true);
-  ruleRow.update();
-  expect(action(postArchive, { action: 'archive', kind: 'rule', id: rule.id, expected_modified: rulesState().rules.find(entry => entry.rule_id === identity).modified }).status === 200, 'The disposable demo rule could not be archived.');
+  ruleRow.setValue('protected_evidence', true);
+  expect(!!ruleRow.update(), 'The rule evidence marker could not be written.');
+  archived = action(postArchive, { action: 'archive', kind: 'rule', id: rule.id, expected_modified: rulesState().rules.find(entry => entry.rule_id === identity).modified });
+  expect(archived.status === 200 && !archived.body.item.can_delete && archived.body.item.retention_reason.includes('marked as protected evidence'),
+    'The marked rule did not report evidence protection.');
   expect(action(postArchive, { action: 'delete', kind: 'rule', id: rule.id, expected_modified: '0' }).status === 409, 'A stale deletion request was accepted.');
   const ruleModified = rulesState().rules.find(entry => entry.rule_id === identity).modified;
-  const ruleRemoved = action(postArchive, { action: 'delete', kind: 'rule', id: rule.id, expected_modified: ruleModified });
-  expect(ruleRemoved.status === 200 && ruleRemoved.body.deleted === true, 'The disposable demo rule was not deleted: ' + JSON.stringify(ruleRemoved.body));
-  const ruleCheck = new GlideRecord('x_2236136_suiko_ai_rule');
-  expect(!ruleCheck.get(rule.id), 'The deleted demo rule was still present.');
+  const markedRule = action(postArchive, { action: 'delete', kind: 'rule', id: rule.id, expected_modified: ruleModified });
+  expect(markedRule.status === 409 && rulesState().rules.find(entry => entry.rule_id === identity).archived, 'A marked rule did not stay archived.');
   const versions = new GlideRecord('x_2236136_suiko_ai_rule_version');
-  versions.addQuery('parent_rule', rule.id);
-  versions.query();
-  expect(versions.getRowCount() === 0, 'The deleted demo rule left orphaned saved versions.');
-  return 'Passed as an admin: protected capstone evidence blocked a direct deletion and was restored; disposable demo story and rule were removed with all saved children and no stale acceptance.';
+  expect(versions.get(rule.draft.id), 'The marked rule lost its saved proposal.');
+  verifyArchivePagination();
+  return 'Passed as admin: marked story/rule retention, held deletion preserves children, stale rejection and two-page archive ordering.';
+}
+
+function verifyArchivePagination() {
+  const timestamp = new GlideDateTime();
+  timestamp.addDaysUTC(2);
+  const newest = timestamp.getValue();
+  timestamp.addDaysUTC(-1);
+  const older = timestamp.getValue();
+  // New IDs are random then sorted so the older row has a larger ID than the
+  // entire tied group. The handler still needs to return it on page two.
+  const ids = Array.from({ length: 52 }, () => String(gs.generateGUID())).sort().reverse();
+  for (const [i, sysId] of ids.entries()) {
+    const row = new GlideRecord('x_2236136_suiko_ai_story');
+    row.initialize();
+    row.setNewGuidValue(sysId);
+    row.autoSysFields(false);
+    row.setValue('title', 'ATF archive page fixture');
+    row.setValue('archived', true);
+    row.setValue('archived_at', newest);
+    row.setValue('sys_updated_on', i === 0 ? older : newest);
+    expect(!!row.insert(), 'A fictional pagination row could not be saved.');
+  }
+  const first = action(getArchive, null, { kind: 'story' });
+  expect(first.status === 200 && first.body.items.length === 50 && first.body.next_cursor
+    && first.body.items.every((item, i) => item.id === ids[i + 1]), 'The first page missed the expected timestamp and ID order.');
+  const next = action(getArchive, null, { kind: 'story', cursor: first.body.next_cursor });
+  expect(next.status === 200 && next.body.items[0]?.id === ids[51] && next.body.items[1]?.id === ids[0],
+    'The second page skipped the next tied row or the older row with a greater ID.');
+  expect(action(getArchive, null, { kind: 'rule', cursor: first.body.next_cursor }).status === 400, 'A story cursor was accepted for rules.');
 }
