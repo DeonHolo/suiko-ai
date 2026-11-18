@@ -38,6 +38,20 @@ function rulesState() {
   getState({ queryParams: {} }, { setBody: value => { state = value; }, setStatus: value => { throw new Error('State failed: ' + value); } });
   return state;
 }
+function archivedItem(kind, id) {
+  let cursor = '';
+  const visited = new Set();
+  do {
+    const page = action(getArchive, null, { kind, cursor });
+    expect(page.status === 200, 'Could not read the archive fixture page.');
+    const item = page.body.items.find(entry => entry.id === id);
+    if (item) return item;
+    cursor = page.body.next_cursor;
+    expect(!cursor || !visited.has(cursor), 'Archive pagination repeated a cursor.');
+    if (cursor) visited.add(cursor);
+  } while (cursor);
+  return null;
+}
 function reviewReply(input, title, text) {
   const ref = (segment_id, quote) => ({ revision_id: 'draft-1', segment_id, quote });
   return {
@@ -75,8 +89,7 @@ export function runArchiveStoryRegression() {
   expect(archived.status === 200 && archived.body.item.can_restore === true, 'The story archive action failed: ' + JSON.stringify(archived.body));
   expect(storyState(storyId).story.archived === true, 'The story did not report its archived state.');
   expect(storyState(storyId).stories.some(item => item.id === storyId) === false, 'The archived story stayed in the daily list.');
-  page = action(getArchive, null, { kind: 'story', cursor: '' });
-  let item = page.body.items.find(entry => entry.id === storyId);
+  const item = archivedItem('story', storyId);
   expect(!!item && item.archived_at && item.can_restore === true && item.can_delete === false, 'The archived story was not listed for the editor.');
   expect(item.retention_reason.includes('Permanent deletion is unavailable'), 'The held deletion path was not explained.');
   expect(action(getArchive, null, { kind: 'story', cursor: 'not-a-page' }).status === 400, 'An unreadable cursor was accepted.');
@@ -143,8 +156,7 @@ export function runArchiveRuleRegression() {
   expect(archived.status === 200 && archived.body.item.can_restore === true, 'The rule archive action failed: ' + JSON.stringify(archived.body));
   const afterArchive = rulesState().rules.find(entry => entry.rule_id === identity);
   expect(afterArchive.archived === true, 'The archived rule left the readable rules view.');
-  const page = action(getArchive, null, { kind: 'rule', cursor: '' });
-  const item = page.body.items.find(entry => entry.id === rule.id);
+  const item = archivedItem('rule', rule.id);
   expect(!!item && item.retention_reason && item.retention_reason.includes('Retained reviews'), 'The archived rule did not report its retained-review protection.');
   expect(item.can_delete === false, 'A non-admin was offered permanent deletion.');
   const after = action((request, response) => reviewSavedVersion(request, response, provider, read),

@@ -1,6 +1,6 @@
 import '@servicenow/sdk/global';
 import { Test, TestSuite } from '@servicenow/sdk/core';
-import { editor, rulesEditor } from './review.now';
+import { editor, legalReviewer, rulesEditor } from './review.now';
 
 const persistence = Test({
   $id: Now.ID['ai16-review-persistence-test'],
@@ -27,6 +27,90 @@ const approvedRules = Test({
   atf.server.runServerSideScript({ $id: Now.ID['ai18-editor-step'], script: Now.include('./tests/everyday-editor.script.js') });
 });
 
+const legalWorkflow = Test({
+  $id: Now.ID['be02-legal-workflow-test'],
+  name: 'Suiko BE-02: exact-revision legal workflow',
+  description: 'Uses separate Editor, assigned legal-only, unassigned legal-only and outsider accounts on fictional drafts.',
+  failOnServerError: true,
+}, atf => {
+  const reviewer = atf.server.createUser({
+    $id: Now.ID['be02-assigned-legal-user'], firstName: 'Suiko', lastName: 'Assigned Legal',
+    roles: [legalReviewer], impersonate: false,
+  });
+  const unassigned = atf.server.createUser({
+    $id: Now.ID['be02-unassigned-legal-user'], firstName: 'Suiko', lastName: 'Unassigned Legal',
+    roles: [legalReviewer], impersonate: false,
+  });
+  const inactive = atf.server.createUser({
+    $id: Now.ID['be02-inactive-legal-user'], firstName: 'Suiko', lastName: 'Inactive Legal',
+    roles: [legalReviewer], fieldValues: { active: false }, impersonate: false,
+  });
+  const outsider = atf.server.createUser({
+    $id: Now.ID['be02-legal-outsider'], firstName: 'Suiko', lastName: 'Legal Outsider',
+    roles: [], impersonate: false,
+  });
+  const sender = atf.server.createUser({
+    $id: Now.ID['be02-legal-workflow-user'],
+    firstName: 'Suiko', lastName: 'Legal Workflow Editor', roles: [editor],
+  });
+  const submitted = atf.server.runServerSideScript({
+    $id: Now.ID['be02-legal-workflow-step'],
+    script: `(function () {
+      var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts');
+      outputs.table = 'x_2236136_suiko_ai_legal_task';
+      outputs.record_id = test.runLegalRoutingRegression('${reviewer.user}', '${unassigned.user}', '${inactive.user}');
+      return true;
+    })();`,
+  });
+  atf.server.impersonate({ $id: Now.ID['be02-test-as-unassigned'], user: unassigned.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-unassigned'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runUnassignedLegalRegression('${submitted.record_id}', true);
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-test-as-outsider'], user: outsider.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-outsider'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runUnassignedLegalRegression('${submitted.record_id}', false);
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-test-as-reviewer'], user: reviewer.user });
+  const cleared = atf.server.runServerSideScript({ $id: Now.ID['be02-check-older-clearance'], script: `(function () {
+    outputs.table = 'x_2236136_suiko_ai_story';
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression('${submitted.record_id}', false);
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-return-to-editor'], user: sender.user });
+  const fresh = atf.server.runServerSideScript({ $id: Now.ID['be02-check-fresh-routing'], script: `(function () {
+    outputs.table = 'x_2236136_suiko_ai_legal_task';
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runFreshLegalRoutingRegression('${cleared.record_id}', '${reviewer.user}');
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-review-newer-copy'], user: reviewer.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-changes-requested'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression('${fresh.record_id}', true);
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-final-editor-check'], user: sender.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-current-status'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyLegalChangesRequested('${cleared.record_id}');
+    return true;
+  })();` });
+  const finalTask = atf.server.runServerSideScript({ $id: Now.ID['be02-route-final-version'], script: `(function () {
+    outputs.table = 'x_2236136_suiko_ai_legal_task';
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').routeCurrentLegalClearanceFixture('${cleared.record_id}', '${reviewer.user}');
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-final-legal-role'], user: reviewer.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-final-clearance'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').clearCurrentLegalFixture('${finalTask.record_id}');
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-editor-clearance-role'], user: sender.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-final-clearance'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyCurrentLegalClearance('${cleared.record_id}');
+    return true;
+  })();` });
+});
+
 const archive = Test({
   $id: Now.ID['fe02-archive-guard-test'],
   name: 'Suiko FE-02: archive, restore and guarded deletion',
@@ -51,5 +135,5 @@ TestSuite({
   $id: Now.ID['ai-review-server-regression-suite'],
   name: 'Suiko AI: server review regressions',
   description: 'Server-only checks using fictional inputs and injected provider replies.',
-  tests: [persistence, approvedRules, archive],
+  tests: [persistence, approvedRules, archive, legalWorkflow],
 });

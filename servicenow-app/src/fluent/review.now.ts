@@ -1,9 +1,14 @@
 import '@servicenow/sdk/global';
 import {
   Acl, Role, Table, StringColumn, IntegerColumn, ReferenceColumn,
-  BooleanColumn, GenericColumn, Form, default_view, RestApi, ApplicationMenu, Record,
+  BooleanColumn, GenericColumn, ChoiceColumn, DateTimeColumn, Form, default_view,
+  RestApi, ApplicationMenu, Record,
 } from '@servicenow/sdk/core';
-import { getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive, configureProvider, getPolicies, savePolicy, suggestPolicyChecks } from '../server/workbench';
+import {
+  getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive,
+  configureProvider, getPolicies, savePolicy, suggestPolicyChecks, workflowAction,
+  legalTasks, legalDecision,
+} from '../server/workbench';
 import { getArchive, postArchive } from '../server/archive';
 
 export const editor = Role({
@@ -13,9 +18,16 @@ export const rulesEditor = Role({
   $id: Now.ID['suiko-rules-editor-role'], name: 'x_2236136_suiko_ai.rules_editor',
   containsRoles: [editor],
 });
+export const legalReviewer = Role({
+  $id: Now.ID['suiko-legal-reviewer-role'], name: 'x_2236136_suiko_ai.legal_reviewer',
+});
 const editorApi = Acl({
   $id: Now.ID['suiko-api-access'], type: 'rest_endpoint', name: 'suiko_editor_api',
   operation: 'execute', roles: [editor], adminOverrides: true,
+});
+const legalApi = Acl({
+  $id: Now.ID['suiko-legal-api-access'], type: 'rest_endpoint', name: 'suiko_legal_api',
+  operation: 'execute', roles: [legalReviewer], adminOverrides: true,
 });
 
 export const x_2236136_suiko_ai_story = Table({
@@ -28,6 +40,16 @@ export const x_2236136_suiko_ai_story = Table({
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
+    current_revision: ReferenceColumn({ label: 'Current revision', referenceTable: 'x_2236136_suiko_ai_revision' }),
+    workflow_status: ChoiceColumn({
+      label: 'Workflow status', choices: {
+        needs_review: 'Needs review',
+        waiting_for_legal: 'With legal',
+        ready_for_sign_off: 'Ready for sign-off',
+        changes_requested: 'Changes requested',
+        signed_off: 'Signed off',
+      }, default: 'needs_review',
+    }),
   },
   allowWebServiceAccess: false,
 });
@@ -47,6 +69,34 @@ export const x_2236136_suiko_ai_revision = Table({
   },
   allowWebServiceAccess: false,
   index: [{ element: 'version_key', unique: true }, { element: 'request_key', unique: true }],
+});
+export const x_2236136_suiko_ai_legal_task = Table({
+  name: 'x_2236136_suiko_ai_legal_task', label: 'Suiko legal review', audit: true,
+  schema: {
+    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true, cascadeRule: 'restrict' }),
+    revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true, cascadeRule: 'restrict', readOnly: true }),
+    pending_key: StringColumn({ label: 'Legal submission identity', maxLength: 32 }),
+    decision_key: StringColumn({ label: 'Legal decision write identity', maxLength: 32 }),
+    submitted_title: StringColumn({ label: 'Submitted title', maxLength: 160, readOnly: true, readOnlyOption: 'display_read_only' }),
+    submitted_text: StringColumn({ label: 'Submitted story text', maxLength: 12000, readOnly: true, readOnlyOption: 'display_read_only' }),
+    submitted_notes: StringColumn({ label: 'Submitted notes', maxLength: 4000, readOnly: true, readOnlyOption: 'display_read_only' }),
+    assigned_reviewer: ReferenceColumn({ label: 'Assigned reviewer', referenceTable: 'sys_user', mandatory: true }),
+    status: ChoiceColumn({
+      label: 'Status', choices: {
+        pending: 'Pending',
+        cleared: 'Cleared',
+        changes_requested: 'Changes requested',
+      }, default: 'pending', mandatory: true,
+    }),
+    reason: StringColumn({ label: 'Reason for legal review', maxLength: 1000, mandatory: true }),
+    requested_by: ReferenceColumn({ label: 'Requested by', referenceTable: 'sys_user', mandatory: true }),
+    requested_at: DateTimeColumn({ label: 'Requested at', mandatory: true }),
+    decision_note: StringColumn({ label: 'Decision note', maxLength: 1000 }),
+    decision_by: ReferenceColumn({ label: 'Decision by', referenceTable: 'sys_user' }),
+    decided_at: DateTimeColumn({ label: 'Decided at' }),
+  },
+  allowWebServiceAccess: false,
+  index: [{ element: 'revision', unique: false }, { element: 'assigned_reviewer', unique: false }, { element: 'pending_key', unique: true }],
 });
 export const x_2236136_suiko_ai_review = Table({
   name: 'x_2236136_suiko_ai_review', label: 'Suiko AI review', audit: true,
@@ -155,7 +205,8 @@ Form({
 Form({
   table: 'x_2236136_suiko_ai_story', view: default_view,
   sections: [{ caption: 'Details', content: [{ layout: 'one-column', elements: [
-      { type: 'table_field', field: 'title' }
+      { type: 'table_field', field: 'title' },
+      { type: 'table_field', field: 'current_revision' },
   ] }] }],
 });
 
@@ -181,6 +232,50 @@ Acl({
   $id: Now.ID['x_2236136_suiko_ai_story-delete'], type: 'record',
   table: 'x_2236136_suiko_ai_story', operation: 'delete',
   roles: ['admin'], adminOverrides: true,
+});
+
+Acl({
+  $id: Now.ID['x_2236136_suiko_ai_legal_task-read'], type: 'record',
+  table: 'x_2236136_suiko_ai_legal_task', operation: 'read',
+  roles: [legalReviewer], adminOverrides: true,
+  script: 'answer = current.getValue("assigned_reviewer") === String(gs.getUserID());',
+});
+
+Acl({
+  $id: Now.ID['x_2236136_suiko_ai_legal_task-create'], type: 'record',
+  table: 'x_2236136_suiko_ai_legal_task', operation: 'create',
+  roles: ['admin'], adminOverrides: true,
+});
+
+Acl({
+  $id: Now.ID['x_2236136_suiko_ai_legal_task-write'], type: 'record',
+  table: 'x_2236136_suiko_ai_legal_task', operation: 'write',
+  roles: ['admin'], adminOverrides: true,
+});
+
+Acl({
+  $id: Now.ID['x_2236136_suiko_ai_legal_task-delete'], type: 'record',
+  table: 'x_2236136_suiko_ai_legal_task', operation: 'delete',
+  roles: ['admin'], adminOverrides: true,
+});
+
+Form({
+  table: 'x_2236136_suiko_ai_legal_task', view: default_view,
+  sections: [{ caption: 'Legal review', content: [{ layout: 'one-column', elements: [
+    { type: 'table_field', field: 'story' },
+    { type: 'table_field', field: 'revision' },
+    { type: 'table_field', field: 'submitted_title' },
+    { type: 'table_field', field: 'submitted_text' },
+    { type: 'table_field', field: 'submitted_notes' },
+    { type: 'table_field', field: 'assigned_reviewer' },
+    { type: 'table_field', field: 'status' },
+    { type: 'table_field', field: 'reason' },
+    { type: 'table_field', field: 'requested_by' },
+    { type: 'table_field', field: 'requested_at' },
+    { type: 'table_field', field: 'decision_note' },
+    { type: 'table_field', field: 'decision_by' },
+    { type: 'table_field', field: 'decided_at' },
+  ] }] }],
 });
 
 Form({
@@ -354,6 +449,7 @@ RestApi({
     { $id: Now.ID['suiko-post-archive'], method: 'POST', path: '/archive', version: 1, script: postArchive },
     { $id: Now.ID['suiko-run-review'], method: 'POST', path: '/reviews', version: 1, script: runReview },
     { $id: Now.ID['suiko-save-metadata'], method: 'POST', path: '/metadata', version: 1, script: saveMetadata },
+    { $id: Now.ID['suiko-workflow-action'], method: 'POST', path: '/workflow/actions', version: 1, script: workflowAction },
     { $id: Now.ID['suiko-save-rule'], method: 'POST', path: '/rules', version: 1, script: saveRule },
     { $id: Now.ID['suiko-approve-rule'], method: 'POST', path: '/rules/approve', version: 1, script: approveRule },
     { $id: Now.ID['suiko-rule-active'], method: 'POST', path: '/rules/active', version: 1, script: setRuleActive },
@@ -361,5 +457,15 @@ RestApi({
     { $id: Now.ID['suiko-save-policy'], method: 'POST', path: '/policies', version: 1, script: savePolicy },
     { $id: Now.ID['suiko-suggest-policy'], method: 'POST', path: '/policies/suggest', version: 1, script: suggestPolicyChecks },
     { $id: Now.ID['suiko-provider-configuration'], method: 'POST', path: '/provider', version: 1, script: configureProvider },
+  ],
+});
+
+RestApi({
+  $id: Now.ID['suiko-legal-api'], name: 'Suiko legal review', serviceId: 'legal',
+  consumes: 'application/json', produces: 'application/json', enforceAcl: [legalApi],
+  versions: [{ $id: Now.ID['suiko-legal-api-v1'], version: 1, isDefault: true }],
+  routes: [
+    { $id: Now.ID['suiko-legal-tasks'], method: 'GET', path: '/tasks', version: 1, script: legalTasks },
+    { $id: Now.ID['suiko-legal-decision'], method: 'POST', path: '/tasks/decision', version: 1, script: legalDecision },
   ],
 });

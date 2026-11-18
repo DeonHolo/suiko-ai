@@ -9,6 +9,7 @@ const tables = {
   story: 'x_2236136_suiko_ai_story',
   rule: 'x_2236136_suiko_ai_rule',
   review: 'x_2236136_suiko_ai_review',
+  legalTask: 'x_2236136_suiko_ai_legal_task',
 };
 
 // Capstone evidence recorded in docs/23-acceptance-results.md. These records stay
@@ -77,6 +78,13 @@ function retentionReason(kind: string, row: GlideRecord) {
   }
   if (protectedEvidence[kind].includes(id(row))) {
     return 'Protected capstone evidence from the acceptance report stays in this instance.';
+  }
+  if (kind === 'story') {
+    const tasks = new GlideRecord(tables.legalTask);
+    tasks.addQuery('story', id(row));
+    tasks.setLimit(1);
+    tasks.query();
+    if (tasks.next()) return 'Retained legal review history depends on this story.';
   }
   if (hasRetainedReview(kind, row)) {
     return kind === 'story'
