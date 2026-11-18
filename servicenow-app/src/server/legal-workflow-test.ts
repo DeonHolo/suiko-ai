@@ -48,6 +48,13 @@ export function runLegalRoutingRegression(assignedId: string, unassignedId: stri
   expect(action(workflowAction, { ...route, expected_modified: '999999' }).status === 409, 'A stale story request was accepted.');
   expect(action(workflowAction, { ...route, reviewer_id: inactiveId }).status === 400
     && action(workflowAction, { ...route, reviewer_id: gs.generateGUID() }).status === 400, 'An inactive or missing reviewer was accepted.');
+  const failed = action((request, response) => workflowAction(request, response, { editor: true, legal: true }, () => {
+    throw new Error('Simulated legal task insert failure.');
+  }), route);
+  const recovered = state(saved.body.story_id).workflow;
+  expect(failed.status === 500 && recovered.status === 'needs_review' && recovered.history.length === 0
+    && recovered.actions.includes('sign_off'), 'A failed legal request left a false clearance requirement.');
+  route.expected_modified = recovered.modified;
   const sent = action(workflowAction, route);
   expect(sent.status === 200 && sent.body.workflow.status === 'waiting_for_legal', 'Sending the revision to legal did not update workflow status.');
   expect(action(getStories, null, { q: saved.body.title, status: 'waiting_for_legal' }).body.items.some(item => item.id === saved.body.story_id),

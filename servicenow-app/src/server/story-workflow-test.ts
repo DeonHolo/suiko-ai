@@ -93,13 +93,14 @@ export function testEditorWorkflow() {
   expect(stored.get(storyId) && stored.getValue('editor_decision_head') === signOffEntry.id, 'The accepted history and native status did not share a write.');
   const prepared = new GlideRecord('x_2236136_suiko_ai_revision');
   const retryKey = requestKey();
+  const preparedText = 'A third fictional draft is staged but unpublished.';
   prepared.initialize();
   prepared.setValue('story', storyId);
   prepared.setValue('version', 3);
   prepared.setValue('version_key', storyId + ':3');
   prepared.setValue('request_key', retryKey);
   prepared.setValue('title', story.title);
-  prepared.setValue('body', 'A third fictional draft is staged but unpublished.');
+  prepared.setValue('body', preparedText);
   prepared.setValue('content_format', 'article');
   prepared.setValue('content_kind', 'news');
   const preparedId = String(prepared.insert() || '');
@@ -108,7 +109,9 @@ export function testEditorWorkflow() {
   expect(visible.workflow.current_revision_id === second.body.id && visible.revisions.every(revision => revision.id !== preparedId)
     && call(workflowAction, { ...signOff, revision_id: preparedId, expected_modified: visible.workflow.modified }).status === 409,
   'A prepared revision was exposed before the story published it.');
-  expect(call(saveRevision, { ...story, request_key: retryKey }).body.id === preparedId
+  expect(call(saveRevision, { ...story, text: preparedText, story_id: storyId,
+    expected_revision_id: second.body.id, request_key: requestKey() }).body.id === preparedId
+    && call(saveRevision, { ...story, request_key: retryKey }).body.id === preparedId
     && workflow(storyId).status === 'needs_review' && workflow(storyId).history.some(entry => entry.id === signOffEntry.id),
   'Retry failed to publish the prepared revision while preserving the older sign-off.');
 }

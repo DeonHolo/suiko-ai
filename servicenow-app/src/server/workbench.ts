@@ -338,10 +338,7 @@ export function saveRevision(request, response) {
       if ((latest ? id(latest) : null) !== (input.expected_revision_id || null)) {
         throw new WorkbenchError('A newer version was saved. Reload the story before saving your edit.', 409);
       }
-      if (latest && latest.getValue('title') === title && latest.getValue('body') === text
-        && (latest.getValue('notes') || '') === notes
-        && latest.getValue('content_format') === content_format && latest.getValue('content_kind') === content_kind
-        && JSON.stringify(parse(latest.getValue('source_urls_json')) || []) === JSON.stringify(source_urls)) {
+      if (latest && sameDraft(latest, normalized)) {
         return revisionView(latest);
       }
       if (!story.getValue('current_revision') && !story.getValue('workflow_change_key')) {
@@ -357,11 +354,21 @@ export function saveRevision(request, response) {
       if (!story.insert()) throw new WorkbenchError('The story could not be saved. Try again.', 500);
     }
     const version = latest ? Number(latest.getValue('version')) + 1 : 1;
+    const versionKey = id(story) + ':' + version;
+    function recoverPrepared() {
+      const prepared = find(tables.revision, 'version_key', versionKey);
+      if (!prepared) return null;
+      publishRevision(id(story), prepared);
+      if (sameDraft(prepared, normalized)) return revisionView(prepared);
+      throw new WorkbenchError('An earlier save finished. Reload the current version before saving your edit.', 409);
+    }
+    const recovered = recoverPrepared();
+    if (recovered) return recovered;
     const revision = new GlideRecord(tables.revision);
     revision.initialize();
     revision.setValue('story', id(story));
     revision.setValue('version', version);
-    revision.setValue('version_key', id(story) + ':' + version);
+    revision.setValue('version_key', versionKey);
     revision.setValue('request_key', input.request_key);
     revision.setValue('title', title);
     revision.setValue('body', text);
@@ -369,12 +376,22 @@ export function saveRevision(request, response) {
     revision.setValue('content_format', content_format);
     revision.setValue('content_kind', content_kind);
     revision.setValue('source_urls_json', JSON.stringify(source_urls));
-    if (!revision.insert()) throw new WorkbenchError('This version was saved elsewhere. Reload the story.', 409);
+    if (!revision.insert()) {
+      const winner = recoverPrepared();
+      if (winner) return winner;
+      throw new WorkbenchError('This version was saved elsewhere. Reload the story.', 409);
+    }
     publishRevision(id(story), revision);
     return revisionView(revision);
   });
 }
 
+function sameDraft(revision: GlideRecord, draft) {
+  return revision.getValue('title') === draft.title && revision.getValue('body') === draft.text
+    && (revision.getValue('notes') || '') === draft.notes
+    && revision.getValue('content_format') === draft.content_format && revision.getValue('content_kind') === draft.content_kind
+    && JSON.stringify(parse(revision.getValue('source_urls_json')) || []) === JSON.stringify(draft.source_urls);
+}
 
 function publishRevision(storyId: string, revision: GlideRecord) {
   // A retry repairs an interrupted publish. Competing changes cannot move
@@ -384,6 +401,9 @@ function publishRevision(storyId: string, revision: GlideRecord) {
     if (story.getValue('current_revision') === id(revision)) return;
     const current = currentRevision(story);
     if (current && Number(current.getValue('version')) > Number(revision.getValue('version'))) return;
+    if (current && story.getValue('workflow_status') === 'waiting_for_legal' && !legalTaskForRevision(id(current))) {
+      throw new WorkbenchError('Legal routing is still being saved. Retry this version after the request is ready.', 409);
+    }
     const prepared = highestRevision(storyId);
     if (!prepared || id(prepared) !== id(revision)) {
       throw new WorkbenchError('A different version is being saved. Reload the story before saving again.', 409);
@@ -394,6 +414,7 @@ function publishRevision(storyId: string, revision: GlideRecord) {
       title: revision.getValue('title'),
       current_revision: id(revision),
       workflow_status: workflowStatus(story, id(revision), task?.getValue('status')),
+      legal_clearance_required: needsLegalClearance(story) ? '1' : '0',
     })) return;
   }
   throw new WorkbenchError('The version was recorded. Retry the save to refresh the story.', 409);
@@ -575,7 +596,7 @@ export function workflowAction(request, response) {
   return workflowActionForTest(request, response, workflowFeatures());
 }
 
-export function workflowActionForTest(request, response, features = { editor: true, legal: true }) {
+export function workflowActionForTest(request, response, features = { editor: true, legal: true }, createTask = routeRevision) {
   respond(response, () => {
     requireEditor();
     const input = request.body.data;
@@ -616,25 +637,26 @@ export function workflowActionForTest(request, response, features = { editor: tr
       // Reserve the story before creating a task so a concurrent editor
       // cannot sign off against the old status.
       const reserved = guardedStoryUpdate(story, {
-        current_revision: id(revision), workflow_status: 'waiting_for_legal', legal_clearance_required: '1',
+        current_revision: id(revision), workflow_status: 'waiting_for_legal',
       });
       if (!reserved) throw stale();
       let routed;
       try {
-        routed = routeRevision(reserved, revision, input.reviewer_id, note);
+        routed = createTask(reserved, revision, input.reviewer_id, note);
       } catch (error) {
         const current = readableRecord(tables.story, id(story));
         if (current.getValue('workflow_change_key') === reserved.getValue('workflow_change_key')
           && !legalTaskForRevision(id(revision))) {
-          guardedStoryUpdate(current, {
-            workflow_status: status,
-            legal_clearance_required: story.getValue('legal_clearance_required') || '0',
-          });
+          guardedStoryUpdate(current, { workflow_status: status }, true);
         }
         throw error;
       }
       const current = readableRecord(tables.story, id(story));
-      return { workflow: workflowView(current, currentRevision(current), features), task_id: id(routed) };
+      if (current.getValue('legal_clearance_required') !== '1') {
+        guardedStoryUpdate(current, { legal_clearance_required: '1' }, true);
+      }
+      const refreshed = readableRecord(tables.story, id(story));
+      return { workflow: workflowView(refreshed, currentRevision(refreshed), features), task_id: id(routed) };
     }
 
     const needsClearance = needsLegalClearance(story);
@@ -729,17 +751,21 @@ export function legalDecision(request, response) {
     if (task.getValue('revision') !== input.revision_id) {
       throw new WorkbenchError('This decision does not match the submitted version.', 409);
     }
+    const status = input.action === 'clear' ? 'cleared' : 'changes_requested';
+    const storyId = task.getValue('story');
+    const storyStatus = status === 'cleared' ? 'ready_for_sign_off' : 'changes_requested';
     if (task.getValue('status') !== 'pending') {
+      if (task.getValue('status') === status && task.getValue('decision_by') === String(gs.getUserID())
+        && (task.getValue('decision_note') || '') === note) synchronizeLegalStatus(storyId, input.revision_id, storyStatus);
       throw new WorkbenchError('This legal review already has a decision.', 409);
     }
     if (input.expected_modified === undefined
       || String(input.expected_modified) !== String(task.getValue('sys_mod_count'))) {
       throw new WorkbenchError('This legal review changed elsewhere. Reload it before deciding.', 409);
     }
-    const story = record(tables.story, task.getValue('story'));
+    const story = record(tables.story, storyId);
     requireActiveStory(story);
     const decisionKey = String(gs.generateGUID());
-    const status = input.action === 'clear' ? 'cleared' : 'changes_requested';
     const update = new GlideRecord(tables.legalTask);
     update.addQuery('sys_id', id(task));
     update.addQuery('sys_mod_count', String(input.expected_modified));
@@ -756,7 +782,7 @@ export function legalDecision(request, response) {
     if (refreshed.getValue('decision_key') !== decisionKey) {
       throw new WorkbenchError('This legal review changed elsewhere. Reload it before deciding.', 409);
     }
-    synchronizeLegalStatus(id(story), input.revision_id, status === 'cleared' ? 'ready_for_sign_off' : 'changes_requested');
+    synchronizeLegalStatus(storyId, input.revision_id, storyStatus);
     return { task: legalTaskView(refreshed) };
   });
 }
@@ -770,7 +796,7 @@ function synchronizeLegalStatus(storyId: string, revisionId: string, status: str
     if (stored === status || stored === 'signed_off' || stored === 'changes_requested') return;
     if (guardedStoryUpdate(current, { workflow_status: status })) return;
   }
-  throw new WorkbenchError('The legal decision was recorded. Reload the story to refresh its status.', 409);
+  throw new WorkbenchError('The legal decision was recorded. Refresh the open story to see it.', 409);
 }
 
 export function saveRule(request, response) {
