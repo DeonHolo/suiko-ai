@@ -182,6 +182,33 @@ test('a discarded duplicate with a bad quote cannot make a grounded claim or rul
   }
 });
 
+test('duplicate inconclusive citations explain the closest available evidence in either order', () => {
+  for (const reversed of [false, true]) {
+    const { request, reply } = sample();
+    const base = reply.claim_checks[1];
+    const other = { ...base, sources: [{ ...source(seats), subject_scope: 'different_subject', stance: 'does_not_resolve' }] };
+    const same = { ...base, sources: [{ ...source(newerTime), subject_scope: 'same_subject', stance: 'does_not_resolve' }] };
+    reply.claim_checks = reversed ? [same, other] : [other, same];
+    const result = checkWorkbenchResult(request, reply, validators, { requireSourceScope: true });
+    assert.equal(result.claim_checks[0].status, 'insufficient');
+    assert.equal(result.claim_checks[0].sources[0].quote, newerTime);
+    assert.ok(result.checks.issues.some(issue => issue.code === 'SOURCE_STANCE_UNCONFIRMED'));
+    assert.equal(result.checks.issues.some(issue => issue.code === 'SOURCE_SUBJECT_UNCONFIRMED'), false);
+  }
+});
+
+test('a repeated primary quote leaves room for an additional verified quote', () => {
+  const { request, reply } = sample();
+  const first = reply.claim_checks[1];
+  const ref = { ...source(seats), subject_scope: 'same_subject', stance: 'supports' };
+  first.sources = [ref, { ...ref }];
+  const extra = { ...source(newerTime), subject_scope: 'same_subject', stance: 'does_not_resolve' };
+  reply.claim_checks = [first, { ...first, sources: [ref, extra] }];
+  const result = checkWorkbenchResult(request, reply, validators, { requireSourceScope: true });
+  assert.deepEqual(result.claim_checks[0].sources, [ref]);
+  assert.deepEqual(result.claim_checks[0].other_cited_sources, [extra]);
+});
+
 test('one rule can show a supported count, conflicting time and missing price in the same saved paragraph', async () => {
   const { request, reply } = sample();
   const checked = await review(request, reply);

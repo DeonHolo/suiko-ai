@@ -89,7 +89,7 @@ export function collectClaimChecks(request, raw, { report, references, shaped, s
     seen.get(key).push({ check, rawStatus: item.status, path, sourceGap, issues });
   }
   for (const entries of seen.values()) {
-    const { check, path, sourceGap, issues } = entries.length === 1 ? entries[0] : reconcileDuplicateClaims(entries);
+    const { check, path, sourceGap, issues } = entries.length === 1 ? entries[0] : reconcileDuplicateClaims(entries, requireSourceStance);
     if (issues.length) incomplete.add(check.rule_id);
     for (const issue of issues) report(...issue);
     if (sourceGap) {
@@ -111,7 +111,7 @@ function uniqueCitations(references) {
   return [...byPassage.values()];
 }
 
-function reconcileDuplicateClaims(entries) {
+function reconcileDuplicateClaims(entries, requireStance) {
   const first = entries[0];
   const grounded = entries.find(entry => entry.check.status === entry.rawStatus && !entry.issues.length)
     || entries.find(entry => entry.check.status === entry.rawStatus) || first;
@@ -130,6 +130,14 @@ function reconcileDuplicateClaims(entries) {
     check.reason = 'A cited passage about this subject conflicts with the draft.';
     check.action = 'Compare the accounts and confirm which fact belongs in the draft.';
     sourceGap = 'SOURCE_STANCE_UNCONFIRMED';
+  } else if (entries.every(entry => entry.sourceGap)) {
+    const comparison = evidenceForVerdict(citations, first.rawStatus, requireStance);
+    if (comparison.code) {
+      sourceGap = comparison.code;
+      check.reason = comparison.reason;
+      check.action = comparison.action;
+      check.sources = uniqueCitations([...sameSubject, ...citations]).slice(0, 3);
+    }
   }
   if (sourceGap === 'CONFLICTING_CLAIM_CHECKS' || (sourceGap === 'SOURCE_STANCE_UNCONFIRMED' && opposing)) {
     // Show both sides even when the provider put each citation in a separate copy of the claim.
@@ -139,6 +147,7 @@ function reconcileDuplicateClaims(entries) {
     }
     check.sources = uniqueCitations([opposing, sameSubject.find(ref => ref.stance === 'supports'), ...firstByVerdict.values(), ...citations]).slice(0, 3);
   }
+  check.sources = uniqueCitations(check.sources);
   const primaryCount = check.sources.length;
   const extra = uniqueCitations([...check.sources, ...citations]).slice(primaryCount, primaryCount + 3);
   if (extra.length) check.other_cited_sources = extra;

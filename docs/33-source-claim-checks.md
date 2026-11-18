@@ -31,7 +31,7 @@ The main Gemini call identifies the subject of each cited passage and whether th
 
 Gemini still judges whether two descriptions refer to the same subject and whether the passage establishes the fact. Similar names, renamed projects, conflicting accounts about the same event and nonnumeric claims deserve further testing. The editor flow makes one review. [Decision 1 history](30-decision-1-retirement.md)
 
-## Repeat the comparison
+## Repeat the old-versus-final comparison
 
 Start from the generated review data for baseline commit `8dcb9a8`. In a checkout of that commit with its Node dependencies installed, run `node servicenow-app/scripts/prepare-review.mjs`. Export the generated module to a JSON file from that checkout's root.
 
@@ -39,6 +39,8 @@ Start from the generated review data for baseline commit `8dcb9a8`. In a checkou
 node --input-type=module -e "import data from './servicenow-app/src/server/generated/review-data.js'; import {writeFileSync} from 'node:fs'; writeFileSync('baseline.json', JSON.stringify(data))"
 ```
 
-In the current checkout, prepare the generated modules again. Run `node servicenow-app/scripts/evaluate-source-scope.mjs <path-to-baseline.json> --dry-run` to inspect the frozen expectations. Omit `--dry-run` for a live comparison using the existing local Gemini configuration. `--candidate-only`, `--case=06` and `--repetitions=1` select the narrow availability retest.
+In the current checkout, prepare the generated modules again. Run `node servicenow-app/scripts/evaluate-source-scope.mjs <path-to-baseline.json> --dry-run` to inspect the frozen expectations. Omit `--dry-run` for a fresh old-versus-final comparison on all ten cases. The existing local Gemini configuration supplies the API key. `--candidate-only`, `--case=04` and `--repetitions=1` select the final gallery retest.
+
+The earlier batches used different versions and case sets. Their saved `expected.json` files hold the exact prompt text, generation settings, input snapshots, hashes and schedules. The wording-only comparison used the original provider schema and cases 01–06. The subject-check run used its archived schema and cases 01–08.
 
 Local evidence is under `ai-review/output/`. The first comparison is in `source-scope-lshgI3`. The subject-check batch and its availability retest are in `source-scope-RJPOdp` and `source-scope-elpvm9`. The final batch and its gallery retest are in `source-scope-yX3JKC` and `source-scope-8DygRf`. Each directory contains its expectations, raw responses, checked answers and attempt history. The combined audit and release evidence are in `source-scope-2026-11-18`. [Case definitions](../ai-review/fixtures/source-scope-cases.json)
