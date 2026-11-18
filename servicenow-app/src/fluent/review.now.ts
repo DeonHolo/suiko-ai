@@ -9,6 +9,7 @@ import {
   configureProvider, getPolicies, savePolicy, suggestPolicyChecks, workflowAction,
   legalTasks, legalDecision,
 } from '../server/workbench';
+import { getArchive, postArchive } from '../server/archive';
 
 export const editor = Role({
   $id: Now.ID['suiko-editor-role'], name: 'x_2236136_suiko_ai.editor',
@@ -33,8 +34,13 @@ export const x_2236136_suiko_ai_story = Table({
   name: 'x_2236136_suiko_ai_story', label: 'Suiko story', audit: true,
   schema: {
     title: StringColumn({ label: 'Title', maxLength: 160, mandatory: true }),
+    archived: BooleanColumn({ label: 'Archived', default: false }),
+    archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
+    archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
+    archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
+    disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
+    protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
     current_revision: ReferenceColumn({ label: 'Current revision', referenceTable: 'x_2236136_suiko_ai_revision' }),
-    legal_change_key: StringColumn({ label: 'Legal workflow write identity', maxLength: 32 }),
     workflow_status: ChoiceColumn({
       label: 'Workflow status', choices: {
         needs_review: 'Needs review',
@@ -69,11 +75,11 @@ export const x_2236136_suiko_ai_legal_task = Table({
   schema: {
     story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true, cascadeRule: 'restrict' }),
     revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true, cascadeRule: 'restrict', readOnly: true }),
-    pending_key: StringColumn({ label: 'Pending revision identity', maxLength: 32 }),
+    pending_key: StringColumn({ label: 'Legal submission identity', maxLength: 32 }),
     decision_key: StringColumn({ label: 'Legal decision write identity', maxLength: 32 }),
-    submitted_title: StringColumn({ label: 'Submitted title', maxLength: 160, readOnly: true }),
-    submitted_text: StringColumn({ label: 'Submitted story text', maxLength: 12000, readOnly: true }),
-    submitted_notes: StringColumn({ label: 'Submitted notes', maxLength: 4000, readOnly: true }),
+    submitted_title: StringColumn({ label: 'Submitted title', maxLength: 160, readOnly: true, readOnlyOption: 'display_read_only' }),
+    submitted_text: StringColumn({ label: 'Submitted story text', maxLength: 12000, readOnly: true, readOnlyOption: 'display_read_only' }),
+    submitted_notes: StringColumn({ label: 'Submitted notes', maxLength: 4000, readOnly: true, readOnlyOption: 'display_read_only' }),
     assigned_reviewer: ReferenceColumn({ label: 'Assigned reviewer', referenceTable: 'sys_user', mandatory: true }),
     status: ChoiceColumn({
       label: 'Status', choices: {
@@ -123,6 +129,12 @@ export const x_2236136_suiko_ai_rule = Table({
     draft_version_id: StringColumn({ label: 'Current proposed version', maxLength: 32 }),
     approved_json: StringColumn({ label: 'Approved rule snapshot', maxLength: 16000 }),
     change_key: StringColumn({ label: 'Last settings action', maxLength: 80 }),
+    archived: BooleanColumn({ label: 'Archived', default: false }),
+    archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
+    archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
+    archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
+    disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
+    protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
   },
   allowWebServiceAccess: false,
   index: [{ element: 'rule_id', unique: true }],
@@ -195,7 +207,6 @@ Form({
   sections: [{ caption: 'Details', content: [{ layout: 'one-column', elements: [
       { type: 'table_field', field: 'title' },
       { type: 'table_field', field: 'current_revision' },
-      { type: 'table_field', field: 'workflow_status' },
   ] }] }],
 });
 
@@ -434,6 +445,8 @@ RestApi({
   routes: [
     { $id: Now.ID['suiko-state'], method: 'GET', path: '/state', version: 1, script: getState },
     { $id: Now.ID['suiko-save-revision'], method: 'POST', path: '/revisions', version: 1, script: saveRevision },
+    { $id: Now.ID['suiko-get-archive'], method: 'GET', path: '/archive', version: 1, script: getArchive },
+    { $id: Now.ID['suiko-post-archive'], method: 'POST', path: '/archive', version: 1, script: postArchive },
     { $id: Now.ID['suiko-run-review'], method: 'POST', path: '/reviews', version: 1, script: runReview },
     { $id: Now.ID['suiko-save-metadata'], method: 'POST', path: '/metadata', version: 1, script: saveMetadata },
     { $id: Now.ID['suiko-workflow-action'], method: 'POST', path: '/workflow/actions', version: 1, script: workflowAction },

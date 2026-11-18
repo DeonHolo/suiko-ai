@@ -1,5 +1,6 @@
 import { GlideRecordSecure, gs } from '@servicenow/glide';
 import { getState, legalDecision, legalTasks, saveRevision, workflowAction } from './workbench.ts';
+import { postArchive } from './archive.ts';
 
 function expect(value, message) {
   if (!value) throw new Error(message);
@@ -123,4 +124,43 @@ export function verifyLegalChangesRequested(storyId: string) {
   const after = state(storyId);
   expect(after.workflow.status === 'changes_requested' && after.workflow.current_revision_id === after.revisions[0].id,
     'The current revision did not reflect the legal changes request.');
+  const archived = action(postArchive, { action: 'archive', kind: 'story', id: storyId, expected_modified: after.story.modified });
+  expect(archived.status === 200 && archived.body.item.retention_reason.includes('Retained legal review history'),
+    'The archive omitted retained legal evidence.');
+  const restored = action(postArchive, { action: 'restore', kind: 'story', id: storyId, expected_modified: archived.body.item.modified });
+  expect(restored.status === 200 && state(storyId).workflow.status === 'changes_requested', 'Restore lost the recorded legal decision.');
+}
+
+export function routeCurrentLegalClearanceFixture(storyId: string, assignedId: string) {
+  const stateBefore = state(storyId);
+  const previous = stateBefore.revisions[0];
+  expect(stateBefore.workflow.status === 'changes_requested', 'The previous legal result did not survive restore.');
+  const saved = action(saveRevision, { ...previous, text: 'The third fictional copy resolves the legal concern.',
+    request_key: 'ATF-legal-third-' + gs.generateGUID(), expected_revision_id: previous.id });
+  expect(saved.status === 200 && saved.body.version === 3, 'The fresh revision did not save.');
+  const next = state(storyId);
+  expect(next.workflow.status === 'needs_review' && next.workflow.current_revision_id === saved.body.id, 'The old legal decision carried over.');
+  const sent = action(workflowAction, { action:'send_to_legal', revision_id:saved.body.id, reviewer_id:assignedId,
+    note:reason, expected_modified:next.workflow.modified });
+  expect(sent.status === 200 && sent.body.workflow.status === 'waiting_for_legal', 'The third version did not get its own legal task.');
+  return sent.body.task_id;
+}
+
+export function clearCurrentLegalFixture(taskId: string) {
+  expect(gs.hasRole(legal) && !gs.hasRole(editor) && !gs.hasRole('admin'), 'Use the assigned legal-only account.');
+  const opened = action(legalTasks, null, {task:taskId});
+  const task = opened.body?.task;
+  expect(opened.status === 200 && task?.revision?.version === 3, 'The new assignment does not refer to the third version.');
+  const cleared = action(legalDecision, {task_id:taskId,revision_id:task.revision.id,
+    expected_modified:task.modified,action:'clear',note:''});
+  expect(cleared.status === 200 && cleared.body.task.status === 'cleared', 'Clearance of the current copy did not persist.');
+}
+
+export function verifyCurrentLegalClearance(storyId: string) {
+  const current = state(storyId);
+  expect(current.workflow.status === 'ready_for_sign_off' && current.workflow.current_revision_id === current.revisions[0].id,
+    'The legal decision did not reach the exact current revision.');
+  const repeat = action(workflowAction, {action:'send_to_legal',revision_id:current.revisions[0].id,
+    reviewer_id:current.workflow.reviewers[0].id,note:reason,expected_modified:current.workflow.modified});
+  expect(repeat.status === 409, 'The already decided version was sent to legal again.');
 }

@@ -17,6 +17,7 @@ function saved(table, id) {
   return row;
 }
 function checkVersion(parent, input) {
+  if (parent.getValue('archived') === '1') throw new WorkbenchError('Restore the archived rule before changing it.', 409);
   if (!Number.isInteger(input?.expected_modified) || input.expected_modified !== Number(parent.getValue('sys_mod_count'))) {
     throw new WorkbenchError('This rule changed elsewhere. Reload it before saving or approving.', 409);
   }
@@ -57,9 +58,11 @@ export function listEditorialRules() {
     rules.push({
       ...definition, id: uid(rows), rule_id: rows.getValue('rule_id'),
       version: Number(rows.getValue('version')), modified: Number(rows.getValue('sys_mod_count')),
-      active: !!approved && rows.getValue('active') === '1', approved, draft,
+      active: !!approved && rows.getValue('active') === '1' && rows.getValue('archived') !== '1', approved, draft,
       pending: !!draft && draft.id !== approved?.version_id,
       legacy_approval_missing: rows.getValue('managed') !== '1', updated_at: rows.getValue('sys_updated_on'),
+      archived: rows.getValue('archived') === '1',
+      can_archive: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
     });
   }
   return rules;

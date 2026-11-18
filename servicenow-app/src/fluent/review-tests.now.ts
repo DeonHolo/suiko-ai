@@ -13,7 +13,6 @@ const persistence = Test({
     script: Now.include('./tests/review-attempt.script.js'),
   });
 });
-
 const approvedRules = Test({
   $id: Now.ID['ai18-approved-rule-test'], name: 'Suiko AI-18: saved rule approval and editor permissions',
   description: 'Runs the rule actions as dedicated non-admin users; no model calls. ATF rolls back its fixture data.',
@@ -95,11 +94,46 @@ const legalWorkflow = Test({
     require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyLegalChangesRequested('${cleared.record_id}');
     return true;
   })();` });
+  const finalTask = atf.server.runServerSideScript({ $id: Now.ID['be02-route-final-version'], script: `(function () {
+    outputs.table = 'x_2236136_suiko_ai_legal_task';
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').routeCurrentLegalClearanceFixture('${cleared.record_id}', '${reviewer.user}');
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-final-legal-role'], user: reviewer.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-final-clearance'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').clearCurrentLegalFixture('${finalTask.record_id}');
+    return true;
+  })();` });
+  atf.server.impersonate({ $id: Now.ID['be02-editor-clearance-role'], user: sender.user });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-final-clearance'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyCurrentLegalClearance('${cleared.record_id}');
+    return true;
+  })();` });
+});
+
+const archive = Test({
+  $id: Now.ID['fe02-archive-guard-test'],
+  name: 'Suiko FE-02: archive, restore and guarded deletion',
+  description: 'Checks admin behavior as the suite runner, then uses dedicated Editor, Rules Editor and outsider fixtures. No changes to shared evidence.',
+  failOnServerError: true,
+}, atf => {
+  // ATF cannot grant admin to a temporary user. Run this step before impersonation.
+  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-admin-step'], script: `
+    var archive = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/archive-test.ts');
+    stepResult.setOutputMessage(archive.runArchiveAdminRegression());
+    return true;
+  ` });
+  atf.server.createUser({ $id: Now.ID['fe02-archive-editor-user'], firstName: 'Suiko', lastName: 'Archive Editor', roles: [editor] });
+  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-story-step'], script: Now.include('./tests/archive-guard.script.js') });
+  atf.server.createUser({ $id: Now.ID['fe02-archive-rules-user'], firstName: 'Suiko', lastName: 'Archive Rules', roles: [rulesEditor] });
+  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-rule-step'], script: Now.include('./tests/archive-guard.script.js') });
+  atf.server.createUser({ $id: Now.ID['fe02-archive-outsider-user'], firstName: 'Suiko', lastName: 'Archive Outsider', roles: [] });
+  atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-outsider-step'], script: Now.include('./tests/archive-guard.script.js') });
 });
 
 TestSuite({
   $id: Now.ID['ai-review-server-regression-suite'],
   name: 'Suiko AI: server review regressions',
   description: 'Server-only checks using fictional inputs and injected provider replies.',
-  tests: [persistence, approvedRules, legalWorkflow],
+  tests: [persistence, approvedRules, archive, legalWorkflow],
 });
