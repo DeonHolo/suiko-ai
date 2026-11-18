@@ -3,7 +3,8 @@ import { WorkbenchError } from './workbench-error.ts';
 
 export const storyTable = 'x_2236136_suiko_ai_story';
 export const revisionTable = 'x_2236136_suiko_ai_revision';
-const legalTaskTable = 'x_2236136_suiko_ai_legal_task';
+export const legalTaskTable = 'x_2236136_suiko_ai_legal_task';
+const decisionTable = 'x_2236136_suiko_ai_decision';
 
 export const workflowStatuses = [
   'needs_review', 'changes_requested', 'signed_off', 'waiting_for_legal', 'ready_for_sign_off',
@@ -22,7 +23,7 @@ export function readableRecord(table: string, sysId: string) {
   return row;
 }
 
-export function latestRevision(storyId: string) {
+export function highestRevision(storyId: string) {
   const row = new GlideRecordSecure(revisionTable);
   row.addQuery('story', storyId);
   row.orderByDesc('version');
@@ -30,6 +31,15 @@ export function latestRevision(storyId: string) {
   row.setLimit(1);
   row.query();
   return row.next() ? row : null;
+}
+
+// The story pointer publishes an immutable revision and its workflow status together.
+// Existing rows without a pointer or write identity use their last legacy save.
+export function currentRevision(story: GlideRecord) {
+  const pointer = story.getValue('current_revision');
+  if (!pointer) return story.getValue('workflow_change_key') ? null : highestRevision(String(story.getUniqueValue()));
+  const row = new GlideRecordSecure(revisionTable);
+  return row.get(pointer) && row.getValue('story') === String(story.getUniqueValue()) && row.canRead() ? row : null;
 }
 
 export function legalTaskForRevision(revisionId: string) {
@@ -50,8 +60,11 @@ export function needsLegalClearance(story: GlideRecord) {
 }
 
 export function workflowStatus(story: GlideRecord, revisionId: string, taskStatus?: string | null) {
-  const stored = (story.getValue('current_revision') || '') === revisionId
-    ? story.getValue('workflow_status') : 'needs_review';
+  return deriveWorkflowStatus(story.getValue('current_revision'), story.getValue('workflow_status'), revisionId, taskStatus);
+}
+
+export function deriveWorkflowStatus(published: string | null, status: string | null, revisionId: string, taskStatus?: string | null) {
+  const stored = (published || '') === revisionId ? status : 'needs_review';
   if (stored === 'signed_off') return stored;
   if (taskStatus === 'pending') return 'waiting_for_legal';
   if (stored === 'changes_requested' || taskStatus === 'changes_requested') return 'changes_requested';
@@ -66,7 +79,7 @@ export function editorActions(status: string, requiresClearance: boolean, cleare
   return actions;
 }
 
-export function guardedStoryUpdate(story: GlideRecord, values: Record<string, string>) {
+export function guardedStoryUpdate(story: GlideRecord, values: Record<string, string>, includeArchived = false) {
   const changeKey = String(gs.generateGUID());
   const update = new GlideRecord(storyTable);
   update.addQuery('sys_id', story.getUniqueValue());
@@ -74,7 +87,7 @@ export function guardedStoryUpdate(story: GlideRecord, values: Record<string, st
   const current = story.getValue('current_revision');
   if (current) update.addQuery('current_revision', current);
   else update.addNullQuery('current_revision');
-  update.addQuery('archived', false).addOrCondition('archived', 'ISEMPTY', '');
+  if (!includeArchived) update.addQuery('archived', false).addOrCondition('archived', 'ISEMPTY', '');
   for (const field of Object.keys(values)) update.setValue(field, values[field]);
   update.setValue('workflow_change_key', changeKey);
   update.updateMultiple();
@@ -84,28 +97,49 @@ export function guardedStoryUpdate(story: GlideRecord, values: Record<string, st
 }
 
 function decisionEntries(story: GlideRecord) {
-  const saved = story.getValue('editor_decisions_json');
-  return saved ? JSON.parse(saved) : [];
+  let next = story.getValue('editor_decision_head');
+  if (!next) return [];
+  const rows = new GlideRecord(decisionTable);
+  rows.addQuery('story', story.getUniqueValue());
+  rows.query();
+  const entries = new Map();
+  while (rows.next()) {
+    const id = String(rows.getUniqueValue());
+    const action = rows.getValue('action');
+    entries.set(id, { previous: rows.getValue('previous'), item: {
+      id, revision_id: rows.getValue('revision'), version: Number(rows.getValue('version')), action,
+      label: action === 'sign_off' ? 'Signed off' : 'Changes requested',
+      actor: rows.getValue('actor_name'), actor_id: rows.getValue('actor'),
+      decided_at: rows.getValue('decided_at'), note: rows.getValue('note') || '',
+    } });
+  }
+  const history = [];
+  // Only entries reachable from the accepted story pointer are decisions.
+  while (next) {
+    const entry = entries.get(next);
+    if (!entry) throw new WorkbenchError('The saved decision history is incomplete. Reload the story before deciding.', 409);
+    history.push(entry.item);
+    entries.delete(next);
+    next = entry.previous;
+  }
+  return history;
 }
 
-export function appendEditorDecision(story: GlideRecord, revision: GlideRecord, action: string, note: string, decisionId: string) {
-  const entries = decisionEntries(story);
-  entries.push({
-    id: decisionId,
-    revision_id: String(revision.getUniqueValue()),
-    version: Number(revision.getValue('version')),
-    action,
-    label: action === 'sign_off' ? 'Signed off' : 'Changes requested',
-    actor_id: String(gs.getUserID()),
-    actor: String(gs.getUserDisplayName()),
-    decided_at: new GlideDateTime().getValue(),
-    note,
-  });
-  const encoded = JSON.stringify(entries);
-  if (encoded.length > 200000) {
-    throw new WorkbenchError('This story has reached its editor decision history limit.', 409);
-  }
-  return encoded;
+export function prepareEditorDecision(story: GlideRecord, revision: GlideRecord, action: string, note: string) {
+  const entry = new GlideRecord(decisionTable);
+  entry.initialize();
+  entry.setValue('story', story.getUniqueValue());
+  entry.setValue('revision', revision.getUniqueValue());
+  entry.setValue('previous', story.getValue('editor_decision_head') || '');
+  entry.setValue('version', revision.getValue('version'));
+  entry.setValue('action', action);
+  entry.setValue('actor', gs.getUserID());
+  entry.setValue('actor_name', gs.getUserDisplayName());
+  entry.setValue('decided_at', new GlideDateTime().getValue());
+  entry.setValue('note', note);
+  const id = entry.insert();
+  if (!id) throw new WorkbenchError('The editor decision could not be saved. Try again.', 500);
+  return String(id);
 }
 
 export function hasEditorDecision(story: GlideRecord, decisionId: string) {
@@ -149,28 +183,24 @@ export function backfillCurrentRevisions() {
   if (!gs.hasRole('admin')) throw new WorkbenchError('Only an admin can backfill stories.', 403);
   const stories = new GlideRecord(storyTable);
   stories.query();
-  let updated = 0;
+  const result = { updated: 0, already_current: 0, conflicts: 0, no_revision: 0 };
   while (stories.next()) {
     const storyId = String(stories.getUniqueValue());
-    const latest = latestRevision(storyId);
-    if (!latest) continue;
+    const latest = stories.getValue('workflow_change_key') ? currentRevision(stories) : highestRevision(storyId);
+    if (!latest) { result.no_revision++; continue; }
     const revisionId = String(latest.getUniqueValue());
     const task = legalTaskForRevision(revisionId);
     const status = workflowStatus(stories, revisionId, task?.getValue('status'));
     const legalRequired = needsLegalClearance(stories) ? '1' : '0';
     if (stories.getValue('current_revision') === revisionId
       && stories.getValue('workflow_status') === status
-      && (stories.getValue('legal_clearance_required') || '0') === legalRequired) continue;
-    const update = new GlideRecord(storyTable);
-    update.addQuery('sys_id', storyId);
-    update.addQuery('sys_mod_count', stories.getValue('sys_mod_count'));
-    update.setValue('current_revision', revisionId);
-    update.setValue('workflow_status', status);
-    update.setValue('legal_clearance_required', legalRequired);
-    update.updateMultiple();
-    const refreshed = new GlideRecord(storyTable);
-    if (refreshed.get(storyId) && refreshed.getValue('current_revision') === revisionId
-      && refreshed.getValue('workflow_status') === status) updated++;
+      && (stories.getValue('legal_clearance_required') || '0') === legalRequired) { result.already_current++; continue; }
+    const refreshed = guardedStoryUpdate(stories, {
+      current_revision: revisionId, workflow_status: status, legal_clearance_required: legalRequired,
+    }, true);
+    if (refreshed?.getValue('current_revision') === revisionId && refreshed.getValue('workflow_status') === status
+      && (refreshed.getValue('legal_clearance_required') || '0') === legalRequired) result.updated++;
+    else result.conflicts++;
   }
-  return updated;
+  return result;
 }

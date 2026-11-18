@@ -73,11 +73,12 @@ The [development guide](../docs/13-servicenow-development-and-cicd.md) explains 
 Install the SDK build in a development instance. In **Scripts - Background**, select
 the Suiko AI scope and run the following as admin to populate current revision
 references for existing stories. Keep the sandbox option off for the backfill.
-A second run is safe. The script reports how many stories it updated.
+A second run is safe. The report counts confirmed updates, already-current rows,
+stories without a saved revision and conflicts. Rerun if any conflicts remain.
 
 ```js
 var workflow = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/story-workflow.ts');
-gs.info('Suiko story workflow records updated: ' + workflow.backfillCurrentRevisions());
+gs.info('Suiko story workflow backfill ' + JSON.stringify(workflow.backfillCurrentRevisions()));
 ```
 
 As a regular Editor, open the Suiko story list with the **Story inspection** view
@@ -92,7 +93,9 @@ The workspace uses `x_2236136_suiko_ai.inbox_enabled` and
 Set each property to `true` after the corresponding installed API and role
 checks pass. The existing legal capability uses its own property.
 
-Editor decisions are appended to the story's audited history field in the same
-guarded update as the status change. The state response joins those entries with
-existing legal task events. Coordinate this history writer with BE-03 if the
-team chooses a separate decision table.
+The story's current revision reference publishes an immutable saved revision. The
+Inbox, editor and legal routing use that same reference. Editor decisions are
+written to the app's decision table. The guarded story update changes the status
+and accepts the decision together. History follows the chain of accepted
+decisions and joins it with events from the legal task table. The same history
+reader can be used for BE-03's combined access checks.

@@ -1,5 +1,5 @@
 import { GlideRecord, gs } from '@servicenow/glide';
-import { getStories, readStateForLegalTest, reviewSavedVersion, saveRevision, workflowAction } from './workbench.ts';
+import { getStories, readStateForLegalTest, reviewSavedVersion, saveRevision, workflowActionForTest as workflowAction } from './workbench.ts';
 
 function expect(assertion: unknown, message: string) {
   if (!assertion) throw new Error(message);
@@ -37,6 +37,16 @@ export function testEditorWorkflow() {
     action: 'request_changes', revision_id: first.body.id, expected_modified: initial.modified,
     note: 'Confirm the opening time.',
   };
+  const legalOnly = { editor: false, legal: true };
+  const gatedState = call((request, response) => readStateForLegalTest(request, response, legalOnly), null, { story: storyId });
+  expect(gatedState.body.workflow.actions.every(action => action === 'send_to_legal')
+    && call((request, response) => workflowAction(request, response, legalOnly), decision).status === 403,
+  'A Legal-only rollout exposed or accepted editor decisions.');
+  const editorOnly = { editor: true, legal: false };
+  const editorState = call((request, response) => readStateForLegalTest(request, response, editorOnly), null, { story: storyId });
+  expect(editorState.body.workflow.reviewers.length === 0 && !editorState.body.workflow.actions.includes('send_to_legal')
+    && call((request, response) => workflowAction(request, response, editorOnly), { ...decision, action: 'send_to_legal' }).status === 403,
+  'An Editor-only rollout exposed or accepted legal routing.');
   expect(call(workflowAction, { ...decision, note: '' }).status === 400, 'An empty changes request was accepted.');
   const changed = call(workflowAction, decision);
   const after = changed.body?.workflow;
@@ -74,15 +84,39 @@ export function testEditorWorkflow() {
   expect(failure.status === 200 && failure.body.state === 'failed' && workflow(storyId).modified === current.modified,
     'A failed AI review changed human status or the decision guard.');
   const signed = call(workflowAction, signOff);
+  const signOffEntry = signed.body?.workflow?.history.find(entry => entry.action === 'sign_off');
   expect(signed.status === 200 && signed.body.workflow.status === 'signed_off'
-    && signed.body.workflow.history.length === 2 && call(workflowAction, signOff).status === 409,
+    && signed.body.workflow.history.length === 2 && call(workflowAction, signOff).status === 409
+    && signOffEntry?.revision_id === second.body.id && signOffEntry?.version === 2 && signOffEntry?.actor_id === String(gs.getUserID()),
   'The current version did not receive exactly one sign-off.');
+  const stored = new GlideRecord('x_2236136_suiko_ai_story');
+  expect(stored.get(storyId) && stored.getValue('editor_decision_head') === signOffEntry.id, 'The accepted history and native status did not share a write.');
+  const prepared = new GlideRecord('x_2236136_suiko_ai_revision');
+  const retryKey = requestKey();
+  prepared.initialize();
+  prepared.setValue('story', storyId);
+  prepared.setValue('version', 3);
+  prepared.setValue('version_key', storyId + ':3');
+  prepared.setValue('request_key', retryKey);
+  prepared.setValue('title', story.title);
+  prepared.setValue('body', 'A third fictional draft is staged but unpublished.');
+  prepared.setValue('content_format', 'article');
+  prepared.setValue('content_kind', 'news');
+  const preparedId = String(prepared.insert() || '');
+  expect(preparedId, 'The staged draft could not be inserted.');
+  const visible = call(readStateForLegalTest, null, { story: storyId }).body;
+  expect(visible.workflow.current_revision_id === second.body.id && visible.revisions.every(revision => revision.id !== preparedId)
+    && call(workflowAction, { ...signOff, revision_id: preparedId, expected_modified: visible.workflow.modified }).status === 409,
+  'A prepared revision was exposed before the story published it.');
+  expect(call(saveRevision, { ...story, request_key: retryKey }).body.id === preparedId
+    && workflow(storyId).status === 'needs_review' && workflow(storyId).history.some(entry => entry.id === signOffEntry.id),
+  'Retry failed to publish the prepared revision while preserving the older sign-off.');
 }
 
-export function testInboxPagination() {
+export function createInboxFixtures() {
   expect(gs.hasRole('admin'), 'Create pagination fixtures as the ATF administrator.');
   const title = 'ATF Inbox page ' + gs.generateGUID();
-  const activeIds = new Set();
+  let fixture = '';
   for (let index = 0; index < 54; index++) {
     const story = new GlideRecord('x_2236136_suiko_ai_story');
     story.initialize();
@@ -90,8 +124,16 @@ export function testInboxPagination() {
     story.setValue('archived', index === 53);
     const id = story.insert();
     expect(id, 'Could not insert an Inbox fixture.');
-    if (index !== 53) activeIds.add(String(id));
+    if (index === 0) fixture = String(id);
   }
+  return fixture;
+}
+
+export function testInboxPagination(fixture: string) {
+  expect(gs.hasRole('x_2236136_suiko_ai.editor') && !gs.hasRole('admin'), 'Read both fixture pages as a regular Editor.');
+  const story = new GlideRecord('x_2236136_suiko_ai_story');
+  expect(story.get(fixture), 'The pagination fixture was not found.');
+  const title = story.getValue('title').slice(0, -2);
   const first = call(getStories, null, { q: title, status: 'needs_review' });
   expect(first.status === 200 && first.body.items.length === 50 && first.body.next_cursor, 'Expected a full first page.');
   const cursor = first.body.next_cursor;
@@ -99,9 +141,12 @@ export function testInboxPagination() {
   expect(second.status === 200 && second.body.items.length === 3 && second.body.next_cursor === null,
     'Expected three remaining rows without an archived result.');
   const rows = [...first.body.items, ...second.body.items];
+  const ids = new Set();
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
-    expect(activeIds.delete(row.id), 'A story repeated or did not belong to the active fixture.');
+    expect(!ids.has(row.id) && row.title.startsWith(title + ' ') && row.title !== title + ' 53',
+      'A story repeated or did not belong to the active fixture.');
+    ids.add(row.id);
     const previous = rows[index - 1];
     expect(!previous || previous.updated_at > row.updated_at
       || (previous.updated_at === row.updated_at && previous.id > row.id), 'The Inbox sort order was unstable.');

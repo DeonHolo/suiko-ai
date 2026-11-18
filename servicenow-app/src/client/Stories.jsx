@@ -3,7 +3,7 @@ import { workspaceService } from './services/ReviewService';
 import { formats, localDateTime, workflowLabels } from './presentation';
 import { href, isNormalClick } from './routes';
 
-export default function Stories({ stories, selected, canSearchAll, hasWorkflow, busy, onOpen, onNew, onSamples }) {
+export default function Stories({ stories, selected, canSearchAll, busy, onOpen, onNew, onSamples }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState({ items: [], next_cursor: null });
@@ -54,7 +54,7 @@ export default function Stories({ stories, selected, canSearchAll, hasWorkflow, 
     <section className="surface records" aria-label="Saved stories">
       <div className="list-toolbar">
         <label>Find a story<input type="search" name="story-search" maxLength={160} value={search} disabled={busy} onChange={event => setSearch(event.target.value)} placeholder="Search by title…" /></label>
-        {canSearchAll && hasWorkflow && <label>Status<select value={status} onChange={event => setStatus(event.target.value)}>
+        {canSearchAll && <label>Status<select value={status} onChange={event => setStatus(event.target.value)}>
           <option value="">All stories</option>
           {Object.entries(workflowLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select></label>}

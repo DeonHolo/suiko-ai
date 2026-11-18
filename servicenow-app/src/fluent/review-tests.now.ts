@@ -140,14 +140,22 @@ const editorInbox = Test({
 }, atf => {
   atf.server.runServerSideScript({
     $id: Now.ID['editor-inbox-pagination-step'],
+    script: `(function () {
+      outputs.table = 'x_2236136_suiko_ai_story';
+      outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/story-workflow-test.ts').createInboxFixtures();
+      return true;
+    })();`,
+  });
+  atf.server.createUser({ $id: Now.ID['editor-inbox-editor-user'], firstName: 'Suiko', lastName: 'Inbox Editor', roles: [editor], impersonate: true });
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-editor-pagination-step'],
     script: Now.include('./tests/story-inbox-pagination.script.js'),
   });
-  atf.server.createUser({ $id: Now.ID['editor-inbox-editor-user'], firstName: 'Suiko', lastName: 'Inbox Editor', roles: [editor] });
   atf.server.runServerSideScript({
     $id: Now.ID['editor-inbox-editor-step'],
     script: Now.include('./tests/story-editor-workflow.script.js'),
   });
-  atf.server.createUser({ $id: Now.ID['editor-inbox-outsider-user'], firstName: 'Suiko', lastName: 'Inbox Outsider', roles: [] });
+  atf.server.createUser({ $id: Now.ID['editor-inbox-outsider-user'], firstName: 'Suiko', lastName: 'Inbox Outsider', roles: [], impersonate: true });
   atf.server.runServerSideScript({
     $id: Now.ID['editor-inbox-outsider-step'],
     script: Now.include('./tests/story-editor-access.script.js'),

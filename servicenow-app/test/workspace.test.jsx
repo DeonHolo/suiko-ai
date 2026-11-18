@@ -430,6 +430,17 @@ test('an old pagination reply cannot replace a new Stories search', async () => 
   assert.equal(screen.queryByRole('link', { name: /Wrong older page/ }) === null, true);
 });
 
+test('Inbox exposes status filtering before editor actions are enabled', async () => {
+  const request = mock.method(workspaceService, 'stories', async ({ status }) => ({
+    items: [{ id: 'river', title: status === 'signed_off' ? 'Signed story' : 'Recent story' }], next_cursor: null,
+  }));
+  render(<Stories stories={[]} canSearchAll onOpen={() => {}} onNew={() => {}} />);
+  await screen.findByRole('link', { name: /Recent story/ });
+  fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'signed_off' } });
+  await screen.findByRole('link', { name: /Signed story/ });
+  assert.equal(request.mock.calls.at(-1).arguments[0].status, 'signed_off');
+});
+
 test('Archive hides permanent delete for retained evidence and shows server errors without closing the confirmation', async () => {
   const demo = { id: 'demo', title: 'Disposable demo', modified: '4', can_restore: true, can_delete: true };
   mock.method(workspaceService, 'archive', async () => ({ items: [demo, { id: 'kept', title: 'Capstone evidence', can_restore: true, can_delete: false }], next_cursor: null }));

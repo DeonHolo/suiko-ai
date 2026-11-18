@@ -1,5 +1,5 @@
 import { GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
-import { getState, legalDecision, legalTasks, readStateForLegalTest, saveRevision, workflowAction } from './workbench.ts';
+import { getState, getStories, legalDecision, legalTasks, readStateForLegalTest, saveRevision, workflowActionForTest as workflowAction } from './workbench.ts';
 import { postArchive } from './archive.ts';
 
 function expect(value, message) {
@@ -50,6 +50,8 @@ export function runLegalRoutingRegression(assignedId: string, unassignedId: stri
     && action(workflowAction, { ...route, reviewer_id: gs.generateGUID() }).status === 400, 'An inactive or missing reviewer was accepted.');
   const sent = action(workflowAction, route);
   expect(sent.status === 200 && sent.body.workflow.status === 'waiting_for_legal', 'Sending the revision to legal did not update workflow status.');
+  expect(action(getStories, null, { q: saved.body.title, status: 'waiting_for_legal' }).body.items.some(item => item.id === saved.body.story_id),
+    'The Editor Inbox did not return the pending legal status.');
   const repeat = action(workflowAction, route);
   expect(repeat.status === 200 && repeat.body.task_id === sent.body.task_id, 'The original request did not reuse its task.');
   expect(action(workflowAction, { ...route, reviewer_id: unassignedId }).status === 409
@@ -171,6 +173,8 @@ export function verifyCurrentLegalClearance(storyId: string) {
   const current = state(storyId);
   expect(current.workflow.status === 'ready_for_sign_off' && current.workflow.current_revision_id === current.revisions[0].id,
     'The legal decision did not reach the exact current revision.');
+  expect(action(getStories, null, { q: current.story.title, status: 'ready_for_sign_off' }).body.items.some(item => item.id === storyId),
+    'The Editor Inbox did not return the freshly cleared status.');
   const repeat = action(workflowAction, {action:'send_to_legal',revision_id:current.revisions[0].id,
     reviewer_id:current.workflow.reviewers[0].id,note:reason,expected_modified:current.workflow.modified});
   expect(repeat.status === 409, 'The already decided version was sent to legal again.');
