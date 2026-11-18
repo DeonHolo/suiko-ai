@@ -4,6 +4,7 @@ import { WorkbenchError } from './workbench-error.ts';
 import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSavedRuleActive, starterTemplates, supportedChecks } from './editorial-rules.ts';
 import { policyState, readPolicyVersion, savePolicyVersion } from './policy-records.ts';
 import { requireRulesEditor } from './rule-access.ts';
+import { assertRevisionNotArchived, assertStoryNotArchived, canArchiveStories } from './archive.ts';
 import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } from './generated/policy-proposals.js';
 import { sourceRuleIds, sourceMaterial } from './generated/source-reader.js';
 import { readSavedSources } from './read-sources.ts';
@@ -143,6 +144,7 @@ export function getState(request, response) {
     const rules = rulesView();
     const stories = [];
     const row = new GlideRecord(tables.story);
+    row.addQuery('archived', false).addOrCondition('archived', 'ISEMPTY', '');
     row.orderByDesc('sys_updated_on');
     row.setLimit(50);
     row.query();
@@ -153,7 +155,8 @@ export function getState(request, response) {
     const runs = [];
     if (storyId) {
       const parent = record(tables.story, storyId);
-      story = { id: id(parent), title: parent.getValue('title'), modified: parent.getValue('sys_mod_count') };
+      story = { id: id(parent), title: parent.getValue('title'), modified: parent.getValue('sys_mod_count'),
+        archived: parent.getValue('archived') === '1', can_archive: canArchiveStories() };
       const revision = new GlideRecord(tables.revision);
       revision.addQuery('story', storyId);
       revision.orderByDesc('version');
@@ -171,7 +174,10 @@ export function getState(request, response) {
     return {
       stories, story, revisions, runs, rules, starter_templates: starterTemplates, supported_checks: supportedChecks, taxonomy: reviewData.taxonomy,
       viewer_id: String(gs.getUserID()),
-      capabilities: { source_reading: true },
+      capabilities: {
+        source_reading: true,
+        archive: gs.getProperty('x_2236136_suiko_ai.archive_enabled', 'false') === 'true',
+      },
       can_manage_rules: gs.hasRole('admin') || gs.hasRole('x_2236136_suiko_ai.rules_editor'),
       provider: { configured: !!config?.getValue('api_key'), model: config?.getValue('model') || 'gemini-3.5-flash-lite' },
     };
@@ -192,6 +198,7 @@ export function saveRevision(request, response) {
     let latest = null;
     if (input.story_id) {
       story = record(tables.story, input.story_id);
+      assertStoryNotArchived(story);
       latest = latestRevision(id(story));
       if ((latest ? id(latest) : null) !== (input.expected_revision_id || null)) {
         throw new WorkbenchError('A newer version was saved. Reload the story before saving your edit.', 409);
@@ -240,7 +247,8 @@ function buildRequest(revision: GlideRecord, requestId: string) {
   const candidate = snapshot(revision);
   const earlier = snapshot(baseline);
   if (!candidate.content_format || !candidate.content_kind) throw new WorkbenchError('Choose the format and content kind, then save a new version before using approved rules. Earlier reviews remain available.');
-  const allRules = rulesView();
+  // Archived rules keep their earlier snapshots readable but stay out of new reviews.
+  const allRules = rulesView().filter(rule => !rule.archived);
   const rules = allRules.filter(rule => rule.active);
   const sources = candidate.source_urls.map((url, index) => ({ source_id: 'source-' + (index + 1), url, status: 'not_read' }));
   const input = {
@@ -297,6 +305,7 @@ export function reviewSavedVersion(request, response, createProvider, readSource
     const duplicate = find(tables.review, 'request_key', body.request_key);
     if (duplicate) return runView(duplicate);
     const revision = record(tables.revision, body.revision_id);
+    assertRevisionNotArchived(revision);
     const provider = createProvider();
     const model = provider.model;
     // Decision 1 is retained for offline experiments, not editor review requests.
