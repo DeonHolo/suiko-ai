@@ -41,7 +41,7 @@ const legalWorkflow = Test({
     $id: Now.ID['be02-unassigned-legal-user'], firstName: 'Suiko', lastName: 'Unassigned Legal',
     roles: [legalReviewer], impersonate: false,
   });
-  const inactive = atf.server.createUser({
+  atf.server.createUser({
     $id: Now.ID['be02-inactive-legal-user'], firstName: 'Suiko', lastName: 'Inactive Legal',
     roles: [legalReviewer], fieldValues: { active: false }, impersonate: false,
   });
@@ -53,60 +53,61 @@ const legalWorkflow = Test({
     $id: Now.ID['be02-legal-workflow-user'],
     firstName: 'Suiko', lastName: 'Legal Workflow Editor', roles: [editor],
   });
-  const submitted = atf.server.runServerSideScript({
+  // Script steps read outputs at runtime. The ATF record IDs are the existing committed identities.
+  atf.server.runServerSideScript({
     $id: Now.ID['be02-legal-workflow-step'],
     script: `(function () {
       var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts');
       outputs.table = 'x_2236136_suiko_ai_legal_task';
-      outputs.record_id = test.runLegalRoutingRegression('${reviewer.user}', '${unassigned.user}', '${inactive.user}');
+      outputs.record_id = test.runLegalRoutingRegression(String(steps('677c43527dd44fb6bf779d1833bc786c').user), String(steps('bf7c90ed4c0248318c78a162f7d5c43f').user), String(steps('ecdb1b53f52c4721b6463926d78fea40').user));
       return true;
     })();`,
   });
   atf.server.impersonate({ $id: Now.ID['be02-test-as-unassigned'], user: unassigned.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-unassigned'], script: `(function () {
-    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runUnassignedLegalRegression('${submitted.record_id}', true);
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runUnassignedLegalRegression(String(steps('48a7fca4b1f346548893cc2dde07a321').record_id), true);
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-test-as-outsider'], user: outsider.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-outsider'], script: `(function () {
-    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runUnassignedLegalRegression('${submitted.record_id}', false);
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runUnassignedLegalRegression(String(steps('48a7fca4b1f346548893cc2dde07a321').record_id), false);
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-test-as-reviewer'], user: reviewer.user });
-  const cleared = atf.server.runServerSideScript({ $id: Now.ID['be02-check-older-clearance'], script: `(function () {
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-older-clearance'], script: `(function () {
     outputs.table = 'x_2236136_suiko_ai_story';
-    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression('${submitted.record_id}', false);
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression(String(steps('48a7fca4b1f346548893cc2dde07a321').record_id), false);
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-return-to-editor'], user: sender.user });
-  const fresh = atf.server.runServerSideScript({ $id: Now.ID['be02-check-fresh-routing'], script: `(function () {
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-fresh-routing'], script: `(function () {
     outputs.table = 'x_2236136_suiko_ai_legal_task';
-    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runFreshLegalRoutingRegression('${cleared.record_id}', '${reviewer.user}');
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runFreshLegalRoutingRegression(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id), String(steps('677c43527dd44fb6bf779d1833bc786c').user));
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-review-newer-copy'], user: reviewer.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-changes-requested'], script: `(function () {
-    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression('${fresh.record_id}', true);
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression(String(steps('a4629dd519dc427e8d24767579635c42').record_id), true);
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-final-editor-check'], user: sender.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-current-status'], script: `(function () {
-    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyLegalChangesRequested('${cleared.record_id}');
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyLegalChangesRequested(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id));
     return true;
   })();` });
-  const finalTask = atf.server.runServerSideScript({ $id: Now.ID['be02-route-final-version'], script: `(function () {
+  atf.server.runServerSideScript({ $id: Now.ID['be02-route-final-version'], script: `(function () {
     outputs.table = 'x_2236136_suiko_ai_legal_task';
-    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').routeCurrentLegalClearanceFixture('${cleared.record_id}', '${reviewer.user}');
+    outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').routeCurrentLegalClearanceFixture(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id), String(steps('677c43527dd44fb6bf779d1833bc786c').user));
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-final-legal-role'], user: reviewer.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-final-clearance'], script: `(function () {
-    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').clearCurrentLegalFixture('${finalTask.record_id}');
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').clearCurrentLegalFixture(String(steps('72ba0dde52e5457ba07dc88a6b2148a1').record_id));
     return true;
   })();` });
   atf.server.impersonate({ $id: Now.ID['be02-editor-clearance-role'], user: sender.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-final-clearance'], script: `(function () {
-    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyCurrentLegalClearance('${cleared.record_id}');
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyCurrentLegalClearance(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id));
     return true;
   })();` });
 });
