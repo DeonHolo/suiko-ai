@@ -79,6 +79,10 @@ declare global {
                         table: 'sys_atf_step'
                         id: 'a4629dd519dc427e8d24767579635c42'
                     }
+                    'be02-check-history-fields': {
+                        table: 'sys_atf_step'
+                        id: '8feb755fb609488c909c6ff09f6b400b'
+                    }
                     'be02-check-older-clearance': {
                         table: 'sys_atf_step'
                         id: '2f223d5e008a473baf352fe7e953a2ab'
@@ -106,6 +110,10 @@ declare global {
                     'be02-final-legal-role': {
                         table: 'sys_atf_step'
                         id: 'c82bc372c2f843148ed7e2189ead7df0'
+                    }
+                    'be02-history-reader': {
+                        table: 'sys_atf_step'
+                        id: '090f7e2be7f3414daae30538238c49b1'
                     }
                     'be02-inactive-legal-user': {
                         table: 'sys_atf_step'
@@ -168,6 +176,34 @@ declare global {
                         table: 'sys_module'
                         id: '7f6958deaccc4422bbcc9fcff113fb44'
                         deleted: false
+                    }
+                    'editor-inbox-editor-pagination-step': {
+                        table: 'sys_atf_step'
+                        id: '239515b689e64001a3deaa48d7a3c307'
+                    }
+                    'editor-inbox-editor-step': {
+                        table: 'sys_atf_step'
+                        id: 'e974cb12ec5543049e11ef2ed9aa65bf'
+                    }
+                    'editor-inbox-editor-user': {
+                        table: 'sys_atf_step'
+                        id: 'c52ff39033014ca1b99b7e9615320ac7'
+                    }
+                    'editor-inbox-outsider-step': {
+                        table: 'sys_atf_step'
+                        id: 'a9ec8421fd4040e180ee474b0347036d'
+                    }
+                    'editor-inbox-outsider-user': {
+                        table: 'sys_atf_step'
+                        id: '03a0335a7a6843a196d7e45654e773cf'
+                    }
+                    'editor-inbox-pagination-step': {
+                        table: 'sys_atf_step'
+                        id: '586d4edb0d0d41f5a745ed95db358b9b'
+                    }
+                    'editor-inbox-regression-test': {
+                        table: 'sys_atf_test'
+                        id: 'b037f8bd5fd44b3486de6a5ca6ce7791'
                     }
                     'fe02-archive-admin-step': {
                         table: 'sys_atf_step'
@@ -349,6 +385,18 @@ declare global {
                         table: 'sys_module'
                         id: '4a3785f085484635b49cab22727160f4'
                     }
+                    'src_server_story-inbox_ts': {
+                        table: 'sys_module'
+                        id: '2502aff4889a4b37820b899ebad589dc'
+                    }
+                    'src_server_story-workflow_ts': {
+                        table: 'sys_module'
+                        id: 'd48457eb11324974aebf899b7e2e03b9'
+                    }
+                    'src_server_story-workflow-test_ts': {
+                        table: 'sys_module'
+                        id: '35baa40985de4861896c43787c0becf2'
+                    }
                     src_server_workbench_ts: {
                         table: 'sys_module'
                         id: '2054332e75aa416a84e82fccf31dbbc7'
@@ -368,6 +416,22 @@ declare global {
                     'suiko-approve-rule': {
                         table: 'sys_ws_operation'
                         id: '75195d7e45934cb2b84a108cd5be622e'
+                    }
+                    'suiko-decision-create': {
+                        table: 'sys_security_acl'
+                        id: '6b30690219e643d29409b134f861d0c8'
+                    }
+                    'suiko-decision-delete': {
+                        table: 'sys_security_acl'
+                        id: '629912b2f240494b8b31551ec2608679'
+                    }
+                    'suiko-decision-read': {
+                        table: 'sys_security_acl'
+                        id: 'f9154e3b3e3246d28120c9f6b1d6adb4'
+                    }
+                    'suiko-decision-write': {
+                        table: 'sys_security_acl'
+                        id: 'e6ed1b9d706f485c8ef346e6d8231cb5'
                     }
                     'suiko-get-archive': {
                         table: 'sys_ws_operation'
@@ -396,6 +460,10 @@ declare global {
                     'suiko-list-policies': {
                         table: 'sys_ws_operation'
                         id: 'f8db95445431407bb22bff31853c1c48'
+                    }
+                    'suiko-list-stories': {
+                        table: 'sys_ws_operation'
+                        id: '76ee04d24f0a41d3ab22cc2741ecb16d'
                     }
                     'suiko-menu': {
                         table: 'sys_app_application'
@@ -665,11 +733,27 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '05ab794662f34432952a8367a5cbd0bd'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: 'b27b2b29ff6033008d3f5d9ad53bf164'
+                        }
+                    },
+                    {
                         table: 'sys_index'
                         id: '05c62cd729274745a8927fe470b98d65'
                         key: {
                             logical_table_name: 'x_2236136_suiko_ai_rule'
                             col_name_string: 'rule_id'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '05e8016884f84e3491f09d744c405d61'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: 'b27b2b29ff6033008d3f5d9ad53bf164'
                         }
                     },
                     {
@@ -711,6 +795,14 @@ declare global {
                             id: '48a7fca4b1f346548893cc2dde07a321'
                             table: 'var__m_atf_input_variable_41de4a935332120028bc29cac2dc349a'
                             field: 'script'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '08d1e4cb72c840f98f821165c90cade5'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: '1778a7480f20101091d0f00c97767e03'
                         }
                     },
                     {
@@ -760,6 +852,15 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_story'
                             element: 'title'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '0a04737b3fbb4c7cb55e1cf88e3446ae'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'NULL'
+                            language: 'en'
                         }
                     },
                     {
@@ -888,6 +989,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '0e5e453dd261455d9431f7c56ab47cdd'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'revision'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '0f6f075c58ba4cb582d7249e7cdda503'
                         key: {
@@ -939,6 +1048,22 @@ declare global {
                             }
                             element: 'title'
                             position: '0'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '10f3fb8760f845fe89721053d7d3118d'
+                        key: {
+                            document_key: 'e974cb12ec5543049e11ef2ed9aa65bf'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '11565e1ab1b2484182af7322c011150d'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: 'ff06ab840f20101091d0f00c97767e6d'
                         }
                     },
                     {
@@ -1089,6 +1214,17 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice'
+                        id: '1e24215c862b4e74b396255fe870e3f1'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'action'
+                            value: 'request_changes'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_ui_element'
                         id: '1ed8e1887a244a19bda8244a6348c921'
                         key: {
@@ -1190,6 +1326,29 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_list_element'
+                        id: '22f848ec629944fda4183c3b08cb5807'
+                        key: {
+                            list_id: {
+                                id: '3584471476e44da5bbde62096f8b2b04'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_story'
+                                    view: {
+                                        id: '2b18358de13a46ddbb574179b049d745'
+                                        key: {
+                                            name: 'suiko_story_inspection'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                    element: 'NULL'
+                                    relationship: 'NULL'
+                                    parent: 'NULL'
+                                }
+                            }
+                            element: 'sys_updated_on'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '23c07026d6604015a63ef1dc14d65533'
                         key: {
@@ -1231,6 +1390,22 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '249ea291b6494ff38f9a66a51ee15408'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'actor_name'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '24d26222ee4c4cd7a32a0efb5c065919'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'editor_decision_head'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: '259137c1d997464881585a11e6ff7566'
                         key: {
@@ -1255,6 +1430,14 @@ declare global {
                                     name: 'x_2236136_suiko_ai.legal_reviewer'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '260f86f5fae946848d6bd582b64e51ae'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'story'
                         }
                     },
                     {
@@ -1291,6 +1474,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '286660d8ce194bb296b9b848d0ebe90c'
+                        key: {
+                            document_key: 'e974cb12ec5543049e11ef2ed9aa65bf'
+                            variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '28da3560d424446eaf5a166c5dae1838'
                         key: {
@@ -1305,6 +1496,13 @@ declare global {
                         key: {
                             document_key: '4b4424d701c8421fb8368c4b6b43e847'
                             variable: 'b27b2b29ff6033008d3f5d9ad53bf164'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_view'
+                        id: '2b18358de13a46ddbb574179b049d745'
+                        key: {
+                            name: 'suiko_story_inspection'
                         }
                     },
                     {
@@ -1324,6 +1522,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '2becb7a6b687476ab9f66d8737c82236'
+                        key: {
+                            document_key: 'a9ec8421fd4040e180ee474b0347036d'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: '2ca5bee9dc1845dbb45d7e206b56de3f'
                         key: {
@@ -1334,6 +1540,14 @@ declare global {
                                     name: 'admin'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '2cd71c2d134342a3a9618b6c32b4ddf5'
+                        key: {
+                            document_key: '586d4edb0d0d41f5a745ed95db358b9b'
+                            variable: '989d9e235324220002c6435723dc3484'
                         }
                     },
                     {
@@ -1373,6 +1587,14 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_rule_version'
                             element: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '2fe3fe73565e4f13a035ccf126edb713'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: '6f69fc4aff6433008d3f5d9ad53bf18c'
                         }
                     },
                     {
@@ -1507,6 +1729,23 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_list'
+                        id: '3584471476e44da5bbde62096f8b2b04'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            view: {
+                                id: '2b18358de13a46ddbb574179b049d745'
+                                key: {
+                                    name: 'suiko_story_inspection'
+                                }
+                            }
+                            sys_domain: 'global'
+                            element: 'NULL'
+                            relationship: 'NULL'
+                            parent: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '35f4ac8f5e074f65972392e5217d50c7'
                         key: {
@@ -1602,6 +1841,15 @@ declare global {
                         key: {
                             document_key: 'fc7a36aa6af64ee7b868cb15381c3d57'
                             variable: '586e2c4253e0220002c6435723dc3415'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '3996cd2c36774002818530e1d6f65c19'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'decided_at'
+                            language: 'en'
                         }
                     },
                     {
@@ -1733,6 +1981,15 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: '3f997ac58354401a89b5d5994e4a149d'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_change_key'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '3fbd2c1136cd4e6bbcf3a04b2decafec'
                         key: {
@@ -1768,6 +2025,15 @@ declare global {
                         key: {
                             document_key: '2badd1a4f8b44cd5a80dc89b6cd5ec2b'
                             variable: '98c44875ffa033008d3f5d9ad53bf1fa'
+                        }
+                    },
+                    {
+                        table: 'sys_element_mapping'
+                        id: '41b2dba278a74aecb162232a7f54bf03'
+                        key: {
+                            id: '586d4edb0d0d41f5a745ed95db358b9b'
+                            table: 'var__m_atf_input_variable_41de4a935332120028bc29cac2dc349a'
+                            field: 'script'
                         }
                     },
                     {
@@ -2017,6 +2283,15 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_element_mapping'
+                        id: '4a68522bacd142b5b8a00d2b185a1214'
+                        key: {
+                            id: '8feb755fb609488c909c6ff09f6b400b'
+                            table: 'var__m_atf_input_variable_41de4a935332120028bc29cac2dc349a'
+                            field: 'script'
+                        }
+                    },
+                    {
                         table: 'ua_table_licensing_config'
                         id: '4b929ecc09074536a3d0edf9e9346741'
                         key: {
@@ -2078,6 +2353,15 @@ declare global {
                     },
                     {
                         table: 'sys_documentation'
+                        id: '4d345c510b9e4095b25bf8e43753a57b'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'actor'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
                         id: '4d57db71f6ff476882e0e0b32d71ba47'
                         key: {
                             name: 'x_2236136_suiko_ai_policy_version'
@@ -2126,6 +2410,14 @@ declare global {
                             }
                             element: 'parent_rule'
                             position: '0'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '4fd672a66bfe4c84a4537f0642e6dcaa'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: '1778a7480f20101091d0f00c97767e03'
                         }
                     },
                     {
@@ -2205,6 +2497,14 @@ declare global {
                         key: {
                             document_key: '420e9ed5b97b487881f370ff8d62693d'
                             variable: '6f69fc4aff6433008d3f5d9ad53bf18c'
+                        }
+                    },
+                    {
+                        table: 'sys_index'
+                        id: '5212d2e87ded40e69fbaab46e3b3f7d2'
+                        key: {
+                            logical_table_name: 'x_2236136_suiko_ai_decision'
+                            col_name_string: 'story'
                         }
                     },
                     {
@@ -2376,6 +2676,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '5a877d5af9ec4d16903f20a4c6ee06e7'
+                        key: {
+                            document_key: '586d4edb0d0d41f5a745ed95db358b9b'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '5af10c490c9b4cd28370fc244ef0c982'
                         key: {
@@ -2434,6 +2742,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: '5c6edd288f8d473f83543664b7d09b56'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'decided_at'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '5cf254f15cab492091080a3839b8e351'
                         key: {
@@ -2468,6 +2784,19 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_security_acl_role'
+                        id: '602d68451a9c41649298e4068eb504d4'
+                        key: {
+                            sys_security_acl: 'f9154e3b3e3246d28120c9f6b1d6adb4'
+                            sys_user_role: {
+                                id: 'c1bf336a905849689b79cae5fc8d997f'
+                                key: {
+                                    name: 'admin'
+                                }
+                            }
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '60365f1e180a4ad5aa8c811f4001f6b0'
                         key: {
@@ -2481,6 +2810,13 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_rule'
                             element: 'title'
+                        }
+                    },
+                    {
+                        table: 'ua_table_licensing_config'
+                        id: '60c3892384c34e00ad409e114dd796a5'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
                         }
                     },
                     {
@@ -2611,6 +2947,22 @@ declare global {
                     },
                     {
                         table: 'sys_dictionary'
+                        id: '6366a18c407549ddaf7fd63483ae62c4'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'note'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '63be9f95c4af4d209532e447cd68b397'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: '8c07aba5ff6033008d3f5d9ad53bf13b'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
                         id: '641768d6cfcf4bd88abff5125207eaf4'
                         key: {
                             name: 'x_2236136_suiko_ai_revision'
@@ -2678,6 +3030,14 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_revision'
                             element: 'body'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '67b403fbe48047338ca32f88f3749e6e'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: '8c07aba5ff6033008d3f5d9ad53bf13b'
                         }
                     },
                     {
@@ -2763,6 +3123,15 @@ declare global {
                     },
                     {
                         table: 'sys_documentation'
+                        id: '6b85e6d855f0414f9c008675c565cbe3'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'action'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
                         id: '6ba575ac2ba047f19ced603ebe0ff455'
                         key: {
                             name: 'x_2236136_suiko_ai_config'
@@ -2823,6 +3192,14 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_revision'
                             element: 'version_key'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '6f16fe0c385f44538d12f1726243a591'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: '6f69fc4aff6433008d3f5d9ad53bf18c'
                         }
                     },
                     {
@@ -2901,6 +3278,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '75f239e860e54305af029e41eccd55e2'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: '1985e0ceff2433008d3f5d9ad53bf1ba'
+                        }
+                    },
+                    {
                         table: 'sys_ui_element'
                         id: '761d797a8bbf4293899509a10b9113da'
                         key: {
@@ -2971,6 +3356,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_atf_test_suite_test'
+                        id: '777b77b83ea247209a372faa576f1a73'
+                        key: {
+                            test_suite: '47a536e4837d4aee8793a15628adeffd'
+                            test: 'b037f8bd5fd44b3486de6a5ca6ce7791'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: '77d1e3192d674dbe9664f35ce66ba001'
                         key: {
@@ -2988,6 +3381,38 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: '78119c917ac64a508b009c9943758860'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'legal_clearance_required'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_list_element'
+                        id: '78682865944649f3ac887d9cee6b9a6d'
+                        key: {
+                            list_id: {
+                                id: '3584471476e44da5bbde62096f8b2b04'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_story'
+                                    view: {
+                                        id: '2b18358de13a46ddbb574179b049d745'
+                                        key: {
+                                            name: 'suiko_story_inspection'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                    element: 'NULL'
+                                    relationship: 'NULL'
+                                    parent: 'NULL'
+                                }
+                            }
+                            element: 'current_revision'
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: '78d259b7d3f7421fb9695e764b12fa48'
                         key: {
@@ -3000,6 +3425,14 @@ declare global {
                         id: '7917820115ab4b8ebe496dc17116fbea'
                         key: {
                             name: 'x_2236136_suiko_ai_review.do - BYOUI Files'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '7acb3ca3a3c648bcad7d423960fec117'
+                        key: {
+                            document_key: '239515b689e64001a3deaa48d7a3c307'
+                            variable: '989d9e235324220002c6435723dc3484'
                         }
                     },
                     {
@@ -3138,6 +3571,14 @@ declare global {
                     },
                     {
                         table: 'sys_dictionary'
+                        id: '7d151a6e171748ad896a140be26fb2d5'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'action'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
                         id: '7d42db249f9143f1a2e7061f7bdd69a6'
                         key: {
                             name: 'x_2236136_suiko_ai_legal_task'
@@ -3218,10 +3659,25 @@ declare global {
                     },
                     {
                         table: 'sys_variable_value'
+                        id: '80d6c09c523543c3ad4e2117ac60b7f7'
+                        key: {
+                            document_key: '8feb755fb609488c909c6ff09f6b400b'
+                            variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
                         id: '8110ff7b1653459eb1365d1a96eaad88'
                         key: {
                             document_key: '2f223d5e008a473baf352fe7e953a2ab'
                             variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
+                        table: 'sys_db_object'
+                        id: '81e1e1f2c6a54095a39ba03013ed478d'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
                         }
                     },
                     {
@@ -3246,6 +3702,17 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice'
+                        id: '8327eaf4463941beb0bbf094f5432796'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'action'
+                            value: 'sign_off'
+                            language: 'en'
+                            dependent_value: 'NULL'
+                        }
+                    },
+                    {
                         table: 'sys_element_mapping'
                         id: '83444db9f395467f8f42339e053d9e08'
                         key: {
@@ -3255,11 +3722,27 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '8373757a64fc41979caef604afb2f754'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: '6f69fc4aff6433008d3f5d9ad53bf18c'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: '83a40e65d35040409701748fdb093fa8'
                         key: {
                             name: 'x_2236136_suiko_ai_review'
                             element: 'state'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: '83dc43b06f0e418688686f61c4375ba0'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: '8c07aba5ff6033008d3f5d9ad53bf13b'
                         }
                     },
                     {
@@ -3415,6 +3898,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: '8a5fbd54e23549c9abda6393df1de853'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: 'ff06ab840f20101091d0f00c97767e6d'
+                        }
+                    },
+                    {
                         table: 'sys_index'
                         id: '8ad5fcafd07745539b19f6f2150c27b6'
                         key: {
@@ -3442,6 +3933,15 @@ declare global {
                             }
                             element: 'body'
                             position: '5'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: '8bc31954a6724b71ab624076d9908051'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'actor_name'
+                            language: 'en'
                         }
                     },
                     {
@@ -3517,6 +4017,19 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_security_acl_role'
+                        id: '8f4f0eb8fdde464ca4f422703ebe3d9f'
+                        key: {
+                            sys_security_acl: '629912b2f240494b8b31551ec2608679'
+                            sys_user_role: {
+                                id: 'c1bf336a905849689b79cae5fc8d997f'
+                                key: {
+                                    name: 'admin'
+                                }
+                            }
+                        }
+                    },
+                    {
                         table: 'sys_element_mapping'
                         id: '90b309c313674d51b8a238014a9753b5'
                         key: {
@@ -3565,6 +4078,14 @@ declare global {
                     },
                     {
                         table: 'sys_variable_value'
+                        id: '9261bc594b524e2a96f110d1621aeb5c'
+                        key: {
+                            document_key: 'a9ec8421fd4040e180ee474b0347036d'
+                            variable: '989d9e235324220002c6435723dc3484'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
                         id: '935065d4434749109932644f7303612e'
                         key: {
                             document_key: '7a8a87187fdd4b1e91cd8162e58333a2'
@@ -3594,6 +4115,14 @@ declare global {
                         key: {
                             logical_table_name: 'x_2236136_suiko_ai_review'
                             col_name_string: 'active_revision'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: '9585b31a5a844842997b81fc7338ae52'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'previous'
                         }
                     },
                     {
@@ -3871,6 +4400,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: 'a13508778003456baa36cc581edb7734'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: '98c44875ffa033008d3f5d9ad53bf1fa'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: 'a18833deac504124b0053f2d3f9700fa'
                         key: {
@@ -3953,6 +4490,14 @@ declare global {
                                 }
                             }
                             sys_domain: 'global'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'a5214a48febf405c9a681e7742b032bf'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: 'b27b2b29ff6033008d3f5d9ad53bf164'
                         }
                     },
                     {
@@ -4211,6 +4756,14 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: 'b17a6006897f477c8420b52d70c7dc76'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: 'ff06ab840f20101091d0f00c97767e6d'
+                        }
+                    },
+                    {
                         table: 'sys_security_acl_role'
                         id: 'b1fc3eb3cefd486f925f1b735c84cbcc'
                         key: {
@@ -4221,6 +4774,22 @@ declare global {
                                     name: 'x_2236136_suiko_ai.editor'
                                 }
                             }
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'b23422533e744ac0bb87d2db3a6e8715'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: '1985e0ceff2433008d3f5d9ad53bf1ba'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'b27e3bac7222485f9e3d273d0bdcaf13'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'version'
                         }
                     },
                     {
@@ -4370,6 +4939,14 @@ declare global {
                         key: {
                             name: 'x_2236136_suiko_ai_story'
                             element: 'workflow_status'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'b9f6a1ad4da041d082b75c0bc9df90c1'
+                        key: {
+                            document_key: 'c52ff39033014ca1b99b7e9615320ac7'
+                            variable: '98c44875ffa033008d3f5d9ad53bf1fa'
                         }
                     },
                     {
@@ -4526,11 +5103,50 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: 'bd495c34fa284b55bc41c7d5cc9ba7af'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'previous'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'bdc3fcc1346a415191c100da5400b859'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'NULL'
+                        }
+                    },
+                    {
+                        table: 'sys_security_acl_role'
+                        id: 'beadd3d1244d4f019f088174be2cb487'
+                        key: {
+                            sys_security_acl: 'e6ed1b9d706f485c8ef346e6d8231cb5'
+                            sys_user_role: {
+                                id: 'c1bf336a905849689b79cae5fc8d997f'
+                                key: {
+                                    name: 'admin'
+                                }
+                            }
+                        }
+                    },
+                    {
                         table: 'sys_variable_value'
                         id: 'bee7442d49b24b828be9c400e1f82509'
                         key: {
                             document_key: 'e3b71f148ec44539a44b1285e9d7262f'
                             variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'bf6ec6af742d49c08d5f4432a7b430cf'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'editor_decision_head'
+                            language: 'en'
                         }
                     },
                     {
@@ -4700,12 +5316,28 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_choice_set'
+                        id: 'c6c8cfe15e3b42738542d10e69cba9c2'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'action'
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: 'c6eec8b1a86544ac94d48317a336182e'
                         key: {
                             name: 'x_2236136_suiko_ai_story'
                             element: 'current_revision'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'c70453769bfe40e79a5509a948673964'
+                        key: {
+                            document_key: '8feb755fb609488c909c6ff09f6b400b'
+                            variable: '42f2564b73031300440211d8faf6a777'
                         }
                     },
                     {
@@ -4846,6 +5478,15 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_documentation'
+                        id: 'd06cf02e92674010bca52bb0099c8041'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'story'
+                            language: 'en'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: 'd0b0fe16244749a89efc9971e7de9831'
                         key: {
@@ -4879,10 +5520,26 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_dictionary'
+                        id: 'd4570d46e63a460aa9a5d2ce1895aa62'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'legal_clearance_required'
+                        }
+                    },
+                    {
                         table: 'ua_table_licensing_config'
                         id: 'd46f2ebfc91e45838c4a370e94f450b8'
                         key: {
                             name: 'x_2236136_suiko_ai_config'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'd4f4beb8307a46c19621774e4c04d314'
+                        key: {
+                            name: 'x_2236136_suiko_ai_story'
+                            element: 'workflow_change_key'
                         }
                     },
                     {
@@ -4982,6 +5639,14 @@ declare global {
                             name: 'x_2236136_suiko_ai_rule'
                             element: 'managed'
                             language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_dictionary'
+                        id: 'd778c4cfe39549f9b5a1ba5ee9cb8644'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'actor'
                         }
                     },
                     {
@@ -5215,6 +5880,14 @@ declare global {
                     },
                     {
                         table: 'sys_variable_value'
+                        id: 'e1f0cf178ffa4e7a96543c8a14d87519'
+                        key: {
+                            document_key: '03a0335a7a6843a196d7e45654e773cf'
+                            variable: '1778a7480f20101091d0f00c97767e03'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
                         id: 'e1f25d2b3ea0430eaea226e2c50fe549'
                         key: {
                             document_key: 'bf7c90ed4c0248318c78a162f7d5c43f'
@@ -5361,6 +6034,29 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_ui_list_element'
+                        id: 'ec72f14e7d7041d2bd2c158f3d8ff12a'
+                        key: {
+                            list_id: {
+                                id: '3584471476e44da5bbde62096f8b2b04'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_story'
+                                    view: {
+                                        id: '2b18358de13a46ddbb574179b049d745'
+                                        key: {
+                                            name: 'suiko_story_inspection'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                    element: 'NULL'
+                                    relationship: 'NULL'
+                                    parent: 'NULL'
+                                }
+                            }
+                            element: 'workflow_status'
+                        }
+                    },
+                    {
                         table: 'sys_dictionary'
                         id: 'ec987f21184745f79e8f84db0e8426eb'
                         key: {
@@ -5373,6 +6069,15 @@ declare global {
                         id: 'ecf0b3b15ae3475f8d1e2e100c1fc548'
                         key: {
                             name: 'x_2236136_suiko_ai_config'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'ef953d817b7a4c3eb934d2c92f850c10'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'revision'
+                            language: 'en'
                         }
                     },
                     {
@@ -5514,11 +6219,33 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_security_acl_role'
+                        id: 'f574f781eb6545f9adaae054f5fa0ceb'
+                        key: {
+                            sys_security_acl: '6b30690219e643d29409b134f861d0c8'
+                            sys_user_role: {
+                                id: 'c1bf336a905849689b79cae5fc8d997f'
+                                key: {
+                                    name: 'admin'
+                                }
+                            }
+                        }
+                    },
+                    {
                         table: 'sys_documentation'
                         id: 'f5d9a362b55e49368633ca43a854833f'
                         key: {
                             name: 'x_2236136_suiko_ai_rule_version'
                             element: 'definition_json'
+                            language: 'en'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'f5f7270802234aa9aea3aa45455edb8a'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'note'
                             language: 'en'
                         }
                     },
@@ -5570,6 +6297,29 @@ declare global {
                         key: {
                             document_key: '5b05a09e6e7e484292ab8a03212e066b'
                             variable: 'b27b2b29ff6033008d3f5d9ad53bf164'
+                        }
+                    },
+                    {
+                        table: 'sys_ui_list_element'
+                        id: 'f946d8f844d142d3a2f6460b391fe23b'
+                        key: {
+                            list_id: {
+                                id: '3584471476e44da5bbde62096f8b2b04'
+                                key: {
+                                    name: 'x_2236136_suiko_ai_story'
+                                    view: {
+                                        id: '2b18358de13a46ddbb574179b049d745'
+                                        key: {
+                                            name: 'suiko_story_inspection'
+                                        }
+                                    }
+                                    sys_domain: 'global'
+                                    element: 'NULL'
+                                    relationship: 'NULL'
+                                    parent: 'NULL'
+                                }
+                            }
+                            element: 'title'
                         }
                     },
                     {
@@ -5627,6 +6377,22 @@ declare global {
                         }
                     },
                     {
+                        table: 'sys_variable_value'
+                        id: 'fa9b2cc0a60f4292ae172fec3982bc35'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: '1985e0ceff2433008d3f5d9ad53bf1ba'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'faaf606230a84de9991f41dc96c8d9db'
+                        key: {
+                            document_key: '239515b689e64001a3deaa48d7a3c307'
+                            variable: '42f2564b73031300440211d8faf6a777'
+                        }
+                    },
+                    {
                         table: 'ua_table_licensing_config'
                         id: 'fae505064738436ab2872e891bf74e9c'
                         key: {
@@ -5665,6 +6431,15 @@ declare global {
                             id: '16d89eadfd87475db523e06677aa6fc8'
                             table: 'var__m_atf_input_variable_41de4a935332120028bc29cac2dc349a'
                             field: 'script'
+                        }
+                    },
+                    {
+                        table: 'sys_documentation'
+                        id: 'fc38b337e100425c83d4746d29f36522'
+                        key: {
+                            name: 'x_2236136_suiko_ai_decision'
+                            element: 'version'
+                            language: 'en'
                         }
                     },
                     {
@@ -5717,6 +6492,14 @@ declare global {
                         key: {
                             document_key: '2badd1a4f8b44cd5a80dc89b6cd5ec2b'
                             variable: '1985e0ceff2433008d3f5d9ad53bf1ba'
+                        }
+                    },
+                    {
+                        table: 'sys_variable_value'
+                        id: 'fed4c349a1d94709945ebfca70aaa99b'
+                        key: {
+                            document_key: '090f7e2be7f3414daae30538238c49b1'
+                            variable: '98c44875ffa033008d3f5d9ad53bf1fa'
                         }
                     },
                 ]

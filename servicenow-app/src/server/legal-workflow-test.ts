@@ -1,5 +1,5 @@
 import { GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
-import { getState, legalDecision, legalTasks, readStateForLegalTest, saveRevision, workflowAction } from './workbench.ts';
+import { getState, getStories, legalDecision, legalTasks, readStateForLegalTest, saveRevision, workflowActionForTest as workflowAction } from './workbench.ts';
 import { postArchive } from './archive.ts';
 
 function expect(value, message) {
@@ -48,8 +48,17 @@ export function runLegalRoutingRegression(assignedId: string, unassignedId: stri
   expect(action(workflowAction, { ...route, expected_modified: '999999' }).status === 409, 'A stale story request was accepted.');
   expect(action(workflowAction, { ...route, reviewer_id: inactiveId }).status === 400
     && action(workflowAction, { ...route, reviewer_id: gs.generateGUID() }).status === 400, 'An inactive or missing reviewer was accepted.');
+  const failed = action((request, response) => workflowAction(request, response, { editor: true, legal: true }, () => {
+    throw new Error('Simulated legal task insert failure.');
+  }), route);
+  const recovered = state(saved.body.story_id).workflow;
+  expect(failed.status === 500 && recovered.status === 'needs_review' && recovered.history.length === 0
+    && recovered.actions.includes('sign_off'), 'A failed legal request left a false clearance requirement.');
+  route.expected_modified = recovered.modified;
   const sent = action(workflowAction, route);
   expect(sent.status === 200 && sent.body.workflow.status === 'waiting_for_legal', 'Sending the revision to legal did not update workflow status.');
+  expect(action(getStories, null, { q: saved.body.title, status: 'waiting_for_legal' }).body.items.some(item => item.id === saved.body.story_id),
+    'The Editor Inbox did not return the pending legal status.');
   const repeat = action(workflowAction, route);
   expect(repeat.status === 200 && repeat.body.task_id === sent.body.task_id, 'The original request did not reuse its task.');
   expect(action(workflowAction, { ...route, reviewer_id: unassignedId }).status === 409
@@ -122,6 +131,9 @@ export function runFreshLegalRoutingRegression(storyId: string, assignedId: stri
   const latest = afterOlder.revisions[0];
   expect(latest.version === 2 && afterOlder.workflow.current_revision_id === latest.id
     && afterOlder.workflow.status === 'needs_review', 'The old clearance changed the newer story status.');
+  expect(action(workflowAction, { action: 'sign_off', revision_id: latest.id,
+    expected_modified: afterOlder.workflow.modified }).status === 409,
+    'Older clearance incorrectly allowed sign-off of the new version.');
   const sent = action(workflowAction, { action: 'send_to_legal', revision_id: latest.id,
     reviewer_id: assignedId, note: reason, expected_modified: afterOlder.workflow.modified });
   expect(sent.status === 200 && sent.body.workflow.status === 'waiting_for_legal', 'The newer version could not obtain its own task.');
@@ -132,11 +144,21 @@ export function verifyLegalChangesRequested(storyId: string) {
   const after = state(storyId);
   expect(after.workflow.status === 'changes_requested' && after.workflow.current_revision_id === after.revisions[0].id,
     'The current revision did not reflect the legal changes request.');
+  expect(after.workflow.history.some(entry => entry.revision_id === after.revisions[0].id
+    && entry.action === 'legal_request_changes' && entry.note === 'Confirm the new clip.'), 'The requesting Editor did not receive the legal instructions.');
   const archived = action(postArchive, { action: 'archive', kind: 'story', id: storyId, expected_modified: after.story.modified });
   expect(archived.status === 200 && archived.body.item.retention_reason.includes('Retained legal review history'),
     'The archive omitted retained legal evidence.');
   const restored = action(postArchive, { action: 'restore', kind: 'story', id: storyId, expected_modified: archived.body.item.modified });
   expect(restored.status === 200 && state(storyId).workflow.status === 'changes_requested', 'Restore lost the recorded legal decision.');
+}
+
+export function verifyOtherEditorHistory(storyId: string) {
+  expect(gs.hasRole(editor) && !gs.hasRole(legal) && !gs.hasRole('admin'), 'Use an unrelated regular Editor.');
+  const current = state(storyId);
+  const legalEvents = current.workflow.history.filter(entry => ['send_to_legal', 'legal_clear', 'legal_request_changes'].includes(entry.action));
+  expect(legalEvents.length >= 4 && legalEvents.every(entry => entry.actor_id !== String(gs.getUserID()) && entry.note === ''),
+    'The shared timeline disclosed another editor’s legal notes.');
 }
 
 export function routeCurrentLegalClearanceFixture(storyId: string, assignedId: string) {
@@ -168,7 +190,13 @@ export function verifyCurrentLegalClearance(storyId: string) {
   const current = state(storyId);
   expect(current.workflow.status === 'ready_for_sign_off' && current.workflow.current_revision_id === current.revisions[0].id,
     'The legal decision did not reach the exact current revision.');
+  expect(action(getStories, null, { q: current.story.title, status: 'ready_for_sign_off' }).body.items.some(item => item.id === storyId),
+    'The Editor Inbox did not return the freshly cleared status.');
   const repeat = action(workflowAction, {action:'send_to_legal',revision_id:current.revisions[0].id,
     reviewer_id:current.workflow.reviewers[0].id,note:reason,expected_modified:current.workflow.modified});
   expect(repeat.status === 409, 'The already decided version was sent to legal again.');
+  const signed = action(workflowAction, { action: 'sign_off', revision_id: current.revisions[0].id,
+    expected_modified: current.workflow.modified });
+  expect(signed.status === 200 && signed.body.workflow.status === 'signed_off',
+    'Clearance of the current revision did not permit final editor sign-off.');
 }

@@ -2,10 +2,10 @@ import '@servicenow/sdk/global';
 import {
   Acl, Role, Table, StringColumn, IntegerColumn, ReferenceColumn,
   BooleanColumn, GenericColumn, ChoiceColumn, DateTimeColumn, Form, default_view,
-  RestApi, ApplicationMenu, Record,
+  RestApi, ApplicationMenu, Record, List,
 } from '@servicenow/sdk/core';
 import {
-  getState, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive,
+  getState, getStories, saveRevision, runReview, saveMetadata, saveRule, approveRule, setRuleActive,
   configureProvider, getPolicies, savePolicy, suggestPolicyChecks, workflowAction,
   legalTasks, legalDecision,
 } from '../server/workbench';
@@ -40,6 +40,9 @@ export const x_2236136_suiko_ai_story = Table({
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
+    legal_clearance_required: BooleanColumn({ label: 'Legal clearance required', default: false }),
+    workflow_change_key: StringColumn({ label: 'Workflow write identity', maxLength: 32 }),
+    editor_decision_head: ReferenceColumn({ label: 'Last accepted editor decision', referenceTable: 'x_2236136_suiko_ai_decision' }),
     current_revision: ReferenceColumn({ label: 'Current revision', referenceTable: 'x_2236136_suiko_ai_revision' }),
     workflow_status: ChoiceColumn({
       label: 'Workflow status', choices: {
@@ -69,6 +72,24 @@ export const x_2236136_suiko_ai_revision = Table({
   },
   allowWebServiceAccess: false,
   index: [{ element: 'version_key', unique: true }, { element: 'request_key', unique: true }],
+});
+export const x_2236136_suiko_ai_decision = Table({
+  name: 'x_2236136_suiko_ai_decision', label: 'Suiko editor decision', audit: true,
+  schema: {
+    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true }),
+    revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true, cascadeRule: 'restrict' }),
+    previous: StringColumn({ label: 'Previous accepted decision', maxLength: 32 }),
+    version: IntegerColumn({ label: 'Version', mandatory: true }),
+    action: ChoiceColumn({ label: 'Action', mandatory: true, choices: {
+      request_changes: 'Changes requested', sign_off: 'Signed off',
+    } }),
+    actor: ReferenceColumn({ label: 'Decided by', referenceTable: 'sys_user', mandatory: true }),
+    actor_name: StringColumn({ label: 'Name when recorded', maxLength: 160 }),
+    decided_at: DateTimeColumn({ label: 'Decided at', mandatory: true }),
+    note: StringColumn({ label: 'Note', maxLength: 1000 }),
+  },
+  allowWebServiceAccess: false,
+  index: [{ element: 'story', unique: false }],
 });
 export const x_2236136_suiko_ai_legal_task = Table({
   name: 'x_2236136_suiko_ai_legal_task', label: 'Suiko legal review', audit: true,
@@ -233,6 +254,15 @@ Acl({
   table: 'x_2236136_suiko_ai_story', operation: 'delete',
   roles: ['admin'], adminOverrides: true,
 });
+
+Acl({ $id: Now.ID['suiko-decision-read'], type: 'record', table: 'x_2236136_suiko_ai_decision',
+  operation: 'read', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['suiko-decision-create'], type: 'record', table: 'x_2236136_suiko_ai_decision',
+  operation: 'create', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['suiko-decision-write'], type: 'record', table: 'x_2236136_suiko_ai_decision',
+  operation: 'write', roles: ['admin'], adminOverrides: true });
+Acl({ $id: Now.ID['suiko-decision-delete'], type: 'record', table: 'x_2236136_suiko_ai_decision',
+  operation: 'delete', roles: ['admin'], adminOverrides: true });
 
 Acl({
   $id: Now.ID['x_2236136_suiko_ai_legal_task-read'], type: 'record',
@@ -438,11 +468,30 @@ Record({
   },
 });
 
+const storyInspection = Record({
+  $id: Now.ID['suiko-story-inspection-view'],
+  table: 'sys_ui_view',
+  data: { name: 'suiko_story_inspection', title: 'Story inspection' },
+});
+
+List({
+  $id: Now.ID['suiko-story-inspection-list'],
+  table: 'x_2236136_suiko_ai_story',
+  view: storyInspection,
+  columns: [
+    { element: 'title', position: 0 },
+    { element: 'current_revision', position: 1 },
+    { element: 'workflow_status', position: 2 },
+    { element: 'sys_updated_on', position: 3 },
+  ],
+});
+
 RestApi({
   $id: Now.ID['suiko-workbench-api'], name: 'Suiko review workbench', serviceId: 'workbench',
   consumes: 'application/json', produces: 'application/json', enforceAcl: [editorApi],
   versions: [{ $id: Now.ID['suiko-api-v1'], version: 1, isDefault: true }],
   routes: [
+    { $id: Now.ID['suiko-list-stories'], method: 'GET', path: '/stories', version: 1, script: getStories },
     { $id: Now.ID['suiko-state'], method: 'GET', path: '/state', version: 1, script: getState },
     { $id: Now.ID['suiko-save-revision'], method: 'POST', path: '/revisions', version: 1, script: saveRevision },
     { $id: Now.ID['suiko-get-archive'], method: 'GET', path: '/archive', version: 1, script: getArchive },

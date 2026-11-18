@@ -90,6 +90,11 @@ const legalWorkflow = Test({
     require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').runAssignedLegalRegression(String(steps('a4629dd519dc427e8d24767579635c42').record_id), true);
     return true;
   })();` });
+  atf.server.createUser({ $id: Now.ID['be02-history-reader'], firstName: 'Suiko', lastName: 'Other Editor', roles: [editor], impersonate: true });
+  atf.server.runServerSideScript({ $id: Now.ID['be02-check-history-fields'], script: `(function () {
+    require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyOtherEditorHistory(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id));
+    return true;
+  })();` });
   atf.server.impersonate({ $id: Now.ID['be02-final-editor-check'], user: sender.user });
   atf.server.runServerSideScript({ $id: Now.ID['be02-check-current-status'], script: `(function () {
     require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/legal-workflow-test.ts').verifyLegalChangesRequested(String(steps('2f223d5e008a473baf352fe7e953a2ab').record_id));
@@ -132,9 +137,39 @@ const archive = Test({
   atf.server.runServerSideScript({ $id: Now.ID['fe02-archive-outsider-step'], script: Now.include('./tests/archive-guard.script.js') });
 });
 
+const editorInbox = Test({
+  $id: Now.ID['editor-inbox-regression-test'],
+  name: 'Suiko FE-01 / BE-01: Inbox and editor decisions',
+  description: 'Checks both pages, version-bound decisions, and Editor access with fictional ATF fixtures.',
+  failOnServerError: true,
+}, atf => {
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-pagination-step'],
+    script: `(function () {
+      outputs.table = 'x_2236136_suiko_ai_story';
+      outputs.record_id = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/story-workflow-test.ts').createInboxFixtures();
+      return true;
+    })();`,
+  });
+  atf.server.createUser({ $id: Now.ID['editor-inbox-editor-user'], firstName: 'Suiko', lastName: 'Inbox Editor', roles: [editor], impersonate: true });
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-editor-pagination-step'],
+    script: Now.include('./tests/story-inbox-pagination.script.js'),
+  });
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-editor-step'],
+    script: Now.include('./tests/story-editor-workflow.script.js'),
+  });
+  atf.server.createUser({ $id: Now.ID['editor-inbox-outsider-user'], firstName: 'Suiko', lastName: 'Inbox Outsider', roles: [], impersonate: true });
+  atf.server.runServerSideScript({
+    $id: Now.ID['editor-inbox-outsider-step'],
+    script: Now.include('./tests/story-editor-access.script.js'),
+  });
+});
+
 TestSuite({
   $id: Now.ID['ai-review-server-regression-suite'],
   name: 'Suiko AI: server review regressions',
   description: 'Server-only checks using fictional inputs and injected provider replies.',
-  tests: [persistence, approvedRules, archive, legalWorkflow],
+  tests: [persistence, approvedRules, archive, legalWorkflow, editorInbox],
 });

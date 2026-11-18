@@ -391,7 +391,7 @@ export default function App() {
           : <p role="status">Opening your workspace…</p>}
       </div>}
       {data && page === 'stories' && <Stories stories={data.stories} selected={current && !archived ? { id: storyId, title: current.title } : null}
-        canSearchAll={data.capabilities.inbox === true} hasWorkflow={data.capabilities.workflow === true} busy={!!busy}
+        canSearchAll={data.capabilities.inbox === true} busy={!!busy}
         onOpen={openStory} onNew={() => leaveDraft(() => startNew())} onSamples={() => setShowSamples(true)} />}
       {body}
       {data?.can_manage_rules && <div hidden={page !== 'rules'}>

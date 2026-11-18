@@ -80,6 +80,7 @@ function retentionReason(kind: string, row: GlideRecord) {
     return 'Protected capstone evidence from the acceptance report stays in this instance.';
   }
   if (kind === 'story') {
+    if (row.getValue('editor_decision_head')) return 'Retained editor decision history depends on this story.';
     const tasks = new GlideRecord(tables.legalTask);
     tasks.addQuery('story', id(row));
     tasks.setLimit(1);
