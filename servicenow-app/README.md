@@ -67,3 +67,32 @@ The preview listens at `http://127.0.0.1:13542`. Saved versions and reviews go t
 Claim the platform work in [Team tasks](../TEAM-TASKS.md). Keep capability flags false until real endpoints pass their tests. If you edit app files in Studio, use the [Studio sync steps](../docs/13-servicenow-development-and-cicd.md#changes-made-in-studio) before the next build. Custom screens remain Deon's responsibility.
 
 The [development guide](../docs/13-servicenow-development-and-cicd.md) explains the GitHub checks and how to get a reviewed change onto the PDI.
+
+## Validate Inbox and editor decisions
+
+Install the SDK build in a development instance. In **Scripts - Background**, select
+the Suiko AI scope and run the following as admin to populate current revision
+references for existing stories. Keep the sandbox option off for the backfill.
+A second run is safe. The script reports how many stories it updated.
+
+```js
+var workflow = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/story-workflow.ts');
+gs.info('Suiko story workflow records updated: ' + workflow.backfillCurrentRevisions());
+```
+
+As a regular Editor, open the Suiko story list with the **Story inspection** view
+(`x_2236136_suiko_ai_story_list.do?sysparm_view=suiko_story_inspection`). In REST
+API Explorer or an authenticated session, verify `GET workbench/stories` with
+title and status filters. Verify the second page with the returned cursor, and
+confirm a non-Editor cannot read the endpoint. Run the **Suiko FE-01 / BE-01**
+and **Suiko BE-02** ATF tests with their dedicated test accounts.
+
+The workspace uses `x_2236136_suiko_ai.inbox_enabled` and
+`x_2236136_suiko_ai.workflow_enabled` to advertise the new capabilities.
+Set each property to `true` after the corresponding installed API and role
+checks pass. The existing legal capability uses its own property.
+
+Editor decisions are appended to the story's audited history field in the same
+guarded update as the status change. The state response joins those entries with
+existing legal task events. Coordinate this history writer with BE-03 if the
+team chooses a separate decision table.
