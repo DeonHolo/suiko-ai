@@ -116,13 +116,14 @@ $modified = $result.workflow.modified
 | 6 | `POST /api/x_2236136_suiko_ai/v1/workbench/workflow/actions` with `{"action":"request_changes","revision_id":"<current>","expected_modified":"<modified>","note":"Direct API check."}` | Editor | **200** | `result.workflow.history` gained exactly one entry with the session actor, version and UTC time |
 | 7 | Repeat request 6 with the latest modification count from state | Editor | **409** | Current count passes the stale guard. The already-requested status rejects a second decision. |
 | 8 | On a separate fictional story in Needs review, submit request 6 with its current revision and an older modification count | Editor | **409** | Request changes is otherwise available. The stale count rejects the write and history stays empty. |
+| 8a | Save version 2 of an untouched fictional story. Submit request 6 using version 1 and version 2's current modification count. | Editor | **409** | The fresh count passes the stale guard. The old saved revision is rejected and history stays empty. |
 | 9 | Request 6 | Legal reviewer | **403** | No decision, no story detail |
 | 10 | Request 6 | No role | **403** | No decision, no story detail |
 | 11 | `GET /api/now/table/x_2236136_suiko_ai_decision/$env:SUIKO_DECISION` | Editor | **403 or 404** | This account cannot read the native decision through the API |
 | 12 | Same request | Admin | Record observed status | Record which authentication method was used. The SDK session returned 200 on the shared instance. |
 | 13 | `POST /api/now/table/x_2236136_suiko_ai_decision` with `{"story":"<id>","revision":"<id>","version":1,"action":"sign_off","actor":"<id>","decided_at":"2026-11-19 00:00:00"}` | Editor | **403** | No forged decision exists |
 | 14 | Read the fixture through the native list | Admin | Readable | The actor and revision match the accepted entry. Leave the audit row intact. |
-| 15 | `PATCH /api/now/table/x_2236136_suiko_ai_decision/$env:SUIKO_DECISION` with `{"note":"rewritten"}` | Editor | **403** | Reopened row still has its original note, actor and time |
+| 15 | `PATCH /api/now/table/x_2236136_suiko_ai_decision/$env:SUIKO_DECISION` with `{"note":"rewritten"}` | Editor | **403 or 404** | Reopened row still has its original note, actor and time |
 | 16 | Check the fixture's native delete access with `canDelete()` | Editor and Rules Editor | Denied | The ATF check tests the ACL without attempting to remove a saved decision |
 | 17 | `POST /api/x_2236136_suiko_ai/v1/workbench/rules` with a valid saved-rule body | Editor | **403** | An everyday Editor cannot change rules |
 | 18 | Same request | Rules Editor | **200** | The designated Rules Editor can change rules |
@@ -147,7 +148,7 @@ Save each response body and status under the ignored local `ai-review/output/` f
 3. **Studio → Access Control.** Confirm the four decision record ACLs are `admin` with admin override, the Editor API ACL requires `x_2236136_suiko_ai.editor`, and the legal API ACL requires `x_2236136_suiko_ai.legal_reviewer`.
 4. **Studio → Automated Test Framework → Suiko AI: server review regressions → Suiko BE-03: decision history and permissions.** Confirm the order: admin as suite runner first, then Editor, Rules Editor, legal-only and no-role users. Run the suite and record its result sys_id.
 5. Open a test story, record a changes request, then reopen **GET workbench/state**. Confirm `workflow.modified` matches the story count and the history entry has the display name, version, note and UTC time. Refresh and confirm the order is unchanged.
-6. On a fictional fixture, save an AI review and an editor-chosen description. Record a human decision, save a newer copy and replace the approved test rule with revised wording. Reopen the older review and decision. Compare the original rule, quoted passage, chosen description, revision, actor, time and note. The installed regression injects a provider reply so this check can run without a live model call.
+6. The manual check requires a configured model provider. On a fictional fixture, save an AI review and an editor-chosen description. Record a human decision, save a newer copy and replace the approved test rule with revised wording. Reopen the older review and decision. Compare the original rule, quoted passage, chosen description, revision, actor, time and note.
 7. Archive the story as an Editor, then attempt permanent deletion as an admin from the Archive. Confirm the item stays archived with the retained-decision reason. Restore it and confirm the history is still there.
 8. Confirm the prepared workspace **Team decisions** panel renders the same payload. BE-03 adds no custom screen and changes no client code.
 9. Before and after the run, reopen the capstone records listed below and confirm they are unchanged.
@@ -170,10 +171,10 @@ Do not write to these records. The deletion guard already refuses to remove the 
 - The new ATF section runs as five fixtures:
   - **Admin (suite runner):** one decision, native row readable/writable with actor, action, time and exact revision; an unsupported provider model returns 400 without changing the saved provider; archive keeps the decision readable; deletion returns 409 with the retained-decision reason; restore succeeds.
   - **Editor:** two decisions on two exact copies with the full history shape and stable ordering; `can_manage_rules` false; provider 403; native decision row unreadable and unwritable.
-  - **Rules Editor:** a decision on the exact copy, history readback and `can_manage_rules` true; native decision row unreadable and unwritable.
+  - **Rules Editor:** a decision on the exact copy, history readback and `can_manage_rules` true; native decision row unreadable and unwritable. ATF checks that twelve active rules reject an extra approval. It opens one slot and approves the fixture rule through the normal handler, then saves the fictional review with an injected source passage and provider reply. The earlier review and decision retain their exact evidence after a new draft and rule approval.
   - **Legal-only:** Editor state, Editor decision, story list and provider configuration all 403 before any record is read.
   - **No role:** the same four paths all 403.
-- No model call is made by this section, and ATF rolls back its fictional fixtures.
+- Run this suite on a development or test instance. The Rules Editor step uses fictional rules to fill free slots and briefly pauses one rule during the full-rulebook check. It prefers a fictional rule and excludes the protected capstone rule. ATF rolls back the test data. This automated check makes no live model call.
 
 ## Direct HTTP observations on the shared instance
 

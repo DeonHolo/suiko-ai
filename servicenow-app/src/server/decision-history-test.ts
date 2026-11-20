@@ -1,10 +1,10 @@
 import { GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
 import {
-  configureProvider, getStories, getState, readStateForLegalTest, reviewSavedVersion, saveMetadata, saveRevision, saveRule,
+  approveRule, configureProvider, getStories, getState, readStateForLegalTest, reviewSavedVersion, saveMetadata, saveRevision, saveRule,
   workflowActionForTest,
 } from './workbench.ts';
 import { postArchive } from './archive.ts';
-import { approveSavedRule } from './editorial-rules.ts';
+import { approveSavedRule, listEditorialRules, setSavedRuleActive } from './editorial-rules.ts';
 import { readSavedSources } from './read-sources.ts';
 
 // BE-03 (#6) regressions: the shared human decision history already written by
@@ -17,6 +17,7 @@ const editorRole = 'x_2236136_suiko_ai.editor';
 const rulesRole = 'x_2236136_suiko_ai.rules_editor';
 const legalRole = 'x_2236136_suiko_ai.legal_reviewer';
 const capstoneStory = '89688f4583e4db106fffc629feaad327';
+const capstoneRule = 'c1484b4583e4db106fffc629feaad326';
 const fixtureSourceUrl = 'https://example.org/suiko-history-fixture';
 // Test-only feature gates so the checks do not depend on the instance properties.
 const features = { editor: true, legal: true };
@@ -138,17 +139,32 @@ export function runDecisionEditorHistoryRegression() {
   return 'Passed as an everyday Editor: history returned both decisions once with actor, label, note, UTC time and exact versions in a stable order; native decision rows were unreadable and unwritable; rule management and provider configuration were denied.';
 }
 
-function preserveEarlierReview(saved, firstDecision) {
-  const identity = 'ATF-history-rule-' + gs.generateGUID();
-  const definition = { rule_id: identity, title: 'ATF attribution', text: 'Keep the original attribution.',
+function historyRuleDefinition() {
+  return { rule_id: 'ATF-history-rule-' + gs.generateGUID(), title: 'ATF attribution', text: 'Keep the original attribution.',
     formats: ['article'], content_kinds: ['news'], priority: 'standard', origin: { kind: 'manual' }, requires_sources: true };
+}
+
+function approvalInput(rule) {
+  return { id: rule.id, version_id: rule.draft.id, expected_modified: rule.modified };
+}
+
+function approveHistoryRule(rule) {
+  const result = approveSavedRule(approvalInput(rule));
+  return result.rules.find(item => item.rule_id === rule.rule_id);
+}
+
+function createHistoryRule(definition = historyRuleDefinition()) {
   const createRule = action(saveRule, definition);
   expect(createRule.status === 200, 'The fictional rule draft could not be saved.');
-  function approve(rule) {
-    const result = approveSavedRule({ id: rule.id, version_id: rule.draft.id, expected_modified: rule.modified }, () => 11);
-    return result.rules.find(item => item.rule_id === identity);
-  }
-  const approved = approve(createRule.body.rules.find(rule => rule.rule_id === identity));
+  return createRule.body.rules.find(rule => rule.rule_id === definition.rule_id);
+}
+
+function setFixtureRuleActive(rule, active: boolean) {
+  return setSavedRuleActive({ id: rule.id, active, expected_modified: rule.modified }).rules
+    .find(item => item.id === rule.id);
+}
+
+function preserveEarlierReview(saved, firstDecision, definition, approved) {
   const run = action((request, response) => reviewSavedVersion(request, response, () => ({
     model: 'injected-history-fixture',
     generate(input) {
@@ -168,9 +184,13 @@ function preserveEarlierReview(saved, firstDecision) {
     status: 200, body: JSON.stringify({ data: { httpStatus: 200, url, finalUrl: url,
       text: 'The fictional exhibition plans to open in November.' } }),
   }))), { revision_id: saved.id, request_key: 'ATF-history-review-' + gs.generateGUID() });
-  expect(run.status === 200 && run.body.state === 'complete', 'The checked fictional review did not save.');
+  expect(run.status === 200 && run.body.state === 'complete',
+    'The checked fictional review did not save: ' + JSON.stringify(run.body?.error || run.body?.message));
   expect(run.body.request.sources[0]?.passages[0]?.text === 'The fictional exhibition plans to open in November.',
     'The injected source passage was not saved.');
+  expect(run.body.rules_current === true && run.body.request.input.policy_pack.rules.length === 12
+    && run.body.request.input.policy_pack.rules.some(rule => rule.rule_id === definition.rule_id && rule.text === definition.text),
+  'The full review did not save the original fixture rule wording.');
   const description = 'The editor wrote this fictional description.';
   const chosen = action(saveMetadata, { review_id: run.body.id, expected_modified: run.body.modified,
     metadata: { section: '', tags: [], description } });
@@ -180,7 +200,7 @@ function preserveEarlierReview(saved, firstDecision) {
   expect(revised.status === 200 && revised.body.version === 2, 'The fictional second version did not save.');
   const change = action(saveRule, { ...definition, id: approved.id, expected_modified: approved.modified, text: 'Confirm the new attribution.' });
   expect(change.status === 200, 'The fictional rule replacement could not be saved.');
-  const replacement = approve(change.body.rules.find(rule => rule.rule_id === identity));
+  const replacement = approveHistoryRule(change.body.rules.find(rule => rule.rule_id === definition.rule_id));
   expect(replacement.approved.definition.text !== definition.text, 'The active rule did not change.');
   const reopened = state(saved.story_id);
   const earlier = reopened.runs.find(item => item.id === run.body.id);
@@ -193,9 +213,7 @@ function preserveEarlierReview(saved, firstDecision) {
     'A new revision and rule changed the earlier human decision.');
 }
 
-export function runDecisionRulesEditorRegression() {
-  expect(gs.hasRole(rulesRole) && gs.hasRole(editorRole) && !gs.hasRole('admin'),
-    'Use the dedicated Rules Editor.');
+function checkRulesEditorHistory() {
   const saved = save('ATF rules editor decision story', 'A fictional copy reviewed by the designated rules editor.', [fixtureSourceUrl]);
   expect(saved.status === 200, 'The rules-editor fixture copy could not be saved.');
   const storyId = saved.body.story_id;
@@ -210,8 +228,47 @@ export function runDecisionRulesEditorRegression() {
     'The Rules Editor decision history lost the actor or exact copy.');
   expect(state(storyId).can_manage_rules === true, 'The Rules Editor was not offered rule management.');
   assertNativeDenied(entry.id, 'A Rules Editor could rewrite a native decision row.');
-  preserveEarlierReview(saved.body, entry);
-  return 'Passed as Rules Editor: native decisions were restricted. The earlier review, quoted evidence, original rule, saved description and exact human decision survived a new revision and rule.';
+  const definition = historyRuleDefinition();
+  const draft = createHistoryRule(definition);
+  const approved = approveHistoryRule(draft);
+  try {
+    preserveEarlierReview(saved.body, entry, definition, approved);
+  } finally {
+    setFixtureRuleActive(listEditorialRules().find(rule => rule.id === approved.id), false);
+  }
+}
+
+export function runDecisionRulesEditorRegression() {
+  expect(gs.hasRole(rulesRole) && gs.hasRole(editorRole) && !gs.hasRole('admin'),
+    'Use the dedicated Rules Editor.');
+  const active = listEditorialRules().filter(rule => rule.active);
+  expect(active.length <= 12, 'The test instance already exceeds the active rule limit.');
+  const filler = [];
+  let paused;
+  try {
+    for (let count = active.length; count < 12; count++) {
+      filler.push(approveHistoryRule(createHistoryRule({ ...historyRuleDefinition(), requires_sources: false })));
+    }
+    // The fixed capstone rule is never edited. Prefer a disposable filler for
+    // the full-rulebook case. ATF rolls back the whole test, including counts.
+    const spare = filler[filler.length - 1] || active.find(rule => rule.id !== capstoneRule);
+    const overCapacity = action(approveRule, approvalInput(createHistoryRule()));
+    expect(overCapacity.status === 400 && overCapacity.body.message.includes('twelve rules'),
+      'A thirteenth rule was not rejected.');
+    paused = setFixtureRuleActive(spare, false);
+    checkRulesEditorHistory();
+    setFixtureRuleActive(paused, true);
+    paused = undefined;
+    expect(listEditorialRules().filter(rule => rule.active).length === 12, 'The full rulebook was not restored.');
+  } finally {
+    if (paused && !filler.some(rule => rule.id === paused.id)) setFixtureRuleActive(paused, true);
+    for (const rule of listEditorialRules().filter(rule => rule.active && filler.some(item => item.id === rule.id))) {
+      setFixtureRuleActive(rule, false);
+    }
+  }
+  expect(listEditorialRules().filter(rule => rule.active).map(rule => rule.id).join(',')
+    === active.map(rule => rule.id).join(','), 'The test left a different set of active rules.');
+  return 'Passed as Rules Editor: native decisions were restricted. A full rulebook refused another approval. With one slot available the earlier review, quoted evidence, original rule, saved description and exact human decision survived a new revision and rule.';
 }
 
 export function runDecisionLegalOnlyRegression() {
