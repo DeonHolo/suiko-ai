@@ -1,9 +1,11 @@
 import { GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
 import {
-  configureProvider, getStories, getState, readStateForLegalTest, saveRevision,
+  configureProvider, getStories, getState, readStateForLegalTest, reviewSavedVersion, saveMetadata, saveRevision, saveRule,
   workflowActionForTest,
 } from './workbench.ts';
 import { postArchive } from './archive.ts';
+import { approveSavedRule } from './editorial-rules.ts';
+import { readSavedSources } from './read-sources.ts';
 
 // BE-03 (#6) regressions: the shared human decision history already written by
 // BE-01/BE-02, its readback shape and combined role access. These tests add
@@ -15,6 +17,7 @@ const editorRole = 'x_2236136_suiko_ai.editor';
 const rulesRole = 'x_2236136_suiko_ai.rules_editor';
 const legalRole = 'x_2236136_suiko_ai.legal_reviewer';
 const capstoneStory = '89688f4583e4db106fffc629feaad327';
+const fixtureSourceUrl = 'https://example.org/suiko-history-fixture';
 // Test-only feature gates so the checks do not depend on the instance properties.
 const features = { editor: true, legal: true };
 
@@ -42,10 +45,10 @@ function decide(input) {
   return action((request, response) => workflowActionForTest(request, response, features), input);
 }
 
-function save(title: string, text: string) {
+function save(title: string, text: string, sourceUrls: string[] = []) {
   return action(saveRevision, {
     request_key: 'ATF-dec-' + gs.generateGUID(), title, text,
-    notes: '', content_format: 'article', content_kind: 'news', source_urls: [],
+    notes: '', content_format: 'article', content_kind: 'news', source_urls: sourceUrls,
   });
 }
 
@@ -63,7 +66,8 @@ function assertNativeDenied(decisionId: string, message: string) {
   const native = new GlideRecordSecure(decisionTable);
   const loaded = native.get(decisionId);
   expect(!loaded || !native.canRead(), message + ' The row stayed readable.');
-  expect(!loaded || !native.canWrite(), message + ' The row stayed writable.');
+  const fixture = new GlideRecord(decisionTable);
+  expect(fixture.get(decisionId) && !fixture.canWrite() && !fixture.canDelete(), message + ' The fixture was editable or deletable.');
 }
 
 function assertNativeAllowed(decisionId: string) {
@@ -112,22 +116,87 @@ export function runDecisionEditorHistoryRegression() {
   const history = historyOf(storyId);
   expect(history.length === 2 && history.some(entry => entry.id === first.id)
     && history.some(entry => entry.id === signOff.id), 'The two accepted decisions were not returned once each.');
+  expect(JSON.stringify(history.find(entry => entry.id === first.id)) === JSON.stringify(first),
+    'Reopening the earlier decision changed its revision, actor, time, label or note.');
   assertOrdered(history, 'The history was not ordered newest first with a stable tie-break.');
   expect(historyOf(storyId).map(entry => entry.id).join(',') === history.map(entry => entry.id).join(','),
     'Repeated history reads returned a different order or different decisions.');
 
   const workspace = state(storyId);
   expect(workspace.can_manage_rules === false, 'An everyday Editor was offered rule management.');
+  expect(Object.keys(workspace.provider).sort().join(',') === 'configured,model',
+    'The Editor workspace exposed private provider configuration.');
+  const config = new GlideRecordSecure('x_2236136_suiko_ai_config');
+  config.query();
+  expect(!config.next() || !config.canRead(), 'An everyday Editor could read native provider configuration.');
   expect(action(configureProvider, { model: 'gemini-3.5-flash-lite' }).status === 403,
     'A non-admin Editor reached provider configuration.');
+  expect(action(saveRule, { rule_id: 'ATF-denied-' + gs.generateGUID(), title: 'ATF rule write denial',
+    text: 'Check required attribution.', formats: ['article'], content_kinds: ['news'], priority: 'standard',
+    origin: { kind: 'manual' } }).status === 403, 'An everyday Editor could save a rule.');
   assertNativeDenied(first.id, 'An everyday Editor could rewrite a native decision row.');
   return 'Passed as an everyday Editor: history returned both decisions once with actor, label, note, UTC time and exact versions in a stable order; native decision rows were unreadable and unwritable; rule management and provider configuration were denied.';
+}
+
+function preserveEarlierReview(saved, firstDecision) {
+  const identity = 'ATF-history-rule-' + gs.generateGUID();
+  const definition = { rule_id: identity, title: 'ATF attribution', text: 'Keep the original attribution.',
+    formats: ['article'], content_kinds: ['news'], priority: 'standard', origin: { kind: 'manual' }, requires_sources: true };
+  const createRule = action(saveRule, definition);
+  expect(createRule.status === 200, 'The fictional rule draft could not be saved.');
+  function approve(rule) {
+    const result = approveSavedRule({ id: rule.id, version_id: rule.draft.id, expected_modified: rule.modified }, () => 11);
+    return result.rules.find(item => item.rule_id === identity);
+  }
+  const approved = approve(createRule.body.rules.find(rule => rule.rule_id === identity));
+  const run = action((request, response) => reviewSavedVersion(request, response, () => ({
+    model: 'injected-history-fixture',
+    generate(input) {
+      const quote = { revision_id: input.candidate_revision.revision_id, segment_id: 'body-1', quote: saved.text };
+      return { model: 'injected-history-fixture', raw: JSON.stringify({
+        overview: 'This fictional story records an editor decision.', overview_evidence: [quote],
+        claim_checks: [], findings: [],
+        assessment: { status: 'reviewed', coverage: { revision_comparison: 'not_requested', metadata_suggestions: 'complete' },
+          changes: [], limitations: [], policy_assessments: input.policy_pack.rules.map(rule => ({
+            rule_id: rule.rule_id, status: 'not_applicable', reason: 'Fictional history fixture.', evidence: [], suggested_action: null,
+          })), metadata_suggestions: { section: { suggested_id: null, reason: 'Fixture.', evidence: [] },
+            tags: { suggested_ids: [], reason: 'Fixture.', evidence: [] },
+            short_description: { suggested_text: saved.text, reason: 'From the draft.', evidence: [quote] } } },
+      }) };
+    },
+  }), (urls, needed) => readSavedSources(urls, needed, url => ({
+    status: 200, body: JSON.stringify({ data: { httpStatus: 200, url, finalUrl: url,
+      text: 'The fictional exhibition plans to open in November.' } }),
+  }))), { revision_id: saved.id, request_key: 'ATF-history-review-' + gs.generateGUID() });
+  expect(run.status === 200 && run.body.state === 'complete', 'The checked fictional review did not save.');
+  expect(run.body.request.sources[0]?.passages[0]?.text === 'The fictional exhibition plans to open in November.',
+    'The injected source passage was not saved.');
+  const description = 'The editor wrote this fictional description.';
+  const chosen = action(saveMetadata, { review_id: run.body.id, expected_modified: run.body.modified,
+    metadata: { section: '', tags: [], description } });
+  expect(chosen.status === 200 && chosen.body.metadata.description === description, 'The editor description was not saved.');
+  const revised = action(saveRevision, { ...saved, text: 'A later fictional version changes the wording.',
+    expected_revision_id: saved.id, request_key: 'ATF-history-next-' + gs.generateGUID() });
+  expect(revised.status === 200 && revised.body.version === 2, 'The fictional second version did not save.');
+  const change = action(saveRule, { ...definition, id: approved.id, expected_modified: approved.modified, text: 'Confirm the new attribution.' });
+  expect(change.status === 200, 'The fictional rule replacement could not be saved.');
+  const replacement = approve(change.body.rules.find(rule => rule.rule_id === identity));
+  expect(replacement.approved.definition.text !== definition.text, 'The active rule did not change.');
+  const reopened = state(saved.story_id);
+  const earlier = reopened.runs.find(item => item.id === run.body.id);
+  expect(earlier?.revision_id === saved.id && earlier.rules_current === false
+    && JSON.stringify(earlier.request) === JSON.stringify(chosen.body.request)
+    && JSON.stringify(earlier.result) === JSON.stringify(chosen.body.result)
+    && earlier.metadata.description === description,
+  'The earlier review lost its original rule, passage, version or saved description.');
+  expect(JSON.stringify(reopened.workflow.history.find(item => item.id === firstDecision.id)) === JSON.stringify(firstDecision),
+    'A new revision and rule changed the earlier human decision.');
 }
 
 export function runDecisionRulesEditorRegression() {
   expect(gs.hasRole(rulesRole) && gs.hasRole(editorRole) && !gs.hasRole('admin'),
     'Use the dedicated Rules Editor.');
-  const saved = save('ATF rules editor decision story', 'A fictional copy reviewed by the designated rules editor.');
+  const saved = save('ATF rules editor decision story', 'A fictional copy reviewed by the designated rules editor.', [fixtureSourceUrl]);
   expect(saved.status === 200, 'The rules-editor fixture copy could not be saved.');
   const storyId = saved.body.story_id;
   const initial = state(storyId).workflow;
@@ -141,7 +210,8 @@ export function runDecisionRulesEditorRegression() {
     'The Rules Editor decision history lost the actor or exact copy.');
   expect(state(storyId).can_manage_rules === true, 'The Rules Editor was not offered rule management.');
   assertNativeDenied(entry.id, 'A Rules Editor could rewrite a native decision row.');
-  return 'Passed as the designated Rules Editor: decision history and exact-version checks worked, rule management was reported, and native decision rows stayed read-only.';
+  preserveEarlierReview(saved.body, entry);
+  return 'Passed as Rules Editor: native decisions were restricted. The earlier review, quoted evidence, original rule, saved description and exact human decision survived a new revision and rule.';
 }
 
 export function runDecisionLegalOnlyRegression() {
@@ -216,5 +286,7 @@ export function runDecisionAdminRegression() {
     action: 'restore', kind: 'story', id: storyId, expected_modified: archivedState.story.modified,
   });
   expect(restored.status === 200, 'The retained-decision story could not be restored.');
+  expect(JSON.stringify(historyOf(storyId).find(item => item.id === entry.id)) === JSON.stringify(entry),
+    'Restoring the story changed its earlier decision.');
   return 'Passed as admin: the native decision row kept its actor, action, time and exact revision; an invalid provider request changed nothing; and a retained human decision kept the archived story from deletion and readable until restore.';
 }

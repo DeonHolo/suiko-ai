@@ -15,7 +15,6 @@ Evidence record for [BE-03 (#6)](../TEAM-TASKS.md#be-03-history-and-permissions)
 ## What this change adds
 
 - `src/server/decision-history-test.ts`: five combined regressions for the existing log.
-- `src/fluent/tests/decision-history.script.js`: the role dispatcher used by the ATF steps.
 - The **Suiko BE-03: decision history and permissions** section in `src/fluent/review-tests.now.ts`, added to the existing server suite.
 - This document, one CHANGELOG row and the regenerated SDK keys.
 
@@ -50,13 +49,13 @@ BE-01 and BE-02 share the response shape and this storage; neither has a competi
 | `POST workbench/provider` | **403** | **403** | **403** | Yes | **403** |
 | Read `provider` in state | `{ configured, model }` only | `{ configured, model }` only | **403** (no state access) | `{ configured, model }` only | **403** |
 | Archive/restore a story | Yes | Yes | **403** | Yes | **403** |
-| Permanently delete an archived story with decisions | **403** (admin-only action) | **403** | **403** | **409** until the decision chain is gone | **403** |
+| Permanently delete an archived story with decisions | **403** (admin-only action) | **403** | **403** | **409** while the decision is retained | **403** |
 
 Legal note visibility is narrower than history visibility: an admin, the requesting Editor or the assigned reviewer sees the legal note; another Editor sees the legal event with an empty note.
 
 ## Direct-API tests
 
-Use four dedicated accounts and one admin. Keep credentials in a password store or environment variables; never commit them. The decision table is not web-service accessible, so the Table API checks must fail even for the admin; that is the intended result, not a setup error.
+Use five dedicated accounts and one admin. Use distinct assigned and unassigned legal reviewers for the same test task. Use a newly saved fictional story, rule and decision for every write. The capstone IDs below are for readback only. The decision table has web-service access disabled, including for the admin.
 
 ```powershell
 # One-time per shell. Read these from your password store, not from a repository file.
@@ -65,14 +64,16 @@ $env:SUIKO_EDITOR        = '<editor account>'
 $env:SUIKO_EDITOR_PASS   = '<from store>'
 $env:SUIKO_RULES         = '<rules editor account>'
 $env:SUIKO_RULES_PASS    = '<from store>'
-$env:SUIKO_LEGAL         = '<legal reviewer account>'
+$env:SUIKO_LEGAL         = '<assigned legal reviewer account>'
 $env:SUIKO_LEGAL_PASS    = '<from store>'
+$env:SUIKO_UNASSIGNED    = '<different legal reviewer account>'
+$env:SUIKO_UNASSIGNED_PASS = '<from store>'
 $env:SUIKO_OUTSIDER      = '<no-role account>'
 $env:SUIKO_OUTSIDER_PASS = '<from store>'
 $env:SUIKO_ADMIN         = '<admin account>'
 $env:SUIKO_ADMIN_PASS    = '<from store>'
-$env:SUIKO_STORY         = '89688f4583e4db106fffc629feaad327'   # a readable test story
-$env:SUIKO_DECISION      = '<a decision sys_id from the admin native list>'
+$env:SUIKO_STORY         = '<new fictional story created for these checks>'
+$env:SUIKO_DECISION      = '<a disposable test decision from the admin native list>'
 
 function Invoke-Suiko {
     param(
@@ -113,8 +114,8 @@ $modified = $result.workflow.modified
 | 4 | Same request | Legal reviewer | **403** | Error body only; no story, revision or history values |
 | 5 | Same request | No role | **403** | Error body only |
 | 6 | `POST /api/x_2236136_suiko_ai/v1/workbench/workflow/actions` with `{"action":"request_changes","revision_id":"<current>","expected_modified":"<modified>","note":"Direct API check."}` | Editor | **200** | `result.workflow.history` gained exactly one entry with the session actor, version and UTC time |
-| 7 | Repeat request 6 unchanged | Editor | **409** | History length is unchanged; no second decision |
-| 8 | Request 6 with a stale `expected_modified` | Editor | **409** | No new history entry |
+| 7 | Repeat request 6 with the latest modification count from state | Editor | **409** | Current count passes the stale guard. The already-requested status rejects a second decision. |
+| 8 | On a separate fictional story in Needs review, submit request 6 with its current revision and an older modification count | Editor | **409** | Request changes is otherwise available. The stale count rejects the write and history stays empty. |
 | 9 | Request 6 | Legal reviewer | **403** | No decision, no story detail |
 | 10 | Request 6 | No role | **403** | No decision, no story detail |
 | 11 | `GET /api/now/table/x_2236136_suiko_ai_decision` | Editor | **403** | The table is not web-service accessible |
@@ -137,7 +138,7 @@ $modified = $result.workflow.modified
 | 28 | Same request | No role | **403** | The legal API rejects the account |
 | 29 | `GET /api/x_2236136_suiko_ai/v1/workbench/decisions` | Editor | **404** | There is no public decision endpoint; decisions are written only by the guarded workflow and legal actions |
 
-Save each response body and status under a local `evidence/be-03/` folder. Do not commit credentials, API keys, provider data or instance exports.
+Save each response body and status under the ignored local `ai-review/output/` folder. Keep credentials and provider data out of the captures.
 
 ## Studio steps
 
@@ -146,7 +147,7 @@ Save each response body and status under a local `evidence/be-03/` folder. Do no
 3. **Studio → Access Control.** Confirm the four decision record ACLs are `admin` with admin override, the Editor API ACL requires `x_2236136_suiko_ai.editor`, and the legal API ACL requires `x_2236136_suiko_ai.legal_reviewer`.
 4. **Studio → Automated Test Framework → Suiko AI: server review regressions → Suiko BE-03: decision history and permissions.** Confirm the order: admin as suite runner first, then Editor, Rules Editor, legal-only and no-role users. Run the suite and record its result sys_id.
 5. Open a test story, record a changes request, then reopen **GET workbench/state**. Confirm `workflow.modified` matches the story count and the history entry has the display name, version, note and UTC time. Refresh and confirm the order is unchanged.
-6. Save a newer copy, sign it off, and reopen the older decision. Confirm it still points to the older version and the actor/time did not change.
+6. On a fictional fixture, save an AI review and an editor-chosen description. Record a human decision, save a newer copy and replace the approved test rule with revised wording. Reopen the older review and decision. Compare the original rule, quoted passage, chosen description, revision, actor, time and note. The installed regression injects a provider reply so this check can run without a live model call.
 7. Archive the story as an Editor, then attempt permanent deletion as an admin from the Archive. Confirm the item stays archived with the retained-decision reason. Restore it and confirm the history is still there.
 8. Confirm the prepared workspace **Team decisions** panel renders the same payload. BE-03 adds no custom screen and changes no client code.
 9. Before and after the run, reopen the capstone records listed below and confirm they are unchanged.
@@ -188,7 +189,6 @@ Do not write to these records. The deletion guard already refuses to remove the 
 New:
 
 - `servicenow-app/src/server/decision-history-test.ts` — the five role regressions.
-- `servicenow-app/src/fluent/tests/decision-history.script.js` — the role dispatcher.
 - `docs/33-decision-history-permissions.md` — this record.
 
 Changed:

@@ -176,27 +176,47 @@ const decisionHistory = Test({
   // ATF cannot grant admin to a temporary user. Run the admin step first, as the suite runner.
   atf.server.runServerSideScript({
     $id: Now.ID['be03-decision-admin-step'],
-    script: Now.include('./tests/decision-history.script.js'),
+    script: `(function () {
+      var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/decision-history-test.ts');
+      stepResult.setOutputMessage(test.runDecisionAdminRegression());
+      return true;
+    })();`,
   });
   atf.server.createUser({ $id: Now.ID['be03-decision-editor-user'], firstName: 'Suiko', lastName: 'Decision Editor', roles: [editor], impersonate: true });
   atf.server.runServerSideScript({
     $id: Now.ID['be03-decision-editor-step'],
-    script: Now.include('./tests/decision-history.script.js'),
+    script: `(function () {
+      var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/decision-history-test.ts');
+      stepResult.setOutputMessage(test.runDecisionEditorHistoryRegression());
+      return true;
+    })();`,
   });
   atf.server.createUser({ $id: Now.ID['be03-decision-rules-user'], firstName: 'Suiko', lastName: 'Decision Rules', roles: [rulesEditor], impersonate: true });
   atf.server.runServerSideScript({
     $id: Now.ID['be03-decision-rules-step'],
-    script: Now.include('./tests/decision-history.script.js'),
+    script: `(function () {
+      var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/decision-history-test.ts');
+      stepResult.setOutputMessage(test.runDecisionRulesEditorRegression());
+      return true;
+    })();`,
   });
   atf.server.createUser({ $id: Now.ID['be03-decision-legal-user'], firstName: 'Suiko', lastName: 'Decision Legal', roles: [legalReviewer], impersonate: true });
   atf.server.runServerSideScript({
     $id: Now.ID['be03-decision-legal-step'],
-    script: Now.include('./tests/decision-history.script.js'),
+    script: `(function () {
+      var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/decision-history-test.ts');
+      stepResult.setOutputMessage(test.runDecisionLegalOnlyRegression());
+      return true;
+    })();`,
   });
   atf.server.createUser({ $id: Now.ID['be03-decision-outsider-user'], firstName: 'Suiko', lastName: 'Decision Outsider', roles: [], impersonate: true });
   atf.server.runServerSideScript({
     $id: Now.ID['be03-decision-outsider-step'],
-    script: Now.include('./tests/decision-history.script.js'),
+    script: `(function () {
+      var test = require('x_2236136_suiko_ai/suiko-ai/0.0.1/src/server/decision-history-test.ts');
+      stepResult.setOutputMessage(test.runDecisionOutsiderRegression());
+      return true;
+    })();`,
   });
 });
 
