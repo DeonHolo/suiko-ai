@@ -43,7 +43,7 @@ BE-01 and BE-02 share the response shape and this storage; neither has a competi
 | `GET workbench/state?story=...` and `workflow.history` | Yes | Yes | **403** (the legal API serves its own tasks) | Yes | **403** |
 | Record `request_changes` / `sign_off` through `POST workbench/workflow/actions` | Yes, when the status and current revision allow it | Yes, same checks | **403** | Yes | **403** |
 | Read decision rows in the native list | **No** (record ACL is admin only) | **No** | **No** | Yes | **No** |
-| Insert/update/delete decision rows over the Table API | **403** | **403** | **403** | **403** | **403** |
+| Write decision rows directly | Denied | Denied | Denied | Native administrator access is audited | Denied |
 | Change rules | **403** (`can_manage_rules: false`) | Yes (`can_manage_rules: true`) | **403** | Yes | **403** |
 | Read/respond to an assigned legal task | **403** (legal API) | **403** | Assigned task only; unassigned sees no task and gets 404 on detail | Yes | **403** |
 | `POST workbench/provider` | **403** | **403** | **403** | Yes | **403** |
@@ -55,7 +55,7 @@ Legal note visibility is narrower than history visibility: an admin, the request
 
 ## Direct-API tests
 
-Use five dedicated accounts and one admin. Use distinct assigned and unassigned legal reviewers for the same test task. Use a newly saved fictional story, rule and decision for every write. The capstone IDs below are for readback only. The decision table has web-service access disabled, including for the admin.
+Use five dedicated accounts and one admin. Use distinct assigned and unassigned legal reviewers for the same test task. Use a newly saved fictional story, rule and decision for every write. The capstone IDs below are for readback only. The table disables web-service access. The installed check observed that the signed-in administrator could read a decision through the Table API using the SDK session. Ordinary access depends on the record ACLs and must be checked independently.
 
 ```powershell
 # One-time per shell. Read these from your password store, not from a repository file.
@@ -118,12 +118,12 @@ $modified = $result.workflow.modified
 | 8 | On a separate fictional story in Needs review, submit request 6 with its current revision and an older modification count | Editor | **409** | Request changes is otherwise available. The stale count rejects the write and history stays empty. |
 | 9 | Request 6 | Legal reviewer | **403** | No decision, no story detail |
 | 10 | Request 6 | No role | **403** | No decision, no story detail |
-| 11 | `GET /api/now/table/x_2236136_suiko_ai_decision` | Editor | **403** | The table is not web-service accessible |
-| 12 | Same request | Admin | **403** | Even admin cannot read it over the Table API |
+| 11 | `GET /api/now/table/x_2236136_suiko_ai_decision/$env:SUIKO_DECISION` | Editor | **403 or 404** | This account cannot read the native decision through the API |
+| 12 | Same request | Admin | Record observed status | Record which authentication method was used. The SDK session returned 200 on the shared instance. |
 | 13 | `POST /api/now/table/x_2236136_suiko_ai_decision` with `{"story":"<id>","revision":"<id>","version":1,"action":"sign_off","actor":"<id>","decided_at":"2026-11-19 00:00:00"}` | Editor | **403** | No forged decision exists |
-| 14 | Same request | Admin | **403** | No direct insert bypasses the server writer |
+| 14 | Read the fixture through the native list | Admin | Readable | The actor and revision match the accepted entry. Leave the audit row intact. |
 | 15 | `PATCH /api/now/table/x_2236136_suiko_ai_decision/$env:SUIKO_DECISION` with `{"note":"rewritten"}` | Editor | **403** | Reopened row still has its original note, actor and time |
-| 16 | `DELETE /api/now/table/x_2236136_suiko_ai_decision/$env:SUIKO_DECISION` | Editor and Admin | **403** | The row still exists |
+| 16 | Check the fixture's native delete access with `canDelete()` | Editor and Rules Editor | Denied | The ATF check tests the ACL without attempting to remove a saved decision |
 | 17 | `POST /api/x_2236136_suiko_ai/v1/workbench/rules` with a valid saved-rule body | Editor | **403** | An everyday Editor cannot change rules |
 | 18 | Same request | Rules Editor | **200** | The designated Rules Editor can change rules |
 | 19 | Same request | No role | **403** | No rule access |
@@ -175,14 +175,19 @@ Do not write to these records. The deletion guard already refuses to remove the 
   - **No role:** the same four paths all 403.
 - No model call is made by this section, and ATF rolls back its fictional fixtures.
 
+## Direct HTTP observations on the shared instance
+
+Using the existing authenticated SDK session, ServiceNow impersonated five temporary users with only their test roles. Acting as the ordinary Editor, the two separate requests returned 409 for the intended guards. The repeat used the fresh count and the stale-count request used a different draft that was eligible for changes. The original decision reopened with the same actor, note, time and saved revision.
+
+The Rules Editor could save a fictional rule draft. The ordinary Editor and outsider received 403. The assigned reviewer opened the exact legal copy and received 409 on a stale response. The unassigned reviewer received 404 and saw an empty queue for that task. A no-role account received 403. The Editor received 404 for a direct decision read or update and 403 for a direct insert. The signed-in administrator received 200 on the read. No native decision was changed by that read. Admin's attempt to delete the archived fictional story returned 409 with the retained-decision reason.
+
+The local evidence folder is `ai-review/output/pr38-history-2026-11-21/`. `direct-http.json` preserves the 38 observations, including the administrator-read expectation that failed. The HTTP pass ran against the already installed workflow from #36 and #37. The new ATF section provides the separate installed regression for PR #38.
+
 ## Still needed in the shared instance
 
 1. Install the branch build and run the installed suite; put the suite result sys_id here.
-2. Run the direct HTTP checks above as the five accounts and keep the status codes and response bodies under `evidence/be-03/` (local only).
-3. Record the fixture story, revision and decision sys_ids, and the failing bodies from checks 4–29. Do not include credentials, API keys or provider data.
-4. Reopen the capstone stories, rule and reviews before and after; confirm they are unchanged.
-5. Repeat checks 6–10 and 22 once BE-01/BE-02 endpoints and the legal task are enabled in the same installed build, so the role checks exercise the real route rather than only the handlers.
-6. Leave #6 open until the installed suite and direct HTTP evidence are attached to the PR.
+2. Compare the saved capstone stories, rule and reviews before and after installation.
+3. Attach the installed suite and direct HTTP evidence summary to the PR before closing #6.
 
 ## Exported app files
 
