@@ -38,6 +38,8 @@ export const x_2236136_suiko_ai_story = Table({
     archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
     archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
+    archive_delete_key: StringColumn({ label: 'Archive delete reservation', maxLength: 32 }),
+    archive_write_key: StringColumn({ label: 'Saved evidence write reservation', maxLength: 32 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
     legal_clearance_required: BooleanColumn({ label: 'Legal clearance required', default: false }),
@@ -59,7 +61,7 @@ export const x_2236136_suiko_ai_story = Table({
 export const x_2236136_suiko_ai_revision = Table({
   name: 'x_2236136_suiko_ai_revision', label: 'Suiko revision', audit: true,
   schema: {
-    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true }),
+    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true, cascadeRule: 'delete' }),
     version: IntegerColumn({ label: 'Version', mandatory: true }),
     version_key: StringColumn({ label: 'Version identity', maxLength: 80 }),
     request_key: StringColumn({ label: 'Save identity', maxLength: 80 }),
@@ -76,7 +78,7 @@ export const x_2236136_suiko_ai_revision = Table({
 export const x_2236136_suiko_ai_decision = Table({
   name: 'x_2236136_suiko_ai_decision', label: 'Suiko editor decision', audit: true,
   schema: {
-    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true }),
+    story: ReferenceColumn({ label: 'Story', referenceTable: 'x_2236136_suiko_ai_story', mandatory: true, cascadeRule: 'restrict' }),
     revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true, cascadeRule: 'restrict' }),
     previous: StringColumn({ label: 'Previous accepted decision', maxLength: 32 }),
     version: IntegerColumn({ label: 'Version', mandatory: true }),
@@ -122,7 +124,7 @@ export const x_2236136_suiko_ai_legal_task = Table({
 export const x_2236136_suiko_ai_review = Table({
   name: 'x_2236136_suiko_ai_review', label: 'Suiko AI review', audit: true,
   schema: {
-    revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true }),
+    revision: ReferenceColumn({ label: 'Revision', referenceTable: 'x_2236136_suiko_ai_revision', mandatory: true, cascadeRule: 'restrict' }),
     request_key: StringColumn({ label: 'Request identity', maxLength: 80 }),
     active_revision: StringColumn({ label: 'Running revision', maxLength: 32 }),
     state: StringColumn({ label: 'State', maxLength: 20 }),
@@ -154,6 +156,8 @@ export const x_2236136_suiko_ai_rule = Table({
     archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
     archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
+    archive_delete_key: StringColumn({ label: 'Archive delete reservation', maxLength: 32 }),
+    archive_write_key: StringColumn({ label: 'Saved evidence write reservation', maxLength: 32 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
   },
@@ -174,7 +178,7 @@ export const x_2236136_suiko_ai_config = Table({
 export const x_2236136_suiko_ai_rule_version = Table({
   name: 'x_2236136_suiko_ai_rule_version', label: 'Suiko rule version', audit: true,
   schema: {
-    parent_rule: ReferenceColumn({ label: 'Editorial rule', referenceTable: 'x_2236136_suiko_ai_rule', mandatory: true }),
+    parent_rule: ReferenceColumn({ label: 'Editorial rule', referenceTable: 'x_2236136_suiko_ai_rule', mandatory: true, cascadeRule: 'delete' }),
     version: IntegerColumn({ label: 'Version', mandatory: true }),
     version_key: StringColumn({ label: 'Version identity', maxLength: 80 }),
     definition_json: StringColumn({ label: 'Saved instruction and applicability', maxLength: 16000 }),
@@ -212,7 +216,7 @@ Acl({ $id: Now.ID['rule-version-create'], type: 'record', table: 'x_2236136_suik
 Acl({ $id: Now.ID['rule-version-write'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
   operation: 'write', roles: ['admin'], adminOverrides: true });
 Acl({ $id: Now.ID['rule-version-delete'], type: 'record', table: 'x_2236136_suiko_ai_rule_version',
-  operation: 'delete', roles: ['admin'], adminOverrides: true });
+  operation: 'delete', roles: ['admin'], adminOverrides: false, script: 'answer = false;' });
 
 Form({
   table: 'x_2236136_suiko_ai_rule_version', view: default_view,
@@ -345,7 +349,7 @@ Acl({
 Acl({
   $id: Now.ID['x_2236136_suiko_ai_revision-delete'], type: 'record',
   table: 'x_2236136_suiko_ai_revision', operation: 'delete',
-  roles: ['admin'], adminOverrides: true,
+  roles: ['admin'], adminOverrides: false, script: 'answer = false;',
 });
 
 Form({

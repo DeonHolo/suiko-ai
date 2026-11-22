@@ -3,6 +3,7 @@ import { normalizeRuleDefinition, approvedRuleSnapshot, starterTemplates, suppor
 import { WorkbenchError } from './workbench-error.ts';
 import { validatePolicyOrigin } from './policy-records.ts';
 import { requireRulesEditor } from './rule-access.ts';
+import { withArchiveWriter } from './archive.ts';
 
 const ruleTable = 'x_2236136_suiko_ai_rule';
 const versionTable = 'x_2236136_suiko_ai_rule_version';
@@ -28,6 +29,7 @@ function changeParent(parent, input, changes) {
   const update = new GlideRecord(ruleTable);
   update.addQuery('sys_id', uid(parent));
   update.addQuery('sys_mod_count', input.expected_modified);
+  update.addNullQuery('archive_delete_key');
   for (const [field, value] of Object.entries(changes)) update.setValue(field, value);
   update.setValue('change_key', token);
   update.updateMultiple();
@@ -115,7 +117,7 @@ export function saveRuleDraft(input) {
   version.setValue('version', number);
   version.setValue('version_key', uid(parent) + ':' + number);
   version.setValue('definition_json', encoded);
-  const versionId = version.insert();
+  const versionId = withArchiveWriter('rule', uid(parent), () => version.insert());
   if (!versionId) throw new WorkbenchError('A proposal was saved elsewhere. Reload the rule.', 409);
   changeParent(parent, guard, {
     draft_version_id: String(versionId), version: number, managed: true,

@@ -1,5 +1,6 @@
 import { GlideDateTime, GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
 import { WorkbenchError } from './workbench-error.ts';
+import { withArchiveWriter } from './archive.ts';
 
 export const storyTable = 'x_2236136_suiko_ai_story';
 export const revisionTable = 'x_2236136_suiko_ai_revision';
@@ -93,6 +94,7 @@ export function guardedStoryUpdate(story: GlideRecord, values: Record<string, st
   const update = new GlideRecord(storyTable);
   update.addQuery('sys_id', story.getUniqueValue());
   update.addQuery('sys_mod_count', String(story.getValue('sys_mod_count')));
+  update.addNullQuery('archive_delete_key');
   const current = story.getValue('current_revision');
   if (current) update.addQuery('current_revision', current);
   else update.addNullQuery('current_revision');
@@ -146,7 +148,7 @@ export function prepareEditorDecision(story: GlideRecord, revision: GlideRecord,
   entry.setValue('actor_name', gs.getUserDisplayName());
   entry.setValue('decided_at', new GlideDateTime().getValue());
   entry.setValue('note', note);
-  const id = entry.insert();
+  const id = withArchiveWriter('story', String(story.getUniqueValue()), () => entry.insert());
   if (!id) throw new WorkbenchError('The editor decision could not be saved. Try again.', 500);
   return String(id);
 }
