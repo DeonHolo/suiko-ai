@@ -135,7 +135,8 @@ function releaseReservation(table: string, sysId: string, field: string, token: 
   release.addQuery('sys_id', sysId);
   release.addQuery(field, token);
   if (!audit) release.autoSysFields(false);
-  release.setValue(field, '');
+  // GlideRecord.updateMultiple ignores empty strings when clearing a field.
+  release.setValue(field, 'NULL');
   release.updateMultiple();
 }
 
@@ -366,7 +367,7 @@ export function postArchiveForTest(request, response, deleteEnabled: boolean) {
       if (!archived(row)) throw new WorkbenchError('This ' + kind + ' is not archived. Reopen the Archive before acting again.', 409);
       // A restored rule returns off until an editor turns it on again.
       const refreshed = guardedWrite(kind, row, body.expected_modified, {
-        archived: false, archived_at: '', archived_by: '', ...(kind === 'rule' ? { active: false } : {}),
+        archived: false, archived_at: 'NULL', archived_by: 'NULL', ...(kind === 'rule' ? { active: false } : {}),
       });
       return { item: itemView(kind, refreshed, deleteEnabled) };
     }

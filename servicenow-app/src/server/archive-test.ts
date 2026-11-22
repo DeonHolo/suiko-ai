@@ -204,7 +204,8 @@ export function runArchiveAdminRegression() {
   marker.update();
   const disabled = (request, response) => postArchiveForTest(request, response, false);
   let archived = action(disabled, { action: 'archive', kind: 'story', id: demoId, expected_modified: storyState(demoId).story.modified });
-  expect(archived.status === 200 && archived.body.item.can_delete === false, 'The disposable story was not safely archived.');
+  expect(archived.status === 200 && archived.body.item.can_delete === false,
+    'The disposable story was not safely archived: ' + JSON.stringify(archived.body));
   const held = action(disabled, { action: 'delete', kind: 'story', id: demoId, expected_modified: archived.body.item.modified });
   expect(held.status === 503 && storyState(demoId).revisions[0].id === demo.body.id, 'The held deletion path touched the saved version.');
   expect(marker.get(demoId), 'The held demo story was removed.');
