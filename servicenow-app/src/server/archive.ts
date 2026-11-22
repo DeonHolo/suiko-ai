@@ -1,4 +1,4 @@
-import { GlideRecord, GlideDateTime, gs } from '@servicenow/glide';
+import { GlideRecord, GlideDateTime, GlideSysAttachment, gs } from '@servicenow/glide';
 import { ReviewValidationError } from './generated/assessment-checks.js';
 import { WorkbenchError } from './workbench-error.ts';
 
@@ -162,29 +162,28 @@ function deletionEnabled() {
 function scopedDeletionConfiguration(kind: string, sysId: string) {
   const parentTable = kindTable(kind);
   const versionTable = kind === 'story' ? tables.revision : tables.ruleVersion;
-  const ownedField = kind === 'story' ? 'story' : 'parent_rule';
-  const allowedReferences = kind === 'story' ? [
-    tables.story + '.current_revision',
-    tables.revision + '.story',
-    tables.decision + '.story',
-    tables.decision + '.revision',
-    tables.review + '.revision',
-    tables.legalTask + '.story',
-    tables.legalTask + '.revision',
-  ] : [tables.ruleVersion + '.parent_rule'];
+  const expectedReferences = kind === 'story' ? {
+    [tables.story + '.current_revision']: '',
+    [tables.revision + '.story']: 'delete',
+    [tables.decision + '.story']: 'restrict',
+    [tables.decision + '.revision']: 'restrict',
+    [tables.review + '.revision']: 'restrict',
+    [tables.legalTask + '.story']: 'restrict',
+    [tables.legalTask + '.revision']: 'restrict',
+  } : { [tables.ruleVersion + '.parent_rule']: 'delete' };
   const dictionary = new GlideRecord('sys_dictionary');
   dictionary.addQuery('reference', 'IN', parentTable + ',' + versionTable);
   dictionary.query();
-  let ownedCascade = false;
+  const seen = new Set();
   while (dictionary.next()) {
-    const name = dictionary.getValue('name');
-    const field = dictionary.getValue('element');
-    if (!allowedReferences.includes(name + '.' + field)) return 'This item has a reference type that Archive cannot remove safely.';
-    if (name === versionTable && field === ownedField && dictionary.getValue('reference_cascade_rule') === 'delete') {
-      ownedCascade = true;
+    const key = dictionary.getValue('name') + '.' + dictionary.getValue('element');
+    if (!Object.prototype.hasOwnProperty.call(expectedReferences, key)
+      || expectedReferences[key] !== (dictionary.getValue('reference_cascade_rule') || '')) {
+      return 'This item has a reference type that Archive cannot remove safely.';
     }
+    seen.add(key);
   }
-  if (!ownedCascade) return 'ServiceNow could not verify safe removal of the saved versions.';
+  if (seen.size !== Object.keys(expectedReferences).length) return 'ServiceNow could not verify safe removal of the saved versions.';
   const rules = new GlideRecord('sys_script');
   rules.addQuery('collection', 'IN', parentTable + ',' + versionTable);
   rules.addQuery('active', true);
@@ -199,12 +198,14 @@ function scopedDeletionConfiguration(kind: string, sysId: string) {
     installedGuard = true;
   }
   if (!installedGuard) return 'ServiceNow could not verify the Archive delete guard.';
-  const attachments = new GlideRecord('sys_attachment');
-  attachments.addQuery('table_sys_id', sysId);
-  attachments.addQuery('table_name', parentTable);
-  attachments.setLimit(1);
-  attachments.query();
-  if (attachments.next()) return 'An attachment still depends on this item.';
+  const attachments = new GlideSysAttachment();
+  if (attachments.getAttachments(parentTable, sysId).next()) return 'An attachment still depends on this item.';
+  const versions = savedChildren(kind, sysId);
+  while (versions.next()) {
+    if (attachments.getAttachments(versionTable, id(versions)).next()) {
+      return 'An attachment still depends on a saved version of this item.';
+    }
+  }
   return null;
 }
 

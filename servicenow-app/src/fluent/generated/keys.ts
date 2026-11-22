@@ -5,6 +5,18 @@ declare global {
         namespace Internal {
             interface Keys extends KeysRegistry {
                 explicit: {
+                    '60886a04833453906fffc629feaad312': {
+                        table: 'sys_scope_privilege'
+                        id: '60886a04833453906fffc629feaad312'
+                    }
+                    '68886a04833453906fffc629feaad31b': {
+                        table: 'sys_scope_privilege'
+                        id: '68886a04833453906fffc629feaad31b'
+                    }
+                    a8886a04833453906fffc629feaad323: {
+                        table: 'sys_scope_privilege'
+                        id: 'a8886a04833453906fffc629feaad323'
+                    }
                     'ai-review-server-regression-suite': {
                         table: 'sys_atf_test_suite'
                         id: '47a536e4837d4aee8793a15628adeffd'

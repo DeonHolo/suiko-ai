@@ -1,4 +1,4 @@
-import { GlideDateTime, GlideRecord, GlideRecordSecure, gs } from '@servicenow/glide';
+import { GlideDateTime, GlideRecord, GlideRecordSecure, GlideSysAttachment, gs } from '@servicenow/glide';
 import { saveRevision, getState, saveRule, approveRule, reviewSavedVersion } from './workbench.ts';
 import { getArchive, getArchiveForTest, postArchive, postArchiveForTest, withArchiveWriter } from './archive.ts';
 import { readSavedSources } from './read-sources.ts';
@@ -293,6 +293,15 @@ function verifyDisposableDeletion() {
     && !stories.getValue('archive_delete_key') && revision.get(first.body.id) && revision.get(second.body.id)
     && dependency.get(String(dependencyId)), 'A refused version removal damaged the archived set: ' + JSON.stringify(refused.body));
   expect(dependency.deleteRecord(), 'The deliberately mismatched test link could not be removed.');
+  const attachments = new GlideSysAttachment();
+  const attachmentId = attachments.write(revision, 'fictional-evidence.txt', 'text/plain', 'Fictional attachment retained with its version.');
+  expect(!!attachmentId, 'The fictional version attachment did not save.');
+  const attached = run({ ...request, expected_modified: storyState(storyId).story.modified });
+  expect(attached.status === 409 && attached.body.message.includes('An attachment still depends')
+    && stories.get(storyId) && revision.get(first.body.id) && revision.get(second.body.id)
+    && attachments.getAttachments('x_2236136_suiko_ai_revision', second.body.id).next(),
+    'Deletion failed to protect the attached version: ' + JSON.stringify(attached.body));
+  attachments.deleteAttachment(attachmentId);
   const fresh = { ...request, expected_modified: storyState(storyId).story.modified };
   const deleted = run(fresh);
   expect(deleted.status === 200 && deleted.body.deleted === true, 'The disposable story was not deleted: ' + JSON.stringify(deleted.body));
