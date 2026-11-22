@@ -38,8 +38,8 @@ export const x_2236136_suiko_ai_story = Table({
     archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
     archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
-    archive_delete_key: StringColumn({ label: 'Archive delete reservation', maxLength: 32 }),
-    archive_write_key: StringColumn({ label: 'Saved evidence write reservation', maxLength: 32 }),
+    archive_delete_key: StringColumn({ label: 'Archive delete reservation', maxLength: 48 }),
+    archive_write_key: StringColumn({ label: 'Saved evidence write reservation', maxLength: 48 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
     legal_clearance_required: BooleanColumn({ label: 'Legal clearance required', default: false }),
@@ -156,8 +156,8 @@ export const x_2236136_suiko_ai_rule = Table({
     archived_at: GenericColumn({ label: 'Archived at', columnType: 'glide_date_time' }),
     archived_by: StringColumn({ label: 'Archived by', maxLength: 32 }),
     archive_change_key: StringColumn({ label: 'Archive write identity', maxLength: 32 }),
-    archive_delete_key: StringColumn({ label: 'Archive delete reservation', maxLength: 32 }),
-    archive_write_key: StringColumn({ label: 'Saved evidence write reservation', maxLength: 32 }),
+    archive_delete_key: StringColumn({ label: 'Archive delete reservation', maxLength: 48 }),
+    archive_write_key: StringColumn({ label: 'Saved evidence write reservation', maxLength: 48 }),
     disposable: BooleanColumn({ label: 'Disposable demo', default: false }),
     protected_evidence: BooleanColumn({ label: 'Protected evidence', default: false }),
   },
@@ -256,7 +256,7 @@ Acl({
 Acl({
   $id: Now.ID['x_2236136_suiko_ai_story-delete'], type: 'record',
   table: 'x_2236136_suiko_ai_story', operation: 'delete',
-  roles: ['admin'], adminOverrides: true,
+  roles: ['admin'], adminOverrides: false, script: 'answer = false;',
 });
 
 Acl({ $id: Now.ID['suiko-decision-read'], type: 'record', table: 'x_2236136_suiko_ai_decision',
@@ -424,7 +424,7 @@ Acl({
 Acl({
   $id: Now.ID['x_2236136_suiko_ai_rule-delete'], type: 'record',
   table: 'x_2236136_suiko_ai_rule', operation: 'delete',
-  roles: ['admin'], adminOverrides: true,
+  roles: ['admin'], adminOverrides: false, script: 'answer = false;',
 });
 
 Form({

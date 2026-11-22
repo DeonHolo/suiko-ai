@@ -94,6 +94,12 @@ function retentionReason(kind: string, row: GlideRecord) {
     decisions.setLimit(1);
     decisions.query();
     if (decisions.next()) return 'Retained editor decision history depends on this story.';
+    const otherStories = new GlideRecord(tables.story);
+    otherStories.addQuery('sys_id', '!=', id(row));
+    otherStories.addQuery('current_revision.story', id(row));
+    otherStories.setLimit(1);
+    otherStories.query();
+    if (otherStories.next()) return 'Another story points to a saved version of this story.';
   }
   if (hasRetainedReview(kind, row)) {
     return kind === 'story'
@@ -107,10 +113,14 @@ const deleteFlag = 'x_2236136_suiko_ai.archive_delete_enabled';
 const deleteReservation = 'archive_delete_key';
 const writeReservation = 'archive_write_key';
 
+function reservationToken() {
+  return String(new GlideDateTime().getNumericValue()) + ':' + String(gs.generateGUID());
+}
+
 // An archive or deletion cannot overtake a write that can add a child to the
 // record set. This transient reservation does not change the editor's version.
 export function withArchiveWriter<T>(kind: string, sysId: string, write: () => T): T {
-  const token = String(gs.generateGUID());
+  const token = reservationToken();
   const table = kindTable(kind);
   const claim = new GlideRecord(table);
   claim.addQuery('sys_id', sysId);
@@ -120,10 +130,10 @@ export function withArchiveWriter<T>(kind: string, sysId: string, write: () => T
   claim.autoSysFields(false);
   claim.setValue(writeReservation, token);
   claim.updateMultiple();
-  if (target(kind, sysId).getValue(writeReservation) !== token) {
-    throw new WorkbenchError('This ' + kind + ' is archived or another change is being saved. Reopen it before trying again.', 409);
-  }
   try {
+    if (target(kind, sysId).getValue(writeReservation) !== token) {
+      throw new WorkbenchError('This ' + kind + ' is archived or another change is being saved. Reopen it before trying again.', 409);
+    }
     return write();
   } finally {
     releaseReservation(table, sysId, writeReservation, token, false);
@@ -138,6 +148,11 @@ function releaseReservation(table: string, sysId: string, field: string, token: 
   // GlideRecord.updateMultiple ignores empty strings when clearing a field.
   release.setValue(field, 'NULL');
   release.updateMultiple();
+  const current = new GlideRecord(table);
+  if (current.get(sysId) && current.getValue(field) === token) {
+    gs.error('Suiko Archive: could not release ' + field + ' for ' + table + '/' + sysId);
+    throw new WorkbenchError('The record is still reserved. Ask an administrator to check the saved change.', 503);
+  }
 }
 
 function savedChildren(kind: string, sysId: string) {
@@ -159,7 +174,7 @@ function deletionEnabled() {
   return gs.getProperty(deleteFlag, 'false') === 'true';
 }
 
-function scopedDeletionConfiguration(kind: string, sysId: string) {
+function deletionConfiguration(kind: string): string | null {
   const parentTable = kindTable(kind);
   const versionTable = kind === 'story' ? tables.revision : tables.ruleVersion;
   const expectedReferences = kind === 'story' ? {
@@ -190,40 +205,53 @@ function scopedDeletionConfiguration(kind: string, sysId: string) {
   rules.addQuery('action_delete', true);
   rules.query();
   const ownGuard = 'Suiko Archive owns ' + kind + ' deletion';
+  const guardId = kind === 'story' ? '4e7c1e44e0984ac1af9207619f51bb25' : 'dad344ac10af400aa2fa28a5dce6a76b';
   let installedGuard = false;
   while (rules.next()) {
-    if (rules.getValue('collection') !== parentTable || rules.getValue('name') !== ownGuard) {
+    if (id(rules) !== guardId || rules.getValue('collection') !== parentTable
+      || rules.getValue('name') !== ownGuard || rules.getValue('when') !== 'before') {
       return 'A separate ServiceNow delete rule can prevent safe removal of the saved set.';
     }
     installedGuard = true;
   }
   if (!installedGuard) return 'ServiceNow could not verify the Archive delete guard.';
-  const attachments = new GlideSysAttachment();
-  if (attachments.getAttachments(parentTable, sysId).next()) return 'An attachment still depends on this item.';
-  const versions = savedChildren(kind, sysId);
-  while (versions.next()) {
-    if (attachments.getAttachments(versionTable, id(versions)).next()) {
-      return 'An attachment still depends on a saved version of this item.';
-    }
-  }
   return null;
 }
 
-function itemView(kind: string, row: GlideRecord, deleteEnabled: boolean) {
-  const reason = deletionReason(kind, row) || (row.getValue(deleteReservation)
-    ? 'Permanent deletion is already in progress.' : null);
-  const canDelete = archived(row) && !reason && gs.hasRole('admin') && deleteEnabled;
+function savedSetRemovalPlan(kind: string, sysId: string, configuration: string | null) {
+  if (configuration) return { reason: configuration, versionIds: [] };
+  const parentTable = kindTable(kind);
+  const versionTable = kind === 'story' ? tables.revision : tables.ruleVersion;
+  const attachments = new GlideSysAttachment();
+  if (attachments.getAttachments(parentTable, sysId).next()) return { reason: 'An attachment still depends on this item.', versionIds: [] };
+  const versionIds: string[] = [];
+  const versions = savedChildren(kind, sysId);
+  while (versions.next()) {
+    if (attachments.getAttachments(versionTable, id(versions)).next()) {
+      return { reason: 'An attachment still depends on a saved version of this item.', versionIds: [] };
+    }
+    versionIds.push(id(versions));
+  }
+  return { reason: null, versionIds };
+}
+
+function itemView(kind: string, row: GlideRecord, deleteEnabled: boolean, configuration = () => deletionConfiguration(kind)) {
+  let reason = deletionReason(kind, row) || (row.getValue(deleteReservation)
+    ? 'Permanent deletion has reserved this item. If it stays here, ask an administrator to check the operation.' : null);
   let deleteSummary;
-  if (canDelete) {
-    const count = savedChildren(kind, id(row)).getRowCount();
-    deleteSummary = 'Permanently removes this ' + kind + ' and ' + count + ' saved version'
-      + (count === 1 ? '' : 's') + '. You cannot undo this.';
+  if (archived(row) && !reason && gs.hasRole('admin') && deleteEnabled) {
+    const plan = savedSetRemovalPlan(kind, id(row), configuration());
+    reason = plan.reason;
+    if (!reason) {
+      deleteSummary = 'Permanently removes this ' + kind + ' and ' + plan.versionIds.length + ' saved version'
+        + (plan.versionIds.length === 1 ? '' : 's') + '. You cannot undo this.';
+    }
   }
   return {
     id: id(row), title: row.getValue('title') || '', modified: String(row.getValue('sys_mod_count')),
     archived_at: row.getValue('archived_at') || '',
     can_restore: !row.getValue(deleteReservation) && (kind === 'story' ? canArchiveStories() : canArchiveRules()),
-    can_delete: canDelete, retention_reason: reason,
+    can_delete: !!deleteSummary, retention_reason: reason,
     ...(deleteSummary ? { delete_summary: deleteSummary } : {}),
   };
 }
@@ -263,9 +291,14 @@ export function getArchiveForTest(request, response, deleteEnabled: boolean) {
     rows.query();
     const items = [];
     let lastReturned = null;
+    let configuration: string | null | undefined;
+    const checkConfiguration = () => {
+      if (configuration === undefined) configuration = deletionConfiguration(kind);
+      return configuration;
+    };
     while (rows.next()) {
       if (items.length === PAGE) return { kind, items, next_cursor: lastReturned };
-      items.push(itemView(kind, rows, deleteEnabled));
+      items.push(itemView(kind, rows, deleteEnabled, checkConfiguration));
       lastReturned = cursorToken(kind, rows);
     }
     return { kind, items, next_cursor: null };
@@ -307,7 +340,7 @@ function deleteArchived(kind: string, row: GlideRecord, expectedModified: unknow
   if (blocked) throw new WorkbenchError('This ' + kind + ' stays archived. ' + blocked, 409);
   if (!enabled) throw new WorkbenchError('Permanent deletion is not enabled on this instance.', 503);
   const sysId = id(row);
-  const token = String(gs.generateGUID());
+  const token = reservationToken();
   const claim = new GlideRecord(kindTable(kind));
   claim.addQuery('sys_id', sysId);
   claim.addQuery('sys_mod_count', String(count));
@@ -316,21 +349,22 @@ function deleteArchived(kind: string, row: GlideRecord, expectedModified: unknow
   claim.addNullQuery(writeReservation);
   claim.setValue(deleteReservation, token);
   claim.updateMultiple();
-  const locked = target(kind, sysId);
-  if (locked.getValue(deleteReservation) !== token || !archived(locked)) {
-    throw new WorkbenchError('This ' + kind + ' changed elsewhere. Reopen the Archive before acting again.', 409);
-  }
   try {
+    const locked = target(kind, sysId);
+    if (locked.getValue(deleteReservation) !== token || !archived(locked)) {
+      throw new WorkbenchError('This ' + kind + ' changed elsewhere. Reopen the Archive before acting again.', 409);
+    }
     const retained = deletionReason(kind, locked);
     if (retained) throw new WorkbenchError('This ' + kind + ' stays archived. ' + retained, 409);
-    const configuration = scopedDeletionConfiguration(kind, sysId);
-    if (configuration) throw new WorkbenchError('This ' + kind + ' stays archived. ' + configuration, 409);
+    const plan = savedSetRemovalPlan(kind, sysId, deletionConfiguration(kind));
+    if (plan.reason) throw new WorkbenchError('This ' + kind + ' stays archived. ' + plan.reason, 409);
     // The only cascade is the parent-owned versions. Retained review and
     // decision references restrict deletion at the platform's data layer.
     if (!locked.deleteRecord()) {
       throw new WorkbenchError('ServiceNow refused to remove this ' + kind + '. It stays archived.', 409);
     }
-    if (savedChildren(kind, sysId).hasNext()) {
+    const versions = new GlideRecord(kind === 'story' ? tables.revision : tables.ruleVersion);
+    if (plan.versionIds.some(versionId => versions.get(versionId)) || savedChildren(kind, sysId).hasNext()) {
       throw new WorkbenchError('ServiceNow could not confirm removal of the complete saved set.', 500);
     }
     return { deleted: true, kind, id: sysId };
@@ -391,7 +425,10 @@ export function assertRevisionNotArchived(revision: GlideRecord) {
 }
 
 export function guardArchiveParentDelete(current: GlideRecord) {
-  if (!gs.hasRole('admin') || !archived(current) || !current.getValue(deleteReservation)) {
-    current.setAbortAction(true);
-  }
+  const kind = current.getTableName() === tables.story ? 'story' : 'rule';
+  const fresh = new GlideRecord(kindTable(kind));
+  const token = current.getValue(deleteReservation);
+  if (!gs.hasRole('admin') || !token || !fresh.get(id(current)) || !archived(fresh)
+    || fresh.getValue(deleteReservation) !== token || fresh.getValue('sys_mod_count') !== current.getValue('sys_mod_count')
+    || deletionReason(kind, fresh) || savedSetRemovalPlan(kind, id(fresh), null).reason) current.setAbortAction(true);
 }

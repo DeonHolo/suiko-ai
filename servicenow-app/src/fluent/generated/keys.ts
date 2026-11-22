@@ -71,6 +71,10 @@ declare global {
                         id: 'd76de6a35f8641de94b755667db607a3'
                         deleted: true
                     }
+                    bc8a264c833453906fffc629feaad326: {
+                        table: 'sys_scope_privilege'
+                        id: 'bc8a264c833453906fffc629feaad326'
+                    }
                     'be02-assigned-legal-user': {
                         table: 'sys_atf_step'
                         id: '677c43527dd44fb6bf779d1833bc786c'

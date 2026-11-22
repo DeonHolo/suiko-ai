@@ -269,6 +269,8 @@ function verifyDisposableDeletion() {
   expect(restored.status === 200 && run(request).status === 409, 'A delete from before restore was allowed.');
   const rearchived = archive();
   expect(rearchived.status === 200 && run(request).status === 409, 'A stale delete matched a newly archived version.');
+  const nativeStory = new GlideRecordSecure('x_2236136_suiko_ai_story');
+  expect(nativeStory.get(storyId) && !nativeStory.canDelete(), 'The native story table offered deletion outside Archive.');
   const revision = new GlideRecord('x_2236136_suiko_ai_revision');
   const nativeRevision = new GlideRecordSecure('x_2236136_suiko_ai_revision');
   expect(nativeRevision.get(first.body.id) && !nativeRevision.canDelete() && revision.get(first.body.id),
@@ -293,9 +295,23 @@ function verifyDisposableDeletion() {
     && !stories.getValue('archive_delete_key') && revision.get(first.body.id) && revision.get(second.body.id)
     && dependency.get(String(dependencyId)), 'A refused version removal damaged the archived set: ' + JSON.stringify(refused.body));
   expect(dependency.deleteRecord(), 'The deliberately mismatched test link could not be removed.');
+  const otherStory = new GlideRecord('x_2236136_suiko_ai_story');
+  expect(otherStory.get(anchor.body.story_id), 'The second fictional story could not be found.');
+  otherStory.setValue('current_revision', second.body.id);
+  expect(!!otherStory.update(), 'The cross-story fixture pointer could not be set.');
+  const crossStory = run({ ...request, expected_modified: storyState(storyId).story.modified });
+  expect(crossStory.status === 409 && crossStory.body.message.includes('Another story points')
+    && otherStory.get(anchor.body.story_id) && otherStory.getValue('current_revision') === second.body.id
+    && revision.get(second.body.id), 'Deletion cleared another story’s saved revision pointer.');
+  otherStory.setValue('current_revision', anchor.body.id);
+  expect(!!otherStory.update(), 'The fictional story pointer did not return to its own revision.');
   const attachments = new GlideSysAttachment();
   const attachmentId = attachments.write(revision, 'fictional-evidence.txt', 'text/plain', 'Fictional attachment retained with its version.');
   expect(!!attachmentId, 'The fictional version attachment did not save.');
+  const protectedListing = action((request, response) => getArchiveForTest(request, response, true), null, { kind: 'story' });
+  const protectedItem = protectedListing.body.items?.find(item => item.id === storyId);
+  expect(protectedListing.status === 200 && protectedItem?.can_delete === false
+    && protectedItem.retention_reason.includes('An attachment still depends'), 'Archive offered to delete an attached version.');
   const attached = run({ ...request, expected_modified: storyState(storyId).story.modified });
   expect(attached.status === 409 && attached.body.message.includes('An attachment still depends')
     && stories.get(storyId) && revision.get(first.body.id) && revision.get(second.body.id)

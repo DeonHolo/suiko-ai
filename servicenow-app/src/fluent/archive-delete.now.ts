@@ -25,6 +25,12 @@ CrossScopePrivilege({
   operation: 'execute', status: 'allowed',
 });
 
+CrossScopePrivilege({
+  $id: 'bc8a264c833453906fffc629feaad326',
+  targetScope: 'global', targetName: 'GlideSysAttachment.getAttachments', targetType: 'scriptable',
+  operation: 'execute', status: 'allowed',
+});
+
 BusinessRule({
   $id: Now.ID['suiko-archive-rule-delete-guard'],
   table: 'x_2236136_suiko_ai_rule', name: 'Suiko Archive owns rule deletion',
