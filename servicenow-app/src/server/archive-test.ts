@@ -1,6 +1,6 @@
-import { GlideDateTime, GlideRecord, gs } from '@servicenow/glide';
+import { GlideDateTime, GlideRecord, GlideRecordSecure, GlideSysAttachment, gs } from '@servicenow/glide';
 import { saveRevision, getState, saveRule, approveRule, reviewSavedVersion } from './workbench.ts';
-import { getArchive, postArchive } from './archive.ts';
+import { getArchive, getArchiveForTest, postArchive, postArchiveForTest, withArchiveWriter } from './archive.ts';
 import { readSavedSources } from './read-sources.ts';
 
 // FE-02 (#2) regressions: archive, restore and guarded deletion. The steps run as
@@ -91,7 +91,7 @@ export function runArchiveStoryRegression() {
   expect(storyState(storyId).stories.some(item => item.id === storyId) === false, 'The archived story stayed in the daily list.');
   const item = archivedItem('story', storyId);
   expect(!!item && item.archived_at && item.can_restore === true && item.can_delete === false, 'The archived story was not listed for the editor.');
-  expect(item.retention_reason.includes('Permanent deletion is unavailable'), 'The held deletion path was not explained.');
+  expect(item.retention_reason.includes('marked as disposable demos'), 'The archive did not explain normal draft retention.');
   expect(action(getArchive, null, { kind: 'story', cursor: 'not-a-page' }).status === 400, 'An unreadable cursor was accepted.');
   const revisionId = storyState(storyId).revisions[0].id;
   let providerTouched = false;
@@ -202,9 +202,11 @@ export function runArchiveAdminRegression() {
   expect(marker.get(demoId), 'The disposable demo story disappeared.');
   marker.setValue('disposable', true);
   marker.update();
-  let archived = action(postArchive, { action: 'archive', kind: 'story', id: demoId, expected_modified: storyState(demoId).story.modified });
-  expect(archived.status === 200 && archived.body.item.can_delete === false, 'The disposable story was not safely archived.');
-  const held = action(postArchive, { action: 'delete', kind: 'story', id: demoId, expected_modified: archived.body.item.modified });
+  const disabled = (request, response) => postArchiveForTest(request, response, false);
+  let archived = action(disabled, { action: 'archive', kind: 'story', id: demoId, expected_modified: storyState(demoId).story.modified });
+  expect(archived.status === 200 && archived.body.item.can_delete === false,
+    'The disposable story was not safely archived: ' + JSON.stringify(archived.body));
+  const held = action(disabled, { action: 'delete', kind: 'story', id: demoId, expected_modified: archived.body.item.modified });
   expect(held.status === 503 && storyState(demoId).revisions[0].id === demo.body.id, 'The held deletion path touched the saved version.');
   expect(marker.get(demoId), 'The held demo story was removed.');
   marker.setValue('protected_evidence', true);
@@ -231,8 +233,108 @@ export function runArchiveAdminRegression() {
   expect(markedRule.status === 409 && rulesState().rules.find(entry => entry.rule_id === identity).archived, 'A marked rule did not stay archived.');
   const versions = new GlideRecord('x_2236136_suiko_ai_rule_version');
   expect(versions.get(rule.draft.id), 'The marked rule lost its saved proposal.');
+  verifyDisposableDeletion();
   verifyArchivePagination();
-  return 'Passed as admin: marked story/rule retention, held deletion preserves children, stale rejection and two-page archive ordering.';
+  return 'Passed as admin: marked story and rule retention, permanent deletion of isolated draft sets, stale rejection and two-page archive ordering.';
+}
+
+function verifyDisposableDeletion() {
+  const run = (input) => action((request, response) => postArchiveForTest(request, response, true), input);
+  const fixture = {
+    title: 'ATF disposable deletion check', text: 'Fictional delete fixture, first version.',
+    notes: '', content_format: 'article', content_kind: 'news', source_urls: [],
+  };
+  const first = action(saveRevision, { ...fixture, request_key: 'ATF-delete-' + gs.generateGUID() });
+  expect(first.status === 200, 'The first disposable draft did not save.');
+  const storyId = first.body.story_id;
+  const second = action(saveRevision, { ...fixture, text: 'Fictional delete fixture, second version.',
+    request_key: 'ATF-delete-' + gs.generateGUID(), story_id: storyId, expected_revision_id: first.body.id });
+  expect(second.status === 200 && second.body.version === 2, 'The second disposable draft did not save.');
+  const stories = new GlideRecord('x_2236136_suiko_ai_story');
+  expect(stories.get(storyId), 'The fictional delete fixture disappeared.');
+  stories.setValue('disposable', true);
+  expect(!!stories.update(), 'The fictional story could not be marked disposable.');
+  const storyInput = { kind: 'story', id: storyId };
+  const archive = () => run({ ...storyInput, action: 'archive', expected_modified: storyState(storyId).story.modified });
+  expect(withArchiveWriter('story', storyId, archive).status === 409 && !storyState(storyId).story.archived,
+    'An archive overtook a write that could add a version.');
+  const archived = archive();
+  expect(archived.status === 200 && archived.body.item.can_delete
+    && archived.body.item.delete_summary.includes('2 saved versions'), 'The archived demo did not give an exact delete summary.');
+  const listing = action((request, response) => getArchiveForTest(request, response, true), null, { kind: 'story' });
+  expect(listing.status === 200 && listing.body.items.find(item => item.id === storyId)?.can_delete,
+    'The eligible throwaway story was unavailable in Archive.');
+  const request = { ...storyInput, action: 'delete', expected_modified: archived.body.item.modified };
+  const restored = run({ ...request, action: 'restore' });
+  expect(restored.status === 200 && run(request).status === 409, 'A delete from before restore was allowed.');
+  const rearchived = archive();
+  expect(rearchived.status === 200 && run(request).status === 409, 'A stale delete matched a newly archived version.');
+  const nativeStory = new GlideRecordSecure('x_2236136_suiko_ai_story');
+  expect(nativeStory.get(storyId) && !nativeStory.canDelete(), 'The native story table offered deletion outside Archive.');
+  const revision = new GlideRecord('x_2236136_suiko_ai_revision');
+  const nativeRevision = new GlideRecordSecure('x_2236136_suiko_ai_revision');
+  expect(nativeRevision.get(first.body.id) && !nativeRevision.canDelete() && revision.get(first.body.id),
+    'A native version delete bypassed Archive.');
+  expect(stories.get(storyId) && !stories.deleteRecord() && stories.get(storyId), 'A native story delete bypassed Archive.');
+  const anchor = action(saveRevision, { ...fixture, title: 'ATF independent retention anchor', request_key: 'ATF-delete-' + gs.generateGUID() });
+  expect(anchor.status === 200, 'The fictional retention anchor did not save.');
+  // Link a version through another fictional story. The version reference
+  // alone must keep the complete set intact.
+  const dependency = new GlideRecord('x_2236136_suiko_ai_decision');
+  dependency.initialize();
+  dependency.setValue('story', anchor.body.story_id);
+  dependency.setValue('revision', second.body.id);
+  dependency.setValue('version', 2);
+  dependency.setValue('action', 'request_changes');
+  dependency.setValue('actor', String(gs.getUserID()));
+  dependency.setValue('decided_at', new GlideDateTime().getValue());
+  const dependencyId = dependency.insert();
+  expect(!!dependencyId, 'The fictional version dependency could not be recorded.');
+  const refused = run({ ...request, expected_modified: rearchived.body.item.modified });
+  expect(refused.status === 409 && stories.get(storyId) && stories.getValue('archived') === '1'
+    && !stories.getValue('archive_delete_key') && revision.get(first.body.id) && revision.get(second.body.id)
+    && dependency.get(String(dependencyId)), 'A refused version removal damaged the archived set: ' + JSON.stringify(refused.body));
+  expect(dependency.deleteRecord(), 'The deliberately mismatched test link could not be removed.');
+  const otherStory = new GlideRecord('x_2236136_suiko_ai_story');
+  expect(otherStory.get(anchor.body.story_id), 'The second fictional story could not be found.');
+  otherStory.setValue('current_revision', second.body.id);
+  expect(!!otherStory.update(), 'The cross-story fixture pointer could not be set.');
+  const crossStory = run({ ...request, expected_modified: storyState(storyId).story.modified });
+  expect(crossStory.status === 409 && crossStory.body.message.includes('Another story points')
+    && otherStory.get(anchor.body.story_id) && otherStory.getValue('current_revision') === second.body.id
+    && revision.get(second.body.id), 'Deletion cleared another story’s saved revision pointer.');
+  otherStory.setValue('current_revision', anchor.body.id);
+  expect(!!otherStory.update(), 'The fictional story pointer did not return to its own revision.');
+  const attachments = new GlideSysAttachment();
+  const attachmentId = attachments.write(revision, 'fictional-evidence.txt', 'text/plain', 'Fictional attachment retained with its version.');
+  expect(!!attachmentId, 'The fictional version attachment did not save.');
+  const protectedListing = action((request, response) => getArchiveForTest(request, response, true), null, { kind: 'story' });
+  const protectedItem = protectedListing.body.items?.find(item => item.id === storyId);
+  expect(protectedListing.status === 200 && protectedItem?.can_delete === false
+    && protectedItem.retention_reason.includes('An attachment still depends'), 'Archive offered to delete an attached version.');
+  const attached = run({ ...request, expected_modified: storyState(storyId).story.modified });
+  expect(attached.status === 409 && attached.body.message.includes('An attachment still depends')
+    && stories.get(storyId) && revision.get(first.body.id) && revision.get(second.body.id)
+    && attachments.getAttachments('x_2236136_suiko_ai_revision', second.body.id).next(),
+    'Deletion failed to protect the attached version: ' + JSON.stringify(attached.body));
+  attachments.deleteAttachment(attachmentId);
+  const fresh = { ...request, expected_modified: storyState(storyId).story.modified };
+  const deleted = run(fresh);
+  expect(deleted.status === 200 && deleted.body.deleted === true, 'The disposable story was not deleted: ' + JSON.stringify(deleted.body));
+  expect(!stories.get(storyId) && !revision.get(first.body.id) && !revision.get(second.body.id), 'Deletion left part of the story set behind.');
+  expect(run(fresh).status === 404, 'Repeating a completed deletion did not report the missing record.');
+
+  const identity = 'ATF-unused-delete-' + gs.generateGUID();
+  const draft = current(action(saveRule, { rule_id: identity, title: 'ATF unused delete fixture', text: 'Fictional draft rule.',
+    priority: 'standard', formats: ['article'], content_kinds: ['news'], origin: { kind: 'manual' } }), identity);
+  const ruleInput = { kind: 'rule', id: draft.id };
+  const archivedRule = run({ ...ruleInput, action: 'archive', expected_modified: draft.modified });
+  expect(archivedRule.status === 200 && archivedRule.body.item.can_delete, 'The unused archived rule was not eligible.');
+  const dropped = run({ ...ruleInput, action: 'delete', expected_modified: archivedRule.body.item.modified });
+  const rules = new GlideRecord('x_2236136_suiko_ai_rule');
+  const versions = new GlideRecord('x_2236136_suiko_ai_rule_version');
+  expect(dropped.status === 200 && dropped.body.deleted && !rules.get(draft.id) && !versions.get(draft.draft.id),
+    'The unused archived rule or its saved proposal remained: ' + JSON.stringify(dropped.body));
 }
 
 function verifyArchivePagination() {

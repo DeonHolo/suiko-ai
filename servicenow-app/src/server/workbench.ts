@@ -9,7 +9,7 @@ import {
 import { listEditorialRules as rulesView, saveRuleDraft, approveSavedRule, setSavedRuleActive, starterTemplates, supportedChecks } from './editorial-rules.ts';
 import { policyState, readPolicyVersion, savePolicyVersion } from './policy-records.ts';
 import { requireRulesEditor } from './rule-access.ts';
-import { assertRevisionNotArchived, assertStoryNotArchived, canArchiveStories } from './archive.ts';
+import { assertRevisionNotArchived, assertStoryNotArchived, canArchiveStories, withArchiveWriter } from './archive.ts';
 import { checkPolicySuggestions, policyProposalPrompt, policyProposalSchema } from './generated/policy-proposals.js';
 import { sourceRuleIds, sourceMaterial } from './generated/source-reader.js';
 import { readSavedSources } from './read-sources.ts';
@@ -376,7 +376,7 @@ export function saveRevision(request, response) {
     revision.setValue('content_format', content_format);
     revision.setValue('content_kind', content_kind);
     revision.setValue('source_urls_json', JSON.stringify(source_urls));
-    if (!revision.insert()) {
+    if (!withArchiveWriter('story', id(story), () => revision.insert())) {
       const winner = recoverPrepared();
       if (winner) return winner;
       throw new WorkbenchError('This version was saved elsewhere. Reload the story.', 409);
@@ -528,7 +528,7 @@ export function reviewSavedVersion(request, response, createProvider, readSource
     run.setValue('model', model);
     run.setValue('request_json', JSON.stringify(prepared));
     if (revisionDiff) run.setValue('revision_diff_json', JSON.stringify(revisionDiff));
-    const runId = run.insert();
+    const runId = withArchiveWriter('story', id(parent), () => run.insert());
     if (!runId) throw new WorkbenchError('Another review started for this version. Refresh to see it.', 409);
     if (!run.get(String(runId))) throw new WorkbenchError('The review attempt could not be reopened. Refresh the story before retrying.', 500);
     // The source column is the saved copy. The model request and readback use that same text.
@@ -693,7 +693,7 @@ function routeRevision(story: GlideRecord, revision: GlideRecord, reviewerId: st
   task.setValue('submitted_title', revision.getValue('title'));
   task.setValue('submitted_text', revision.getValue('body'));
   task.setValue('submitted_notes', revision.getValue('notes') || '');
-  if (task.insert()) return task;
+  if (withArchiveWriter('story', id(story), () => task.insert())) return task;
   const winner = legalTaskForRevision(id(revision));
   if (!winner) throw new WorkbenchError('The legal request could not be saved. Reload and retry sending it.', 500);
   requireMatchingRoute(winner, reviewerId, reason);
